@@ -1,0 +1,84 @@
+id: untyped-value-probe-rust
+language: Rust
+severity: warning
+message: Untyped Value key probe or open Map<String, Value> field/parameter defers schema validation past the boundary; decode once into a closed #[derive(Deserialize)] struct or enum.
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/target/**"
+  - "**/vendor/**"
+  - "**/third_party/**"
+  - "**/tests/**"
+  - "**/benches/**"
+  - "**/tests.rs"
+  - "**/*_tests.rs"
+  - "**/*_test.rs"
+metadata:
+  directive: G4
+  source: "ai-contexts/AGENT.md#code"
+constraints:
+  KEY:
+    kind: string_literal
+    regex: '^"'
+  METHOD:
+    regex: "^(as_str|as_u64|as_i64|as_f64|as_bool|as_array|as_object)$"
+rule:
+  all:
+    - not:
+        inside:
+          matches: test-scope
+          stopBy: end
+    - any:
+        - pattern: $OBJ.get($KEY).and_then(|$V| $V.$METHOD())
+        - pattern: $OBJ.get($KEY).and_then($FN::$METHOD)
+        - pattern: $OBJ[$KEY].$METHOD()
+        - kind: generic_type
+          all:
+            - has:
+                field: type
+                regex: "^(std::collections::)?(HashMap|BTreeMap|IndexMap|FxHashMap)$"
+            - has:
+                field: type_arguments
+                kind: type_arguments
+                regex: "^<\\s*String\\s*,\\s*(serde_json::|serde_yaml::|toml::)?Value\\s*>$"
+            - inside:
+                any:
+                  - kind: field_declaration
+                  - kind: parameter
+                stopBy: {kind: generic_type}
+---
+id: sql-string-interpolation-rust
+language: Rust
+severity: warning
+message: format! interpolates a value into SQL statement text (quoted or compared), bypassing bound parameters; pass values through the driver's bindings (?1, $1, params![]).
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/target/**"
+  - "**/vendor/**"
+  - "**/third_party/**"
+  - "**/tests/**"
+  - "**/benches/**"
+  - "**/tests.rs"
+  - "**/*_tests.rs"
+  - "**/*_test.rs"
+metadata:
+  directive: G4
+  source: "ai-contexts/AGENT.md#code"
+rule:
+  kind: macro_invocation
+  all:
+    - not:
+        inside:
+          matches: test-scope
+          stopBy: end
+    - has:
+        field: macro
+        regex: "^format$"
+    - has:
+        kind: token_tree
+        has:
+          any:
+            - kind: string_literal
+            - kind: raw_string_literal
+          regex: '(?i)^r?#*"\s*(SELECT\b[\s\S]*\bFROM|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM)\b[\s\S]*(''\{(?:(?-i:[^}A-Z])[^}]*)?\}''|=\s*\{(?:(?-i:[^}A-Z])[^}]*)?\})'

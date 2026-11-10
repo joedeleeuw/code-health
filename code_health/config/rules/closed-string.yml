@@ -1,0 +1,151 @@
+id: closed-string
+language: Python
+severity: warning
+message: A str parameter or field is closed by a literal set at runtime. Declare the case space in its type (a Literal alias or an Enum) so callers and checkers see the cases.
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/site-packages/**"
+  - "**/vendor/**"
+  - "**/Vendor/**"
+  - "**/third_party/**"
+  - "**/tests/**"
+  - "**/test/**"
+  - "**/test_*.py"
+  - "**/*_test.py"
+  - "**/conftest.py"
+metadata:
+  directive: G9
+  source: "ai-contexts/AGENT.md#code (Declare the case space first)"
+utils:
+  # ("shadow", "apply"), {"a", "b"}, ["a", "b"]: two or more string literals
+  literal-set:
+    any: [{kind: tuple}, {kind: set}, {kind: list}]
+    has: {kind: string}
+    not: {has: {not: {any: [{kind: string}, {regex: "^[(),\\[\\]{}]$"}]}}}
+  # SHAPING_MODES, _VALID_PADDING_MODES: a module constant that is not a dict;
+  # a dict is a registry whose rows carry each case's behaviour
+  constant-set:
+    kind: identifier
+    regex: "^_?[A-Z][A-Z0-9_]*$"
+    pattern: $SET
+    inside:
+      kind: module
+      stopBy: end
+      not:
+        has:
+          kind: expression_statement
+          has:
+            kind: assignment
+            regex: "^_?[A-Z][A-Z0-9_]*\\s*(?::[^=]*)?=\\s*(?:\\{\\s*\\}|\\{[^}]*:|dict\\(|MappingProxyType\\()"
+            has: {field: left, pattern: $SET}
+  str-parameter:
+    inside:
+      kind: function_definition
+      stopBy: end
+      not: {has: {field: name, regex: "^__getattr__$"}}
+      has:
+        field: parameters
+        has:
+          any:
+            - kind: typed_parameter
+              all:
+                - has: {kind: identifier, pattern: $X}
+                - has: {field: type, regex: "^str$"}
+            - kind: typed_default_parameter
+              all:
+                - has: {field: name, pattern: $X}
+                - has: {field: type, regex: "^str$"}
+  str-field:
+    inside:
+      kind: class_definition
+      stopBy: end
+      has:
+        field: body
+        has:
+          kind: expression_statement
+          has:
+            kind: assignment
+            all:
+              - has: {field: left, pattern: $F}
+              - has: {field: type, regex: "^str$"}
+rule:
+  kind: comparison_operator
+  regex: "\\snot\\s+in\\s"
+  all:
+    - any:
+        - all:
+            - has: {nthChild: 1, kind: identifier, pattern: $X}
+            - matches: str-parameter
+        - all:
+            - has:
+                nthChild: 1
+                kind: attribute
+                all:
+                  - has: {field: object, regex: "^self$"}
+                  - has: {field: attribute, pattern: $F}
+            - matches: str-field
+    - has:
+        nthChild: 2
+        any:
+          - matches: literal-set
+          - matches: constant-set
+    - inside:
+        kind: if_statement
+        field: condition
+        has:
+          field: consequence
+          has: {kind: raise_statement, stopBy: end}
+---
+id: closed-string-rust
+language: Rust
+severity: warning
+message: A struct field stores a closed case space as String instead of an enum. Declare the cases in a Rust enum (#[derive(Serialize, Deserialize)]) so the compiler enforces exhaustiveness.
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/target/**"
+  - "**/vendor/**"
+  - "**/third_party/**"
+  - "**/tests/**"
+  - "**/tests.rs"
+  - "**/*_tests.rs"
+  - "**/*_test.rs"
+metadata:
+  directive: G9
+  source: "ai-contexts/AGENT.md#code (Declare the case space first)"
+utils:
+  string-literal-arm:
+    kind: match_arm
+    has:
+      field: pattern
+      has:
+        kind: string_literal
+        stopBy: end
+rule:
+  all:
+    - not:
+        inside: {matches: test-scope, stopBy: end}
+    - kind: match_expression
+      all:
+        - has:
+            field: value
+            kind: call_expression
+            has:
+              field: function
+              kind: field_expression
+              all:
+                - has:
+                    field: field
+                    regex: "^(as_str|as_deref)$"
+                - has:
+                    field: value
+                    kind: field_expression
+        - has:
+            field: body
+            has:
+              nthChild:
+                position: 2
+                ofRule:
+                  matches: string-literal-arm
+              matches: string-literal-arm

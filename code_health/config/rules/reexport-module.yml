@@ -1,0 +1,38 @@
+id: reexport-module
+language: Python
+severity: warning
+message: Module whose only statements import names from elsewhere. A re-export is a hop, not an owner; importers name the owner module directly.
+ignores:
+  - "**/__init__.py"
+  # pytest finds fixtures only in a conftest, so a conftest re-export is the protocol
+  - "**/conftest.py"
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/site-packages/**"
+metadata:
+  directive: G10
+  source: "ai-contexts/AGENT.md#code (a module that re-exports one symbol); skills/codebase-design/SKILL.md#principles (The deletion test)"
+rule:
+  kind: module
+  has: {kind: import_from_statement}
+  all:
+    - not:
+        has:
+          regex: "."
+          not:
+            any:
+              - kind: import_from_statement
+              - kind: future_import_statement
+              - kind: comment
+              - kind: expression_statement
+                has: {kind: string}
+              - kind: expression_statement
+                regex: "^__all__\\s*="
+    # a public facade over a private sibling (from ._io import *) is the package's surface
+    - not:
+        has:
+          kind: import_from_statement
+          has:
+            field: module_name
+            kind: relative_import
+            regex: "^\\.+_"

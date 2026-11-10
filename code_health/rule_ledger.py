@@ -1,0 +1,84 @@
+"""The one owner of retired published rule IDs: code_health/config/retired-rule-ids.json
+maps each ID that code-health or process-review published and withdrew to why
+it went and what replaced it. code-health and process-review both read it
+through this module, so a consumer that still names the ID fails with the
+reason, and no rule may take the ID again.
+"""
+
+import json
+from pathlib import Path
+
+import yaml
+
+from code_health import stop
+
+CONFIG_DIR = Path(__file__).resolve().parent / "config"
+LEDGER = CONFIG_DIR / "retired-rule-ids.json"
+SGCONFIG = CONFIG_DIR / "sgconfig.yml"
+
+
+def catalog_rule_files() -> list[Path]:
+    """Every rule file ast-grep loads: each ruleDirs entry of the owner
+    sgconfig.yml, walked recursively for .yml and .yaml."""
+    config = yaml.safe_load(SGCONFIG.read_text())
+    return sorted(
+        path
+        for folder in config["ruleDirs"]
+        for path in (SGCONFIG.parent / folder).rglob("*")
+        if path.suffix in {".yml", ".yaml"}
+    )
+
+
+def catalog_rule_ids() -> set[str]:
+    """Every rule ID in the catalog."""
+    return {
+        document["id"]
+        for path in catalog_rule_files()
+        for document in yaml.safe_load_all(path.read_text())
+        if document
+    }
+
+
+def ledger_records() -> dict[str, dict[str, str]]:
+    """Each ID in the ledger with its reason and replacement. A rule file that
+    takes a ledgered ID stops the check."""
+    records = json.loads(LEDGER.read_text())
+    reused = sorted(catalog_rule_ids() & records.keys())
+    if reused:
+        stop(f"rule ID {reused[0]} is listed in {LEDGER}")
+    return records
+
+
+def ledger_message(rule_id: str, records: dict[str, dict[str, str]]) -> str:
+    """The reason a consumer naming a ledgered ID is told, empty for any other
+    ID."""
+    if rule_id not in records:
+        return ""
+    record = records[rule_id]
+    return (
+        f"rule {rule_id} is retired: {record['reason']} "
+        f"Replaced by {record['replacement']}."
+    )
+
+
+def refuse_ledgered_pins(source: str, pinned: dict[str, int]) -> None:
+    """Check the rule catalog against the ledger, then stop when a pin names a
+    ledgered rule ID, giving its reason."""
+    records = ledger_records()
+    for key in sorted(pinned):
+        message = ledger_message(key.split("::", 1)[0], records)
+        if message:
+            stop(f"{source}.pins.ast_grep.{key}: {message}")
+
+
+def refuse_unknown_rules(source: str, allowed: list[str]) -> None:
+    """Stop when an allowed key is a ledgered rule ID, giving its reason, or is
+    not a rule in the catalog."""
+    records = ledger_records()
+    catalog = catalog_rule_ids()
+    for key in allowed:
+        message = ledger_message(key, records)
+        if message:
+            stop(f"{source}.{key}: {message}")
+        if key not in catalog:
+            stop(f"{source}.{key}: not a rule ID in the catalog")

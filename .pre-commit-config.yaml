@@ -1,0 +1,48 @@
+default_stages: [pre-commit]
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=10240]
+      - id: no-commit-to-branch
+        args: [--branch, "", --pattern, ".*[-_/]codex.*"]
+  - repo: https://github.com/lycheeverse/lychee
+    rev: lychee-v0.22.0
+    hooks:
+      - id: lychee
+        exclude: ^(\.pre-commit-config\.yaml|\.sudocode/.*)$
+        args: [--offline, --no-progress, --include-fragments,
+               --exclude, '^file://.*/(issues|pulls|wiki|discussions|actions|releases)/?$',
+               --exclude-path, '(^|/)(__)?fixtures(__)?/']
+  - repo: local
+    hooks:
+      - id: nixfmt
+        name: nixfmt check
+        entry: nixfmt --check
+        language: system
+        files: \.nix$
+      - id: new-test-files
+        name: no new test files
+        entry: check-new-tests
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: ruff
+        name: ruff
+        entry: uvx ruff@0.15.12 check --force-exclude
+        language: system
+        types: [python]
+      - id: code-health-ast-grep-test
+        name: code-health ast-grep rule tests
+        entry: ast-grep test --config code_health/config/sgconfig.yml --skip-snapshot-tests
+        language: system
+        pass_filenames: false
+        always_run: true
+      - id: code-health
+        name: code-health ratchet
+        entry: uv run code-health
+        language: system
+        pass_filenames: false
+        always_run: true

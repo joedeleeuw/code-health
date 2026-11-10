@@ -1,0 +1,922 @@
+{
+  "root": "/mnt/18tb/clones",
+  "symlink": "~/code/clones",
+  "clones": [
+    {
+      "name": "aft",
+      "remote": "https://github.com/cortexkit/aft.git",
+      "rev": "9826d9cae9d7d71c06ac6063313c191ba410ca99",
+      "languages": [
+        "rust",
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "agent-browser",
+      "remote": "https://github.com/vercel-labs/agent-browser.git",
+      "rev": "2d1271baefa026161de333a0da55c0f9e118a07f",
+      "languages": [
+        "rust",
+        "typescript",
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "agent-client-protocol",
+      "remote": "https://github.com/agentclientprotocol/agent-client-protocol.git",
+      "rev": "a965f1f14e06865bee5da58f009c789ab9f630e5",
+      "languages": [
+        "rust"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "agent-governance-toolkit",
+      "remote": "https://github.com/microsoft/agent-governance-toolkit.git",
+      "rev": "48f04e5ad1efd4f2e5692d4b67def2e0f99a6870",
+      "languages": [
+        "python",
+        "rust",
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "agent-of-empires",
+      "remote": "https://github.com/agent-of-empires/agent-of-empires.git",
+      "rev": "ec7bd0f8cab83c76140de76211679649b4499363",
+      "languages": [
+        "rust",
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "agent-sprite-forge",
+      "remote": "https://github.com/0x0funky/agent-sprite-forge.git",
+      "rev": "6b3da5c444363378e20f3fce130ebecc22f343dd",
+      "languages": [
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "agent-toolkit",
+      "remote": "https://github.com/raniellimontagna/agent-toolkit.git",
+      "rev": "7ee5dea38539f1d4afacfb46167c1572d09a8d07",
+      "languages": [
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "ai-chat-demo",
+      "remote": "https://github.com/margelo/ai-chat-demo",
+      "rev": "6280b1f0f6d53d557b160481185e7bdfa7385cb6",
+      "languages": [
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "ai-dotfiles",
+      "remote": "https://github.com/jsavyasachi/ai-dotfiles.git",
+      "rev": "4593b82142343198fbb73b3343b648f9bbdc6118",
+      "languages": [],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "anyplot",
+      "remote": "https://github.com/MarkusNeusinger/anyplot.git",
+      "rev": "8f3d5991e14d6e36e0a12c0378b6975f955632ad",
+      "languages": [
+        "python",
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "athena-crisis",
+      "remote": "git@github.com:nkzw-tech/athena-crisis.git",
+      "rev": "8a6fa12ccf5db510e0b70f4eeb2e6515835242aa",
+      "languages": [
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "attrs",
+      "remote": "https://github.com/python-attrs/attrs.git",
+      "rev": "9d9f94a043de7fc4012459853a4ed597a5577855",
+      "languages": [
+        "python"
+      ],
+      "role": "negative-control"
+    },
+    {
+      "name": "bernstein",
+      "remote": "https://github.com/sipyourdrink-ltd/bernstein.git",
+      "rev": "485e06f9118fd4811f44ed0f2454f76a252b8038",
+      "languages": [
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "black",
+      "remote": "https://github.com/psf/black.git",
+      "rev": "b4f1fcae48826790b6f93ca9226d20003bce0eaa",
+      "languages": [
+        "python"
+      ],
+      "role": "negative-control"
+    },
+    {
+      "name": "Citadel",
+      "remote": "https://github.com/masumi-network/Citadel.git",
+      "rev": "749a24014a6cef59499dbe13b6fb4c348f8044a4",
+      "languages": [
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "clanker-code",
+      "remote": "https://github.com/heiervang-technologies/clanker-code.git",
+      "rev": "0d055fa6d107328ec8a0fea55adcc2af5b48453e",
+      "languages": [
+        "rust",
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "claude-agent-acp",
+      "remote": "git@github.com:agentclientprotocol/claude-agent-acp.git",
+      "rev": "eb78afa8556b8fc4082495e48e3fd1762fb6a50f",
+      "languages": [
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "claude-seo",
+      "remote": "https://github.com/AgriciDaniel/claude-seo.git",
+      "rev": "6be93f45064ffbadced572b5d5c95f55fd263af0",
+      "languages": [
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "claude-universal",
+      "remote": "https://github.com/Achitokun14/claude-universal.git",
+      "rev": "af22363e8f52884720dbfe52880871e20d6bd10c",
+      "languages": [],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "claudette",
+      "remote": "https://github.com/utensils/claudette.git",
+      "rev": "12ed630d5c33e0f6f70a61b4c2472b9fc0519eca",
+      "languages": [
+        "rust",
+        "typescript"
+      ],
+      "role": "ai-corpus",
+      "stack": "tauri"
+    },
+    {
+      "name": "claurst",
+      "remote": "https://github.com/Kuberwastaken/claurst.git",
+      "rev": "e4228cc6757d804d7c25ff4fb6d89c06d4ae3b88",
+      "languages": [
+        "rust",
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "clawpier",
+      "remote": "https://github.com/SebastianElvis/clawpier.git",
+      "rev": "1886b9453d46a2e2783b6b055bf11c5289da1e5c",
+      "languages": [
+        "rust",
+        "typescript"
+      ],
+      "role": "ai-corpus",
+      "stack": "tauri"
+    },
+    {
+      "name": "clerk-javascript",
+      "remote": "https://github.com/clerk/javascript.git",
+      "rev": "d22c84b63fef01e5b9f9f063cbe12304a1ca04a8",
+      "languages": [
+        "rust",
+        "typescript"
+      ],
+      "role": "negative-control"
+    },
+    {
+      "name": "click",
+      "remote": "https://github.com/pallets/click.git",
+      "rev": "8abb77a8432e03ed14a95f972b44f905279415a7",
+      "languages": [
+        "python"
+      ],
+      "role": "negative-control"
+    },
+    {
+      "name": "cloudflare-agents",
+      "remote": "https://github.com/cloudflare/agents",
+      "rev": "6caa6e85a48c219b7ceef7a6e575f2812a0668b4",
+      "languages": [
+        "typescript"
+      ],
+      "role": "negative-control"
+    },
+    {
+      "name": "codex",
+      "remote": "git@github.com:openai/codex.git",
+      "rev": "279b93242cfef379e65da97e87e44b83c5934fd7",
+      "languages": [
+        "rust",
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "codex-acp",
+      "remote": "git@github.com:agentclientprotocol/codex-acp.git",
+      "rev": "927c4802f83c0859b439e7d641b5eb692560e5df",
+      "languages": [
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "crucible",
+      "remote": "https://github.com/Starlight143/crucible.git",
+      "rev": "f8e022d371fbcfa3a11360b845ada80e95048197",
+      "languages": [
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "cubeloop",
+      "remote": "https://github.com/cubeplexai/cubeloop.git",
+      "rev": "bb2d6336e537f286ccac3dec072218bbec13405b",
+      "languages": [
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "cursor-plugins",
+      "remote": "https://github.com/cursor/plugins.git",
+      "rev": "ae5650febf4320793844c12c4adaa937f417f8da",
+      "languages": [
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "deciduous",
+      "remote": "https://github.com/notactuallytreyanastasio/deciduous.git",
+      "rev": "ed9196eb4008e0a0cfc4599cde3e05af521daa5e",
+      "languages": [
+        "rust",
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "Deepgraph",
+      "remote": "https://github.com/billion-token-one-task/Deepgraph.git",
+      "rev": "69afb415e990e6147c1cd507e42a242a5ede049c",
+      "languages": [
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "deepseek-harness",
+      "remote": "https://github.com/deepseek-ai/deepseek-harness.git",
+      "rev": "f3803c96974ad4a94195fb97e5c637e9c2a3afe3",
+      "languages": [],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "django",
+      "remote": "https://github.com/django/django.git",
+      "rev": "6a8248f13fe7b51c4414eeaf3554a666464b2636",
+      "languages": [
+        "python"
+      ],
+      "role": "negative-control"
+    },
+    {
+      "name": "drift",
+      "remote": "https://github.com/sauremilk/drift.git",
+      "rev": "7729a84d4a5c4966a55dfa71233aea6d22261615",
+      "languages": [
+        "typescript",
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "EloPhanto",
+      "remote": "https://github.com/elophanto/EloPhanto.git",
+      "rev": "7bfc65d9af99857b8529a60a62b1fe242636d07c",
+      "languages": [
+        "python",
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "excalidraw-mcp-app",
+      "remote": "https://github.com/antonpk1/excalidraw-mcp-app.git",
+      "rev": "a617657e56337bf195a27612b9d595e539e35c55",
+      "languages": [
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "executor",
+      "remote": "git@github.com:UsefulSoftwareCo/executor.git",
+      "rev": "3cf6e54659cb34ac731fe3cf747ca139be769b93",
+      "languages": [
+        "typescript",
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "fastapi",
+      "remote": "https://github.com/fastapi/fastapi.git",
+      "rev": "ba5d72bae32807f0af203c45cff695f80fd0f26c",
+      "languages": [
+        "python"
+      ],
+      "role": "negative-control"
+    },
+    {
+      "name": "ffmpeg-skill",
+      "remote": "https://github.com/kajisho5/ffmpeg-skill.git",
+      "rev": "6e42a79247909659b3d80833120b272fb5e46aba",
+      "languages": [
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "figma-console-mcp",
+      "remote": "https://github.com/southleft/figma-console-mcp.git",
+      "rev": "5d00f572542f159d70dae32bc27412c0b7bb3e61",
+      "languages": [
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "flask",
+      "remote": "https://github.com/pallets/flask.git",
+      "rev": "49943b5a94413a530761350f04e896f76e8d620e",
+      "languages": [
+        "python"
+      ],
+      "role": "negative-control"
+    },
+    {
+      "name": "get-physics-done",
+      "remote": "https://github.com/psi-oss/get-physics-done.git",
+      "rev": "0f417695ccf1f987af44bb4f4b3cbbdeb5f2c48b",
+      "languages": [
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "ghostty",
+      "remote": "https://github.com/ghostty-org/ghostty.git",
+      "rev": "0f40a6fef29561b3f3b350c190f33c0f83cb8378",
+      "languages": [
+        "typescript",
+        "python"
+      ],
+      "role": "negative-control"
+    },
+    {
+      "name": "goose",
+      "remote": "https://github.com/block/goose.git",
+      "rev": "cfb67d72f6129ba3c9f68d4c225d8dfcaba18a87",
+      "languages": [
+        "rust",
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "grok-bot-reconstructed",
+      "remote": "https://github.com/b-nnett/grok-bot-0.18-reconstructed.git",
+      "rev": "a9f633e09d49a85829b8236331b9e21f7e612634",
+      "languages": [
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "grok-build",
+      "remote": "https://github.com/xai-org/grok-build.git",
+      "rev": "2bdd1d6a6369de0e8c68132ea4539e9abd9e14a8",
+      "languages": [
+        "rust"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "harness-sdk",
+      "remote": "https://github.com/strands-agents/harness-sdk.git",
+      "rev": "33ee9afce043b201f5001da2d86eccf5eb87216d",
+      "languages": [
+        "typescript",
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "harnessrouter",
+      "remote": "https://github.com/HarnessRouter/harnessrouter.git",
+      "rev": "05b96f8bad80ea9615f5b2968629e8068f5c1439",
+      "languages": [
+        "python",
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "hcom",
+      "remote": "https://github.com/aannoo/hcom.git",
+      "rev": "de33e31a0cdbba4c5863f7cc050d8b79aa50bcdf",
+      "languages": [
+        "rust",
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "herdr",
+      "remote": "git@github.com:herdrdev/herdr.git",
+      "rev": "ee5bfb5041bb3e4a49d591c72308aae3c81ecdde",
+      "languages": [
+        "rust",
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "herdr-mobile-relay",
+      "remote": "https://github.com/0cv/herdr-mobile-relay.git",
+      "rev": "487c95894a8142a9318f532f66e6b05ff7cbca44",
+      "languages": [
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "hermes-agent",
+      "remote": "https://github.com/NousResearch/hermes-agent.git",
+      "rev": "c314285f077e91937c995d419b9fa40af9eb4981",
+      "languages": [
+        "rust",
+        "typescript",
+        "python"
+      ],
+      "role": "ai-corpus",
+      "stack": "tauri"
+    },
+    {
+      "name": "httpx",
+      "remote": "https://github.com/encode/httpx.git",
+      "rev": "b5addb64f0161ff6bfe94c124ef76f6a1fba5254",
+      "languages": [
+        "python"
+      ],
+      "role": "negative-control"
+    },
+    {
+      "name": "hunk",
+      "remote": "https://github.com/modem-dev/hunk.git",
+      "rev": "544bc4054632fc076e92da0b25b4765aab3b992b",
+      "languages": [
+        "typescript",
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "Jarvis",
+      "remote": "https://github.com/kr8tiv-ai/Jarvis.git",
+      "rev": "4074acbcbf0b1975a74344b822607ac36b7a0c25",
+      "languages": [
+        "python",
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "kimi-code",
+      "remote": "https://github.com/MoonshotAI/kimi-code.git",
+      "rev": "444c609e8e6629d43fb7fd571a8db48ce5a41570",
+      "languages": [
+        "typescript",
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "LibreChat",
+      "remote": "https://github.com/danny-avila/LibreChat.git",
+      "rev": "98755d86c835a6c9ef39591a303bc95c38f9da4e",
+      "languages": [
+        "typescript",
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "lilya",
+      "remote": "https://github.com/dymmond/lilya.git",
+      "rev": "2e321eb9dea23c1628466e37a39b11fc14591076",
+      "languages": [
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "math-modeling-skill",
+      "remote": "https://github.com/XiaoMaColtAI/math-modeling-skill.git",
+      "rev": "74f3125e5ae44661447bde6dec3a556334425a04",
+      "languages": [
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "mcp_agent_mail_rust",
+      "remote": "https://github.com/Dicklesworthstone/mcp_agent_mail_rust.git",
+      "rev": "5ac4dc248343e7b3d33659c22780514db2b0635d",
+      "languages": [
+        "rust"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "memstack",
+      "remote": "https://github.com/cwinvestments/memstack.git",
+      "rev": "89b4f278f7f89608041f3c32a09fe4049ed6d365",
+      "languages": [
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "ModSSC",
+      "remote": "https://github.com/ModSSC/ModSSC.git",
+      "rev": "f69f37342befe16ec02d7454e44a7e0d6464dda3",
+      "languages": [
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "napi-rs-package-template",
+      "remote": "https://github.com/napi-rs/package-template.git",
+      "rev": "62f5391dd4aec526be310b28a26bf0de52e0b697",
+      "languages": [
+        "rust",
+        "typescript"
+      ],
+      "role": "negative-control"
+    },
+    {
+      "name": "OpenClaudia",
+      "remote": "https://github.com/Corvidae-Coding-Projects/OpenClaudia.git",
+      "rev": "fad337c447320ea0a3281bcbff378b30e7a1d3d0",
+      "languages": [
+        "rust"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "opencode-mobile",
+      "remote": "git@github.com:doza62/opencode-mobile.git",
+      "rev": "d47a4b082950d1575609dab967f360539855836d",
+      "languages": [
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "Parrot",
+      "remote": "https://github.com/turantekin/Parrot.git",
+      "rev": "46d4eb3051b03c0cb69547ea2790a7cb32d5203b",
+      "languages": [
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "paseo",
+      "remote": "git@github.com:getpaseo/paseo.git",
+      "rev": "d7b7016cc98da02ce5110fb218c70cac419657f3",
+      "languages": [
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "pi",
+      "remote": "git@github.com:earendil-works/pi.git",
+      "rev": "35dfa757378bd7a8570670e99c2687bdd1039a06",
+      "languages": [
+        "rust",
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "pi-smart-compact",
+      "remote": "git@github.com:alpertarhan/pi-smart-compact.git",
+      "rev": "dd1198eaab7badb306a561ec1d10837b4bf1195f",
+      "languages": [
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "pi_agent_rust",
+      "remote": "https://github.com/Dicklesworthstone/pi_agent_rust.git",
+      "rev": "07e2b84a4f5edd3b585873f61a08c85848a151bf",
+      "languages": [
+        "rust",
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "pierre",
+      "remote": "https://github.com/pierrecomputer/pierre.git",
+      "rev": "27bb17834cb273c23c09321f7c1590318b37dc11",
+      "languages": [
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "poetry",
+      "remote": "https://github.com/python-poetry/poetry.git",
+      "rev": "9a4453d8c6d035c7c412bdd3ba4ab6a67e3d743c",
+      "languages": [
+        "python"
+      ],
+      "role": "negative-control"
+    },
+    {
+      "name": "ppt-master",
+      "remote": "https://github.com/hugohe3/ppt-master.git",
+      "rev": "3c6ffd0ee6d6e31aa9ca316bd157173802e3526f",
+      "languages": [
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "prime-agent",
+      "remote": "https://github.com/PrimeIntellect-ai/prime-agent.git",
+      "rev": "c83ac68b346fc5a41bbadb72824b0343ecc5dcbe",
+      "languages": [
+        "rust",
+        "typescript",
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "pydantic",
+      "remote": "https://github.com/pydantic/pydantic.git",
+      "rev": "fe5b5ce5581f10626a16dc7ff4159cf3cb6ddbec",
+      "languages": [
+        "python",
+        "rust"
+      ],
+      "role": "negative-control"
+    },
+    {
+      "name": "pytest",
+      "remote": "https://github.com/pytest-dev/pytest.git",
+      "rev": "bc14038c406563b18a03e15453a10b9eee969e42",
+      "languages": [
+        "python"
+      ],
+      "role": "negative-control"
+    },
+    {
+      "name": "r1code",
+      "remote": "https://github.com/maria-rcks/r1code.git",
+      "rev": "0a587ab9e47970b581e08ad5d3e27113a3a647f4",
+      "languages": [
+        "rust"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "refchecker",
+      "remote": "https://github.com/markrussinovich/refchecker.git",
+      "rev": "27a81896c0c3d7361fb95b4d14b24a86f02c9c0d",
+      "languages": [
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "remote-pi",
+      "remote": "git@github.com:jacobaraujo7/remote_pi.git",
+      "rev": "edd24a3d84a1bfed4ae5c49cc3b439451300c1ce",
+      "languages": [
+        "rust",
+        "typescript",
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "requests",
+      "remote": "https://github.com/psf/requests.git",
+      "rev": "3c7baaa05ab4aa49cc819ce3a819d260de19c157",
+      "languages": [
+        "python"
+      ],
+      "role": "negative-control"
+    },
+    {
+      "name": "rich",
+      "remote": "https://github.com/Textualize/rich.git",
+      "rev": "3a109ccdffe5b2d0e30684a304fbd388e99ce57b",
+      "languages": [
+        "python"
+      ],
+      "role": "negative-control"
+    },
+    {
+      "name": "sandcastles",
+      "remote": "https://github.com/zpdzap/sandcastles.git",
+      "rev": "4cb5d82608c1ee1a7da415ea8967c603011f4d77",
+      "languages": [],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "sentry",
+      "remote": "https://github.com/getsentry/sentry.git",
+      "rev": "61b2595b3bbefdfeb6144b8c3267d10a21382d0d",
+      "languages": [
+        "typescript",
+        "python"
+      ],
+      "role": "negative-control"
+    },
+    {
+      "name": "skillhub-desktop",
+      "remote": "https://github.com/skillhub-club/skillhub-desktop.git",
+      "rev": "a8726bcb5f5d378843981f23f524569627dd6cbf",
+      "languages": [
+        "rust",
+        "typescript"
+      ],
+      "role": "ai-corpus",
+      "stack": "tauri"
+    },
+    {
+      "name": "skills",
+      "remote": "https://github.com/scenario-labs/skills.git",
+      "rev": "b96506d77c8595a4fe9c66eddb0bf9b5953a1d45",
+      "languages": [
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "spec-kitty",
+      "remote": "https://github.com/spec-kitty/spec-kitty.git",
+      "rev": "d9014376dfe411c6788085423cd0b6878dbe1e42",
+      "languages": [
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "SwarmWatch",
+      "remote": "https://github.com/SwarmPack/SwarmWatch.git",
+      "rev": "5d10bdc2f7afcee648aaede653baaadec220ec57",
+      "languages": [
+        "rust",
+        "typescript"
+      ],
+      "role": "ai-corpus",
+      "stack": "tauri"
+    },
+    {
+      "name": "t3code",
+      "remote": "https://github.com/pingdotgg/t3code.git",
+      "rev": "ac8dce0cc3abd8a337f2d806b5082a6834b9b81a",
+      "languages": [
+        "rust",
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "universal-modder",
+      "remote": "https://github.com/rehan-remade/universal-modder.git",
+      "rev": "3c4ac6c38e411b8c543bce217eae197039516bfc",
+      "languages": [
+        "python"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "unleash",
+      "remote": "https://github.com/heiervang-technologies/unleash.git",
+      "rev": "93db328ce0e1560560001a206fa56f50f240f2bd",
+      "languages": [
+        "rust"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "uv",
+      "remote": "https://github.com/astral-sh/uv.git",
+      "rev": "564a2074b02eb9de5aaaa9491ed74357ade0332f",
+      "languages": [
+        "rust"
+      ],
+      "role": "negative-control"
+    },
+    {
+      "name": "veritas_os",
+      "remote": "https://github.com/veritasfuji-japan/veritas_os.git",
+      "rev": "11ec6419e5646e1f496b39d60805f893f5721ebb",
+      "languages": [
+        "python",
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "wisp-science",
+      "remote": "https://github.com/xuzhougeng/wisp-science.git",
+      "rev": "ce24643a090a5040dfc7bd6966f7505bdd2fa7e1",
+      "languages": [
+        "rust",
+        "typescript"
+      ],
+      "role": "ai-corpus",
+      "stack": "tauri"
+    },
+    {
+      "name": "xianyu-super-butler",
+      "remote": "https://github.com/23Star/xianyu-super-butler.git",
+      "rev": "0eadae3e8852c540694d0c1d26e7691cde7862ec",
+      "languages": [
+        "python",
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    },
+    {
+      "name": "zed",
+      "remote": "git@github.com:zed-industries/zed.git",
+      "rev": "ba63a022c9a22ca66d68ef2a8f0bb9b5b0a9984d",
+      "languages": [
+        "rust"
+      ],
+      "role": "negative-control"
+    },
+    {
+      "name": "zeptoclaw",
+      "remote": "https://github.com/qhkm/zeptoclaw.git",
+      "rev": "094e08566ca7d7f9ba1abbfbb1e5eedeb44a0b3f",
+      "languages": [
+        "rust",
+        "typescript"
+      ],
+      "role": "ai-corpus"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "d1-test-private-attribute": {
+    "reason": "Ruff SLF001 (private-member-access) is enabled globally in ruff.toml and project-init (including test files) and covers 100% of external private-attribute accesses.",
+    "replacement": "Ruff SLF001"
+  },
+  "g10-single-call-hop": {
+    "reason": "It matched a function whose body is one call statement by syntax alone, which measured the wrong property: it flagged contracts, registered callbacks, public exports and shared literals, and missed composed-call hops.",
+    "replacement": "single_call_hops"
+  },
+  "g21-vague-name-typescript": {
+    "reason": "TypeScript static rules are owned by @joedeleeuw/antidrift, which enforces this check with ESTree and lexical scope analysis.",
+    "replacement": "antidrift/no-vague-names"
+  },
+  "g5-compat-identifier-typescript": {
+    "reason": "TypeScript static rules are owned by @joedeleeuw/antidrift, which enforces this check with ESTree and lexical scope analysis.",
+    "replacement": "antidrift/no-compat-names"
+  },
+  "s5-dated-comment-typescript": {
+    "reason": "TypeScript static rules are owned by @joedeleeuw/antidrift, which enforces this check with ESTree and lexical scope analysis.",
+    "replacement": "antidrift/no-tutorial-comments"
+  },
+  "w4-nullable-tuple-rust": {
+    "reason": "Independent optional tuple members do not establish mutually exclusive states.",
+    "replacement": "Design review of state contracts"
+  },
+  "g9-boolean-map-rust": {
+    "reason": "Boolean maps can encode negative caches, partial updates, and independent two-state properties; a set is not equivalent.",
+    "replacement": "Design review of map semantics"
+  },
+  "w4-parallel-maps-rust": {
+    "reason": "Equal key types do not prove shared membership, lifecycle, or one state owner.",
+    "replacement": "Design review of map ownership"
+  },
+  "g11-pub-lock-field-rust": {
+    "reason": "Visible lock fields do not prove an invalid public contract or unsafe synchronization.",
+    "replacement": "Design review of synchronization ownership"
+  },
+  "hash-compare": {
+    "reason": "It matched every comparison involving a hash, so it could not tell a redundant re-verification from a real integrity check.",
+    "replacement": "process-review L2"
+  }
+}

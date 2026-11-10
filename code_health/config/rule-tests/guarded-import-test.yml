@@ -1,0 +1,21 @@
+id: guarded-import
+language: Python
+valid:
+  - |
+    import yaml
+  - |
+    try:
+        value = risky()
+    except ValueError:
+        raise
+invalid:
+  - |
+    try:
+        import tomllib
+    except ImportError:
+        tomllib = None
+  - |
+    try:
+        from x import y
+    except ModuleNotFoundError:
+        y = None

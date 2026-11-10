@@ -1,0 +1,58 @@
+id: worker-gpu-acl-bash
+language: Bash
+severity: warning
+message: setfacl on a worker GPU node grants every desktop app that user's access. Run GPU work as `gpu-job <command>` instead; the homer-gpu group stays on that command's process tree.
+metadata:
+  directive: G29
+  source: "ai-contexts/AGENT.md#worker-gpus-are-reserved"
+rule:
+  kind: command
+  all:
+    - any:
+        - has:
+            field: name
+            regex: "^setfacl$"
+        - all:
+            - has:
+                field: name
+                regex: "^(sudo|doas|run0)$"
+            - has:
+                kind: word
+                regex: "^setfacl$"
+    - has:
+        any:
+          - kind: word
+          - kind: string
+          - kind: raw_string
+        regex: "^[\"']?/dev/(kfd|dri/)"
+---
+id: udevadm-drm-trigger-bash
+language: Bash
+severity: warning
+message: Never re-trigger the whole drm/graphics subsystem with udevadm (it flashes the desktop iGPU); target the specific worker PCI device paths instead.
+metadata:
+  directive: G29
+  source: "ai-contexts/AGENT.md#worker-gpus-are-reserved"
+rule:
+  kind: command
+  all:
+    - any:
+        - has:
+            field: name
+            regex: "^udevadm$"
+        - all:
+            - has:
+                field: name
+                regex: "^(sudo|doas|run0)$"
+            - has:
+                kind: word
+                regex: "^udevadm$"
+    - has:
+        kind: word
+        regex: "^trigger$"
+    - has:
+        any:
+          - kind: word
+          - kind: string
+          - kind: raw_string
+        regex: "--subsystem-match=(drm|graphics)($|[\"'])"

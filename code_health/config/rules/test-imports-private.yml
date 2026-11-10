@@ -1,0 +1,34 @@
+id: test-imports-private
+language: Python
+severity: warning
+message: A test imports a private name. The interface is the test surface; test through the module's public entry points, or make the name part of the interface.
+# test files only: a helper or mock module beside the tests is not a test
+files:
+  - "**/test_*.py"
+  - "**/*_test.py"
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/site-packages/**"
+metadata:
+  directive: D1
+  source: "skills/codebase-design/SKILL.md#principles (The interface is the test surface)"
+utils:
+  # a private helper of the test suite itself is not the product's internals
+  product-import:
+    kind: import_from_statement
+    has:
+      field: module_name
+      not:
+        any:
+          - kind: relative_import
+          - regex: "(?:^|\\.)(?:tests?|testing|conftest|test_\\w+)(?:\\.|$)"
+rule:
+  kind: dotted_name
+  regex: "^_[A-Za-z0-9]"
+  any:
+    - inside: {matches: product-import, field: name}
+    - inside:
+        kind: aliased_import
+        field: name
+        inside: {matches: product-import}

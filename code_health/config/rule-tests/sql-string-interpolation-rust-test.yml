@@ -1,0 +1,29 @@
+id: sql-string-interpolation-rust
+language: Rust
+valid:
+  - |
+    let query = format!("SELECT payload FROM {SPILL_TABLE} WHERE revision = ?1");
+  - |
+    let query = format!("UPDATE instances SET {column} = ? WHERE name = ?");
+  - |
+    let query = format!("DELETE FROM {} WHERE id = $1", schema.events_table());
+  - |
+    let banner = format!("selected {count} rows from the cache");
+  - |
+    let query = format!("UPDATE messages SET sender = '{UNKNOWN_SENDER}' WHERE sender IS NULL");
+  - |
+    #[cfg(test)]
+    mod seed {
+        fn row(id: u64) -> String {
+            format!("INSERT INTO rows VALUES ({id}, 'seed')")
+        }
+    }
+invalid:
+  - |
+    let query = format!("SELECT seq FROM events WHERE session_id = '{session_id}'");
+  - |
+    let query = format!("UPDATE file_reservations SET expires_ts={future} WHERE id=500");
+  - |
+    let query = format!("DELETE FROM {table} WHERE discriminant = '{}'", start);
+  - |
+    let query = format!(r#"INSERT INTO agents (name) SELECT name FROM staging WHERE project_id = {project_id}"#);

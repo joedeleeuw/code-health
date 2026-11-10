@@ -1,0 +1,22 @@
+id: ls-capture-assignment-bash
+language: Bash
+valid:
+  - |
+    count=$(ls "$dir" | wc -l)
+  - |
+    entries=$(ls -1 "$dir" 2>/dev/null || true)
+  - |
+    archive="dist/app-$version.tar.gz"
+  - |
+    names=$(ls -t "$dir"/*.log | sort)
+invalid:
+  - |
+    archive=$(ls dist/*.tar.gz)
+  - |
+    archive=$(ls dist/*.tar.gz 2>/dev/null)
+  - |
+    latest=$(ls -t "$out"/*.json 2>/dev/null | head -1)
+  - |
+    newest=$(ls -t target/debug/deps/pi-* | grep -v '\.d$' | head -n 1 || true)
+  - |
+    session=$(ls -t "$HOME"/.prime/sessions/*.jsonl | tail -n1)

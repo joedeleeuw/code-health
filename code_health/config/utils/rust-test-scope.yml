@@ -1,0 +1,24 @@
+id: test-scope
+language: Rust
+rule:
+  any:
+    - kind: mod_item
+      follows:
+        kind: attribute_item
+        regex: "(?:cfg\\s*\\(\\s*(?:test\\s*\\)|all\\s*\\([^)]*\\btest\\b)|^#\\[\\s*(?:[a-z0-9_]+::)*test\\b)"
+        stopBy:
+          not:
+            any:
+              - kind: attribute_item
+              - kind: line_comment
+              - kind: block_comment
+    - kind: function_item
+      follows:
+        kind: attribute_item
+        regex: "(?:cfg\\s*\\(\\s*(?:test\\s*\\)|all\\s*\\([^)]*\\btest\\b)|^#\\[\\s*(?:[a-z0-9_]+::)*test\\b)"
+        stopBy:
+          not:
+            any:
+              - kind: attribute_item
+              - kind: line_comment
+              - kind: block_comment

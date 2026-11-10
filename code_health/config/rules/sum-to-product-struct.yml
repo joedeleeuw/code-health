@@ -1,0 +1,57 @@
+id: sum-to-product-struct-rust
+language: Rust
+severity: warning
+message: Struct flattens a success/failure sum type into a boolean flag plus an Option<_> error field; model the mutually exclusive outcomes as Result<T, E> or a tagged enum.
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/target/**"
+  - "**/vendor/**"
+  - "**/third_party/**"
+  - "**/tests/**"
+  - "**/benches/**"
+  - "**/tests.rs"
+  - "**/*_tests.rs"
+  - "**/*_test.rs"
+metadata:
+  directive: W4
+  source: "ai-contexts/AGENT.md#code"
+rule:
+  kind: struct_item
+  all:
+    - not:
+        inside:
+          matches: test-scope
+          stopBy: end
+    - not:
+        follows:
+          kind: attribute_item
+          regex: "Deserialize|Serialize"
+          stopBy:
+            not:
+              any:
+                - kind: attribute_item
+                - kind: line_comment
+                - kind: block_comment
+    - has:
+        field: body
+        kind: field_declaration_list
+        all:
+          - has:
+              kind: field_declaration
+              all:
+                - has:
+                    field: name
+                    regex: "^(ok|success|succeeded|valid|failed|is_ok|is_error|is_valid)$"
+                - has:
+                    field: type
+                    regex: "^bool$"
+          - has:
+              kind: field_declaration
+              all:
+                - has:
+                    field: name
+                    regex: "^(error|err|error_message|err_msg)$"
+                - has:
+                    field: type
+                    regex: "^Option<"

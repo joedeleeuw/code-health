@@ -1,0 +1,37 @@
+{
+  "exclude": [
+    "code_health/config/rule-tests/*"
+  ],
+  "allowed": {},
+  "limits": {
+    "file_lines": 1000,
+    "complexity": 25,
+    "nesting": 4,
+    "params": 5,
+    "docstring_code": 0,
+    "clone_pairs": 0
+  },
+  "pins": {
+    "file_lines": {},
+    "complexity": {},
+    "nesting": {},
+    "params": {},
+    "docstring_code": {},
+    "dated_docstrings": {},
+    "ast_grep": {},
+    "clippy": {},
+    "nix_lints": {},
+    "dead_paths": {},
+    "shadow_key_prose": {},
+    "single_call_hops": {},
+    "unresolved_imports": {},
+    "incomplete_hop_analysis": {},
+    "incomplete_shape_analysis": {},
+    "incomplete_import_analysis": {},
+    "single_adapter_seams": {},
+    "test_only_seams": {},
+    "clone_pairs": 0,
+    "cycles": 0,
+    "unused": []
+  }
+}

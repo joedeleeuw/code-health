@@ -1,0 +1,124 @@
+id: dict-argument-write
+language: Python
+severity: warning
+message: A function writes its result into a dict it was handed and returns nothing. Return the result instead of producing the side effect, so callers and tests read it from the interface.
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/site-packages/**"
+  - "**/vendor/**"
+  - "**/Vendor/**"
+  - "**/third_party/**"
+  # tests configure the doubles they are handed; the rule judges production interfaces
+  - "**/tests/**"
+  - "**/test/**"
+  - "**/test_*.py"
+  - "**/*_test.py"
+  - "**/conftest.py"
+metadata:
+  directive: D2
+  source: "skills/codebase-design/SKILL.md#designing-for-testability (2. Return results, don't produce side effects)"
+utils:
+  key-write:
+    any:
+      - pattern: $P[$K] = $V
+      - pattern: $P[$K] += $V
+      - pattern: $P[$K] -= $V
+  # result["status"] = ..., metrics[f"{base}/mean"] = ...: a named field of a record
+  named-key:
+    has:
+      field: left
+      kind: subscript
+      has:
+        field: subscript
+        any:
+          - kind: string
+          - kind: concatenated_string
+  # a function of its own choosing: not a method (its class's protocol may fix the
+  # signature), not a context manager (whose purpose is a temporary change), and
+  # returning nothing, neither by return nor by yield
+  own-function:
+    kind: function_definition
+    all:
+      - not:
+          inside:
+            kind: class_definition
+            stopBy: end
+      - not:
+          inside:
+            kind: decorated_definition
+            has:
+              kind: decorator
+              regex: contextmanager
+      - not:
+          has:
+            stopBy: end
+            any:
+              - kind: return_statement
+                regex: "^return\\s+\\S"
+              - kind: yield
+  parameter-p:
+    has:
+      field: parameters
+      has:
+        any:
+          - {kind: identifier, pattern: $P}
+          - {kind: typed_parameter, has: {kind: identifier, pattern: $P}}
+          - {kind: default_parameter, has: {field: name, pattern: $P}}
+          - {kind: typed_default_parameter, has: {field: name, pattern: $P}}
+  dict-parameter-p:
+    has:
+      field: parameters
+      has:
+        any:
+          - kind: typed_parameter
+            all:
+              - has: {kind: identifier, pattern: $P}
+              - has: {field: type, regex: "^(?:dict|Dict|MutableMapping|defaultdict|DefaultDict|Counter|OrderedDict)\\b"}
+          - kind: typed_default_parameter
+            all:
+              - has: {field: name, pattern: $P}
+              - has: {field: type, regex: "^(?:dict|Dict|MutableMapping|defaultdict|DefaultDict|Counter|OrderedDict)\\b"}
+  # the write lands on a local copy: the function rebinds the name (data = dict(data))
+  rebinds-p:
+    has:
+      stopBy: end
+      kind: assignment
+      has: {field: left, pattern: $P}
+  # a process or thread target: multiprocessing fixes the signature and the shared
+  # Manager dict or Value is how the child hands its result back
+  callback:
+    has: {field: name, pattern: $F}
+    inside:
+      kind: module
+      stopBy: end
+      has:
+        stopBy: end
+        kind: keyword_argument
+        regex: "^target\\s*="
+        has: {field: value, pattern: $F}
+  own-write:
+    all:
+      - matches: own-function
+      - not: {matches: rebinds-p}
+      - not: {matches: callback}
+rule:
+  all:
+    - matches: key-write
+    - any:
+        - all:
+            - matches: named-key
+            - inside:
+                stopBy: end
+                all:
+                  - matches: parameter-p
+                  - matches: own-write
+        - inside:
+            stopBy: end
+            all:
+              - matches: dict-parameter-p
+              - matches: own-write
+constraints:
+  P:
+    not:
+      regex: "^(?:self|cls)(?:_\\w+)?$|^_?(?:\\w+_)?(?:cache|ctx|memo)s?$"

@@ -1,0 +1,18 @@
+id: guarded-import
+language: Python
+severity: warning
+message: Guarded import. Support properly by consuming the published artifact; do not stub or guard a missing dependency.
+metadata:
+  directive: G14
+  source: "ai-contexts/AGENT.md#code"
+rule:
+  kind: try_statement
+  all:
+    - has:
+        any:
+          - kind: import_statement
+          - kind: import_from_statement
+        stopBy: end
+    - has:
+        kind: except_clause
+        regex: "(ImportError|ModuleNotFoundError)"

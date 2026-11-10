@@ -1,0 +1,31 @@
+id: sum-to-product-struct-rust
+language: Rust
+valid:
+  - |
+    pub enum Outcome {
+        Written { path: String },
+        Failed { reason: String },
+    }
+  - |
+    pub struct Progress {
+        pub done: bool,
+        pub remaining: usize,
+    }
+  - |
+    #[cfg(test)]
+    mod fixtures {
+        struct Step { ok: bool, error: Option<String> }
+    }
+invalid:
+  - |
+    pub struct PutFileResult {
+        pub path: String,
+        pub ok: bool,
+        pub error: Option<String>,
+    }
+  - |
+    struct CommitOutcome {
+        success: bool,
+        commit_sha: Option<String>,
+        error_message: Option<String>,
+    }

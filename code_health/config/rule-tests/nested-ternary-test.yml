@@ -1,0 +1,8 @@
+id: nested-ternary
+language: Python
+valid:
+  - |
+    label = "on" if enabled else "off"
+invalid:
+  - |
+    label = "high" if score > 10 else ("mid" if score > 5 else "low")
