@@ -50,9 +50,9 @@ NONE = {
     "incomplete_import_analysis": {},
     "single_adapter_seams": {},
     "test_only_seams": {},
-    "clone_pairs": 0,
-    "cycles": 0,
-    "unused": [],
+    "clone_pairs": {},
+    "cycles": {},
+    "unused": {},
 }
 
 NO_FINDINGS = {
@@ -65,8 +65,9 @@ NO_FINDINGS = {
     "incomplete_import_analysis": {},
     "single_adapter_seams": {},
     "test_only_seams": {},
-    "cycles": {"": []},
-    "clone_pairs": {"": []},
+    "cycles": {},
+    "clone_pairs": {},
+    "unused": {},
 }
 
 
@@ -396,8 +397,9 @@ def measure_python(
         "incomplete_import_analysis": graph.incomplete,
         "single_adapter_seams": python_single_adapters(trees),
         "test_only_seams": test_only_seams(trees, modules),
-        "cycles": {"": graph.cycles},
-        "clone_pairs": {"": restated.findings},
+        "cycles": graph.cycles,
+        "clone_pairs": restated.findings,
+        "unused": unused,
     }
     measured = {
         "file_lines": {p: len((root / p).read_bytes().splitlines()) for p in files},
@@ -413,8 +415,8 @@ def measure_python(
         "incomplete_import_analysis": counted(graph.incomplete),
         "single_adapter_seams": counted(findings["single_adapter_seams"]),
         "test_only_seams": counted(findings["test_only_seams"]),
-        "clone_pairs": len(restated.findings),
-        "cycles": len(graph.cycles),
-        "unused": unused,
+        "clone_pairs": counted(restated.findings),
+        "cycles": counted(graph.cycles),
+        "unused": counted(unused),
     }
     return measured, findings

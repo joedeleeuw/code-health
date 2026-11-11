@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "code-health"
 version = "0.1.0"
-description = "Whole-workspace static analysis and ratchet for Python, Rust, and Nix"
+description = "Whole-workspace static analysis for Python and Nix, with a Rust preset"
 requires-python = ">=3.12"
 dependencies = [
     "Jinja2==3.1.6",
@@ -16,3 +16,6 @@ dependencies = [
 
 [project.scripts]
 code-health = "code_health.cli:main"
+
+[tool.code-health]
+exclude = ["code_health/config/rule-tests/*"]

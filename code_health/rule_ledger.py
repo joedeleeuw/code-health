@@ -61,16 +61,6 @@ def ledger_message(rule_id: str, records: dict[str, dict[str, str]]) -> str:
     )
 
 
-def refuse_ledgered_pins(source: str, pinned: dict[str, int]) -> None:
-    """Check the rule catalog against the ledger, then stop when a pin names a
-    ledgered rule ID, giving its reason."""
-    records = ledger_records()
-    for key in sorted(pinned):
-        message = ledger_message(key.split("::", 1)[0], records)
-        if message:
-            stop(f"{source}.pins.ast_grep.{key}: {message}")
-
-
 def refuse_unknown_rules(source: str, allowed: list[str]) -> None:
     """Stop when an allowed key is a ledgered rule ID, giving its reason, or is
     not a rule in the catalog."""
@@ -81,4 +71,4 @@ def refuse_unknown_rules(source: str, allowed: list[str]) -> None:
         if message:
             stop(f"{source}.{key}: {message}")
         if key not in catalog:
-            stop(f"{source}.{key}: not a rule ID in the catalog")
+            stop(f"{source}.{key}: not a check or a rule ID in the catalog")

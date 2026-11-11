@@ -1,4 +1,4 @@
-"""Measurements behind the code-health ratchet."""
+"""Measurements behind the code-health checks."""
 
 import subprocess
 import sys

@@ -631,10 +631,10 @@ def strong_components(graph: dict[str, set[str]]) -> list[list[str]]:
 
 @dataclass
 class ImportGraph:
-    """The import cycles, and the incomplete analysis by the file it stands
-    in."""
+    """The import cycles by their first module in path order, and the
+    incomplete analysis by the file it stands in."""
 
-    cycles: list[str]
+    cycles: dict[str, list[str]]
     incomplete: dict[str, list[str]]
 
 
@@ -673,11 +673,13 @@ def import_cycles(modules: Modules) -> ImportGraph:
             incomplete[path] = guards
     for path, notes in modules.incomplete(loaded).items():
         incomplete.setdefault(path, []).extend(notes)
-    cycles = [
-        " → ".join(
-            member.removesuffix(".py").removesuffix("/__init__").replace("/", ".")
-            for member in component
-        )
+    cycles = {
+        min(component): [
+            " → ".join(
+                member.removesuffix(".py").removesuffix("/__init__").replace("/", ".")
+                for member in component
+            )
+        ]
         for component in sorted(strong_components(graph))
-    ]
+    }
     return ImportGraph(cycles, dict(sorted(incomplete.items())))

@@ -1,4 +1,4 @@
-"""Native Nix lint findings on the ratchet's measured files."""
+"""Native Nix lint findings on the measured files."""
 
 import subprocess
 import sys

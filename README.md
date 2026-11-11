@@ -1,8 +1,8 @@
 # code-health
 
-Static analysis and ratchet for Python and Nix repositories, plus a Rust preset for Clippy and ast-grep.
+Static analysis for Python and Nix repositories, plus a Rust preset for Clippy and ast-grep.
 
-`code-health` enforces code quality limits (file length, cyclomatic complexity, nesting depth, parameter counts), deep-module invariants, structural duplication checks, AST import cycles, and curated `ast-grep` rules. Excess items must be pinned in `.code-health.json`, where pins act as ceilings that ratchet down and can never be raised.
+`code-health` enforces code quality limits (file length, cyclomatic complexity, nesting depth, parameter counts), deep-module invariants, structural duplication checks, AST import cycles, and curated `ast-grep` rules. Every finding is an error; a repository accepts one by allowing that check in that file in its `pyproject.toml`.
 
 ## Prerequisites
 
@@ -40,85 +40,63 @@ uvx --from git+https://github.com/joedeleeuw/code-health code-health
 
 ## Quick Start
 
-### 1. Initialize Baseline
-
-In your repository root, initialize `.code-health.json` with your project's baseline:
-
-```bash
-code-health --baseline
-```
-
-This generates `.code-health.json` with default limits and records existing violations as ratchet pins. Stage and commit this file:
-
-```bash
-git add .code-health.json
-git commit -m "chore: initialize code-health baseline"
-```
-
-### 2. Run the Ratchet
-
-Run `code-health` directly against staged/tracked files:
+Run it in a repository root. It needs no setup and writes nothing:
 
 ```bash
 code-health
 ```
 
-- **Exit 0**: All files satisfy configured limits and ratchet pins.
-- **Exit 1**: Limit exceeded, or a pin was lowered in-place (stage the lowered `.code-health.json` to lock in improvements).
-- **Exit 2**: Environment/configuration error (unreadable file, missing dependency, etc.).
+- **Exit 0**: nothing found outside the allowed files.
+- **Exit 1**: one line per finding on stderr.
+- **Exit 2**: the check could not run (unreadable file, failed tool, missing dependency).
 
-## Pre-commit Integration
+Every finding is an error. Fix it, or allow that check in that file (see Configuration).
 
-Add `code-health` to your `.pre-commit-config.yaml`:
+## Hook Integration
 
-```yaml
-repos:
-  - repo: local
-    hooks:
-      - id: code-health
-        name: code-health ratchet
-        entry: uv run code-health
-        language: system
-        pass_filenames: false
-        always_run: true
-```
-
-Or when installed as a standalone global tool:
+Call it from the hook runner the repository already uses. With pre-commit:
 
 ```yaml
 repos:
   - repo: local
     hooks:
       - id: code-health
-        name: code-health ratchet
+        name: code-health
         entry: code-health
         language: system
         pass_filenames: false
         always_run: true
 ```
 
-## Configuration (`.code-health.json`)
+With lefthook:
 
-```json
-{
-  "exclude": [
-    "vendor/*",
-    "docs/*"
-  ],
-  "allowed": {},
-  "limits": {
-    "file_lines": 1000,
-    "complexity": 25,
-    "nesting": 4,
-    "params": 5,
-    "docstring_code": 0,
-    "clone_pairs": 0
-  },
-  "pins": {}
-}
+```yaml
+pre-commit:
+  jobs:
+    - name: code-health
+      run: code-health
 ```
 
-- **`exclude`**: Globs to ignore from analysis.
-- **`allowed`**: Maps `ast-grep` rule IDs to allowed file globs.
-- **`limits`**: Invariant ceilings.
-- **`pins`**: Recorded baseline pins that decrease automatically as code is refactored.
+## Configuration (`pyproject.toml`)
+
+Settings live in the `[tool.code-health]` table. Every key is optional; a repository without the table gets the defaults shown for `limits`.
+
+```toml
+[tool.code-health]
+exclude = ["vendor/*", "docs/*"]
+
+[tool.code-health.limits]
+file_lines = 1000
+complexity = 25
+nesting = 4
+params = 5
+docstring_code = 0
+
+[tool.code-health.allowed]
+single_call_hops = ["scripts/migrate.py"]
+vague-name-python = ["tests/*"]
+```
+
+- **`exclude`**: Globs left out of the analysis.
+- **`limits`**: The size limits.
+- **`allowed`**: Maps a check name (the word before the colon in a finding, such as `single_call_hops`, `unused`, `nesting`) or a rule ID (ast-grep rule IDs, `deadnix`, `statix-<code>`) to file globs. A finding of that check in a matching file is not reported. A glob that matches no measured file stops the check.

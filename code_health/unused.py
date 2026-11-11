@@ -845,7 +845,7 @@ class UnusedCode:
         completes = any(accessor(decorator, candidate.name) for decorator in decorators)
         return "property" if completes or PROPERTIES & decorated else "method"
 
-    def findings(self) -> list[str]:
+    def findings(self) -> dict[str, list[str]]:
         found = set()
         for candidate in self.candidates:
             site = self.declaration(candidate) if self.unused(candidate) else None
@@ -854,5 +854,8 @@ class UnusedCode:
             declaring = self.declaring.get(site, candidate)
             holders = reversed(self.around(self.owners.get(site)))
             named = ".".join([*(holder.name for holder in holders), declaring.name])
-            found.add(f"unused {self.kind(declaring)} '{named}' in {site.path}")
-        return sorted(found)
+            found.add((site.path, f"unused {self.kind(declaring)} '{named}'"))
+        by_file: dict[str, list[str]] = {}
+        for path, finding in sorted(found):
+            by_file.setdefault(path, []).append(finding)
+        return by_file

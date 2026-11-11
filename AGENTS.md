@@ -2,7 +2,7 @@
 
 ## Commands
 
-- `uv run code-health`: Run the whole-workspace code-health ratchet against this checkout.
+- `uv run code-health`: Run the whole-workspace code-health checks against this checkout.
 - `uvx ruff@0.15.12 check --force-exclude`: Lint Python sources against `ruff.toml`.
 - `ast-grep test --config code_health/config/sgconfig.yml --skip-snapshot-tests`: Run the ast-grep rule test suite.
 
