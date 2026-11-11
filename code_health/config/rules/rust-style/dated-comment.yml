@@ -1,0 +1,20 @@
+id: dated-comment-rust
+language: Rust
+severity: warning
+message: Dated provenance prose in a comment. History belongs in field notes and commit bodies, not in code.
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/target/**"
+  - "**/vendor/**"
+  - "**/third_party/**"
+metadata:
+  directive: S5
+  source: "cloud-rl-train AGENTS.md#process"
+rule:
+  any:
+    - kind: line_comment
+    - kind: block_comment
+  all:
+    - regex: '(^|[^\w-])20\d{2}-?[01]\d-?[0-3]\d([^\w-]|$)'
+    - regex: '(?i)\b(as of|added|changed|commented out|decided|deprecated|disabled|fixed|fixme|hardcoded|introduced|investigated|removed|reverted|superseded|verified|workaround)\b'

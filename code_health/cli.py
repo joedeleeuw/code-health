@@ -11,17 +11,9 @@ rules, dead repository paths in Python strings, JSON and YAML values and markdow
 spans, JSON objects whose dotted keys shadow the file's own leaves, seams with
 one adapter, and injected dependencies that only tests override. Measured Nix
 files get native Statix and deadnix findings, ratcheted by rule and file;
-both commands must be available on PATH when those files exist. A
-repository with a measured Cargo.toml also gets cargo clippy on each top-level
-workspace: the disallowed-method and disallowed-type lists from
-code_health/config/clippy.toml, let_underscore_must_use, let_underscore_lock,
-map_err_ignore, manual_unwrap_or_default, await_holding_lock,
-await_holding_refcell_ref, allow_attributes_without_reason, the config's
-complexity, nesting and parameter limits as cognitive_complexity,
-excessive_nesting and too_many_arguments, and rustc's dead_code,
-unused_imports, unused_variables and unused_must_use. Findings are counted per
-lint and file and ratcheted like the ast-grep rules. cargo must be on PATH with
-the clippy component, the crates must compile, and Cargo.lock must be current.
+both commands must be available on PATH when those files exist. Rust lints
+are not run here: presets/rust holds the Clippy settings and lint levels a Rust
+workspace adopts in its own Cargo.toml and clippy.toml.
 
 The repository's code-health config holds the limits and the pins. A value over
 its limit needs a pin, and a pin is a ceiling that only goes down. A pin above its
@@ -61,7 +53,6 @@ from typing import NamedTuple
 
 import yaml
 from code_health import ERROR_EXIT, counted, run, stop
-from code_health.clippy import cargo_clippy
 from code_health.config import (
     CONFIG,
     CodeHealthConfig,
@@ -176,10 +167,9 @@ def measure(
     root: Path, tracked: TrackedSources, config: CodeHealthConfig
 ) -> tuple[dict, dict]:
     rules = ast_grep(root, tracked.languages, config.allowed)
-    lints = cargo_clippy(root, tracked.files, config.limits)
     values, findings = measure_python(root, tracked.trees, tracked.listed)
-    values |= {"ast_grep": counted(rules), "clippy": counted(lints)}
-    findings |= {"ast_grep": rules, "clippy": lints}
+    values |= {"ast_grep": counted(rules)}
+    findings |= {"ast_grep": rules}
     counts, found = measure_references(
         root, tracked.files, tracked.listed, tracked.trees
     )

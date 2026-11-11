@@ -1,3 +1,6 @@
+cognitive-complexity-threshold = 25
+excessive-nesting-threshold = 5
+too-many-arguments-threshold = 5
 disallowed-methods = [
   { path = "core::result::Result::unwrap_or", reason = "fail loudly: a silent default hides the failure; propagate the error or match it" },
   { path = "core::result::Result::unwrap_or_default", reason = "fail loudly: a silent default hides the failure; propagate the error or match it" },

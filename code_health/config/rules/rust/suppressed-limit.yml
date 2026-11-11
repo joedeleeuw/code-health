@@ -1,0 +1,20 @@
+id: suppressed-limit-rust
+language: Rust
+severity: warning
+message: A size or safety lint from the preset is silenced with allow or expect and no reason; fix the code so the lint passes, change the limit for the whole workspace in clippy.toml, or state the reason in the attribute.
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/target/**"
+  - "**/vendor/**"
+  - "**/third_party/**"
+rule:
+  any:
+    - kind: attribute_item
+    - kind: inner_attribute_item
+  has:
+    kind: attribute
+    all:
+      - has: {kind: identifier, regex: "^(allow|expect)$"}
+      - not: {regex: "\\breason\\s*="}
+      - regex: "clippy::(disallowed_methods|disallowed_types|let_underscore_must_use|let_underscore_lock|map_err_ignore|manual_unwrap_or_default|await_holding_lock|await_holding_refcell_ref|cognitive_complexity|excessive_nesting|too_many_arguments|too_many_lines|type_complexity)\\b"

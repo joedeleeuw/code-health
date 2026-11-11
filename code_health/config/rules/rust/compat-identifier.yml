@@ -1,0 +1,56 @@
+id: compat-identifier-rust
+language: Rust
+severity: warning
+message: Compatibility/retirement name declared, or one receiver probed under a fallback key. No backwards compatibility and no codified removals; delete the old path instead.
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/target/**"
+  - "**/vendor/**"
+  - "**/third_party/**"
+  - "**/fixtures/**"
+  - "**/__fixtures__/**"
+  - "**/tests/**"
+  - "**/tests.rs"
+  - "**/*_tests.rs"
+  - "**/*_test.rs"
+metadata:
+  directive: G5
+  source: "ai-contexts/AGENT.md#code"
+rule:
+  all:
+    - not:
+        inside: {matches: test-scope, stopBy: end}
+    - any:
+        - all:
+            - pattern: $OBJ.get($KEY).or_else(|| $OBJ.get($KEY2))
+            - not:
+                pattern: $OBJ.get($KEY).or_else(|| $OBJ.get($KEY))
+        - all:
+            - pattern: $OBJ.get($KEY).or($OBJ.get($KEY2))
+            - not:
+                pattern: $OBJ.get($KEY).or($OBJ.get($KEY))
+        - all:
+            - any:
+                - regex: "(?i)(legacy|deprecat|retire|no_?longer)"
+                - all:
+                    - regex: "(?i)compat"
+                    - not: {regex: "(?i)compatib"}
+            - any:
+                - kind: identifier
+                  any:
+                    - inside: {kind: function_item, field: name}
+                    - inside: {kind: let_declaration, field: pattern}
+                    - inside: {kind: parameter, field: pattern}
+                    - inside: {kind: const_item, field: name}
+                    - inside: {kind: static_item, field: name}
+                    - inside: {kind: mod_item, field: name}
+                - kind: type_identifier
+                  any:
+                    - inside: {kind: struct_item, field: name}
+                    - inside: {kind: enum_item, field: name}
+                    - inside: {kind: enum_variant, field: name}
+                    - inside: {kind: trait_item, field: name}
+                    - inside: {kind: type_item, field: name}
+                - kind: field_identifier
+                  inside: {kind: field_declaration, field: name}

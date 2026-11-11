@@ -8,4 +8,5 @@
 
 ## Workspace Boundaries
 
-- `code_health/` owns the CLI entry point (`code_health.cli:main`), the Python, Rust, Nix, and reference analyzers, the retired-rule ledger (`code_health.rule_ledger`), and the packaged configuration under `code_health/config/` (`clippy.toml`, `sgconfig.yml`, `retired-rule-ids.json`, `rules/`, `rule-tests/`, `utils/`, `corpus-clones.json`).
+- `code_health/` owns the CLI entry point (`code_health.cli:main`), the Python, Nix, and reference analyzers, the retired-rule ledger (`code_health.rule_ledger`), and the packaged configuration under `code_health/config/` (`sgconfig.yml`, `retired-rule-ids.json`, `rules/`, `rule-tests/`, `utils/`, `corpus-clones.json`).
+- `presets/rust/` owns the Rust preset a workspace adopts itself: `clippy.toml`, `lints.toml`, and the ast-grep config over `code_health/config/rules/rust/`. `code-health` runs no Rust build.

@@ -1,0 +1,32 @@
+id: elif-chain-rust
+language: Rust
+severity: warning
+message: If/else-if chain with 3+ else-ifs. Declare the case space as a typed table or match on an enum instead.
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/target/**"
+  - "**/vendor/**"
+  - "**/third_party/**"
+metadata:
+  directive: G9
+  source: "ai-contexts/AGENT.md#code"
+rule:
+  kind: if_expression
+  not:
+    inside: {kind: else_clause}
+  has:
+    field: alternative
+    kind: else_clause
+    has:
+      kind: if_expression
+      has:
+        field: alternative
+        kind: else_clause
+        has:
+          kind: if_expression
+          has:
+            field: alternative
+            kind: else_clause
+            has:
+              kind: if_expression

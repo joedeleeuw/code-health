@@ -1,6 +1,6 @@
 # code-health
 
-Static analysis and ratchet engine for Python, Rust, and Nix repositories.
+Static analysis and ratchet for Python and Nix repositories, plus a Rust preset for Clippy and ast-grep.
 
 `code-health` enforces code quality limits (file length, cyclomatic complexity, nesting depth, parameter counts), deep-module invariants, structural duplication checks, AST import cycles, and curated `ast-grep` rules. Excess items must be pinned in `.code-health.json`, where pins act as ceilings that ratchet down and can never be raised.
 
@@ -9,7 +9,18 @@ Static analysis and ratchet engine for Python, Rust, and Nix repositories.
 - Python `>=3.12`
 - `uv` (including `uvx`, used to run `basedpyright` for Python unused-code resolution)
 - `ast-grep` on `PATH`
-- `cargo` with `clippy` on `PATH` when analyzing Rust workspaces
+
+## Rust preset
+
+Rust is checked by the tools a Rust workspace already runs. `code-health` runs no Rust build and no Clippy; `presets/rust` holds what to adopt:
+
+1. Copy `presets/rust/clippy.toml` to the workspace root (or merge it into yours). It sets the complexity, nesting and argument thresholds and the banned methods. Clippy counts `self` as an argument and the function body as one nesting level.
+2. Paste `presets/rust/lints.toml` into the workspace `Cargo.toml` and add `[lints]\nworkspace = true` to each member. A single crate uses `[lints.clippy]` as the table name.
+3. Run the pattern rules with `ast-grep scan --config <checkout>/presets/rust/sgconfig.yml`.
+
+The default rules are the ones that separate agent-written from mature Rust on a 46-repository corpus (3.5 to 16 times more frequent). Four house-style rules that do not separate them (vague names, `else if` chains, dated comments, host paths) are opt-in through `presets/rust/sgconfig-style.yml`.
+
+`cargo clippy` then fails on the preset's lints like any other. The pattern rule `suppressed-limit-rust` reports an `allow` or `expect` of one of those lints that states no reason.
 
 ## Installation
 

@@ -19,7 +19,6 @@
     "docstring_code": {},
     "dated_docstrings": {},
     "ast_grep": {},
-    "clippy": {},
     "nix_lints": {},
     "dead_paths": {},
     "shadow_key_prose": {},

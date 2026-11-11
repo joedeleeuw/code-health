@@ -2,7 +2,7 @@
 only goes down.
 
 Size limits, docstring code and restated shapes (clone_pairs, one per shape)
-take their limit from the config. Rule matches, clippy lints, dead paths, dated
+take their limit from the config. Rule matches, dead paths, dated
 docstrings, shadowing objects, single-call hops,
 incomplete hop, shape and import analysis, import cycles and the seam categories
 have limit 0.
@@ -20,7 +20,6 @@ INCOMPLETE = (
 ZERO = (
     "dated_docstrings",
     "ast_grep",
-    "clippy",
     "nix_lints",
     "dead_paths",
     "shadow_key_prose",

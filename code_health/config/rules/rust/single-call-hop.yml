@@ -72,10 +72,17 @@ rule:
                   - not: {has: {nthChild: 1, regex: "."}}
                   - not: {has: {kind: self_parameter}}
             - has:
-                kind: arguments
-                stopBy: end
-                all:
-                  - not: {has: {nthChild: 1, regex: "."}}
+                field: body
+                has:
+                  kind: call_expression
+                  stopBy: end
+                  all:
+                    - not: {has: {field: function, regex: "^self\\."}}
+                    - has:
+                        field: arguments
+                        kind: arguments
+                        all:
+                          - not: {has: {nthChild: 1, regex: "."}}
         - all:
             - has:
                 field: parameters
@@ -85,11 +92,18 @@ rule:
                   - not: {has: {kind: self_parameter}}
                   - has: {nthChild: 1, kind: parameter, has: {field: pattern, pattern: $P0}}
             - has:
-                kind: arguments
-                stopBy: end
-                all:
-                  - not: {has: {nthChild: 2, regex: "."}}
-                  - has: {nthChild: 1, pattern: $P0}
+                field: body
+                has:
+                  kind: call_expression
+                  stopBy: end
+                  all:
+                    - not: {has: {field: function, regex: "^self\\."}}
+                    - has:
+                        field: arguments
+                        kind: arguments
+                        all:
+                          - not: {has: {nthChild: 2, regex: "."}}
+                          - has: {nthChild: 1, pattern: $P0}
         - all:
             - has:
                 field: parameters
@@ -100,12 +114,19 @@ rule:
                   - has: {nthChild: 1, kind: parameter, has: {field: pattern, pattern: $P0}}
                   - has: {nthChild: 2, kind: parameter, has: {field: pattern, pattern: $P1}}
             - has:
-                kind: arguments
-                stopBy: end
-                all:
-                  - not: {has: {nthChild: 3, regex: "."}}
-                  - has: {nthChild: 1, pattern: $P0}
-                  - has: {nthChild: 2, pattern: $P1}
+                field: body
+                has:
+                  kind: call_expression
+                  stopBy: end
+                  all:
+                    - not: {has: {field: function, regex: "^self\\."}}
+                    - has:
+                        field: arguments
+                        kind: arguments
+                        all:
+                          - not: {has: {nthChild: 3, regex: "."}}
+                          - has: {nthChild: 1, pattern: $P0}
+                          - has: {nthChild: 2, pattern: $P1}
         - all:
             - has:
                 field: parameters
@@ -117,13 +138,20 @@ rule:
                   - has: {nthChild: 2, kind: parameter, has: {field: pattern, pattern: $P1}}
                   - has: {nthChild: 3, kind: parameter, has: {field: pattern, pattern: $P2}}
             - has:
-                kind: arguments
-                stopBy: end
-                all:
-                  - not: {has: {nthChild: 4, regex: "."}}
-                  - has: {nthChild: 1, pattern: $P0}
-                  - has: {nthChild: 2, pattern: $P1}
-                  - has: {nthChild: 3, pattern: $P2}
+                field: body
+                has:
+                  kind: call_expression
+                  stopBy: end
+                  all:
+                    - not: {has: {field: function, regex: "^self\\."}}
+                    - has:
+                        field: arguments
+                        kind: arguments
+                        all:
+                          - not: {has: {nthChild: 4, regex: "."}}
+                          - has: {nthChild: 1, pattern: $P0}
+                          - has: {nthChild: 2, pattern: $P1}
+                          - has: {nthChild: 3, pattern: $P2}
         - all:
             - has:
                 field: parameters
@@ -136,14 +164,21 @@ rule:
                   - has: {nthChild: 3, kind: parameter, has: {field: pattern, pattern: $P2}}
                   - has: {nthChild: 4, kind: parameter, has: {field: pattern, pattern: $P3}}
             - has:
-                kind: arguments
-                stopBy: end
-                all:
-                  - not: {has: {nthChild: 5, regex: "."}}
-                  - has: {nthChild: 1, pattern: $P0}
-                  - has: {nthChild: 2, pattern: $P1}
-                  - has: {nthChild: 3, pattern: $P2}
-                  - has: {nthChild: 4, pattern: $P3}
+                field: body
+                has:
+                  kind: call_expression
+                  stopBy: end
+                  all:
+                    - not: {has: {field: function, regex: "^self\\."}}
+                    - has:
+                        field: arguments
+                        kind: arguments
+                        all:
+                          - not: {has: {nthChild: 5, regex: "."}}
+                          - has: {nthChild: 1, pattern: $P0}
+                          - has: {nthChild: 2, pattern: $P1}
+                          - has: {nthChild: 3, pattern: $P2}
+                          - has: {nthChild: 4, pattern: $P3}
         - all:
             - has:
                 field: parameters
@@ -157,15 +192,22 @@ rule:
                   - has: {nthChild: 4, kind: parameter, has: {field: pattern, pattern: $P3}}
                   - has: {nthChild: 5, kind: parameter, has: {field: pattern, pattern: $P4}}
             - has:
-                kind: arguments
-                stopBy: end
-                all:
-                  - not: {has: {nthChild: 6, regex: "."}}
-                  - has: {nthChild: 1, pattern: $P0}
-                  - has: {nthChild: 2, pattern: $P1}
-                  - has: {nthChild: 3, pattern: $P2}
-                  - has: {nthChild: 4, pattern: $P3}
-                  - has: {nthChild: 5, pattern: $P4}
+                field: body
+                has:
+                  kind: call_expression
+                  stopBy: end
+                  all:
+                    - not: {has: {field: function, regex: "^self\\."}}
+                    - has:
+                        field: arguments
+                        kind: arguments
+                        all:
+                          - not: {has: {nthChild: 6, regex: "."}}
+                          - has: {nthChild: 1, pattern: $P0}
+                          - has: {nthChild: 2, pattern: $P1}
+                          - has: {nthChild: 3, pattern: $P2}
+                          - has: {nthChild: 4, pattern: $P3}
+                          - has: {nthChild: 5, pattern: $P4}
         - all:
             - has:
                 field: parameters
@@ -174,10 +216,17 @@ rule:
                   - not: {has: {nthChild: 2, regex: "."}}
                   - has: {kind: self_parameter}
             - has:
-                kind: arguments
-                stopBy: end
-                all:
-                  - not: {has: {nthChild: 1, regex: "."}}
+                field: body
+                has:
+                  kind: call_expression
+                  stopBy: end
+                  all:
+                    - has: {field: function, regex: "^self\\."}
+                    - has:
+                        field: arguments
+                        kind: arguments
+                        all:
+                          - not: {has: {nthChild: 1, regex: "."}}
         - all:
             - has:
                 field: parameters
@@ -187,11 +236,18 @@ rule:
                   - has: {kind: self_parameter}
                   - has: {nthChild: 2, kind: parameter, has: {field: pattern, pattern: $P0}}
             - has:
-                kind: arguments
-                stopBy: end
-                all:
-                  - not: {has: {nthChild: 2, regex: "."}}
-                  - has: {nthChild: 1, pattern: $P0}
+                field: body
+                has:
+                  kind: call_expression
+                  stopBy: end
+                  all:
+                    - has: {field: function, regex: "^self\\."}
+                    - has:
+                        field: arguments
+                        kind: arguments
+                        all:
+                          - not: {has: {nthChild: 2, regex: "."}}
+                          - has: {nthChild: 1, pattern: $P0}
         - all:
             - has:
                 field: parameters
@@ -202,12 +258,19 @@ rule:
                   - has: {nthChild: 2, kind: parameter, has: {field: pattern, pattern: $P0}}
                   - has: {nthChild: 3, kind: parameter, has: {field: pattern, pattern: $P1}}
             - has:
-                kind: arguments
-                stopBy: end
-                all:
-                  - not: {has: {nthChild: 3, regex: "."}}
-                  - has: {nthChild: 1, pattern: $P0}
-                  - has: {nthChild: 2, pattern: $P1}
+                field: body
+                has:
+                  kind: call_expression
+                  stopBy: end
+                  all:
+                    - has: {field: function, regex: "^self\\."}
+                    - has:
+                        field: arguments
+                        kind: arguments
+                        all:
+                          - not: {has: {nthChild: 3, regex: "."}}
+                          - has: {nthChild: 1, pattern: $P0}
+                          - has: {nthChild: 2, pattern: $P1}
         - all:
             - has:
                 field: parameters
@@ -219,13 +282,20 @@ rule:
                   - has: {nthChild: 3, kind: parameter, has: {field: pattern, pattern: $P1}}
                   - has: {nthChild: 4, kind: parameter, has: {field: pattern, pattern: $P2}}
             - has:
-                kind: arguments
-                stopBy: end
-                all:
-                  - not: {has: {nthChild: 4, regex: "."}}
-                  - has: {nthChild: 1, pattern: $P0}
-                  - has: {nthChild: 2, pattern: $P1}
-                  - has: {nthChild: 3, pattern: $P2}
+                field: body
+                has:
+                  kind: call_expression
+                  stopBy: end
+                  all:
+                    - has: {field: function, regex: "^self\\."}
+                    - has:
+                        field: arguments
+                        kind: arguments
+                        all:
+                          - not: {has: {nthChild: 4, regex: "."}}
+                          - has: {nthChild: 1, pattern: $P0}
+                          - has: {nthChild: 2, pattern: $P1}
+                          - has: {nthChild: 3, pattern: $P2}
         - all:
             - has:
                 field: parameters
@@ -238,14 +308,21 @@ rule:
                   - has: {nthChild: 4, kind: parameter, has: {field: pattern, pattern: $P2}}
                   - has: {nthChild: 5, kind: parameter, has: {field: pattern, pattern: $P3}}
             - has:
-                kind: arguments
-                stopBy: end
-                all:
-                  - not: {has: {nthChild: 5, regex: "."}}
-                  - has: {nthChild: 1, pattern: $P0}
-                  - has: {nthChild: 2, pattern: $P1}
-                  - has: {nthChild: 3, pattern: $P2}
-                  - has: {nthChild: 4, pattern: $P3}
+                field: body
+                has:
+                  kind: call_expression
+                  stopBy: end
+                  all:
+                    - has: {field: function, regex: "^self\\."}
+                    - has:
+                        field: arguments
+                        kind: arguments
+                        all:
+                          - not: {has: {nthChild: 5, regex: "."}}
+                          - has: {nthChild: 1, pattern: $P0}
+                          - has: {nthChild: 2, pattern: $P1}
+                          - has: {nthChild: 3, pattern: $P2}
+                          - has: {nthChild: 4, pattern: $P3}
         - all:
             - has:
                 field: parameters
@@ -259,15 +336,22 @@ rule:
                   - has: {nthChild: 5, kind: parameter, has: {field: pattern, pattern: $P3}}
                   - has: {nthChild: 6, kind: parameter, has: {field: pattern, pattern: $P4}}
             - has:
-                kind: arguments
-                stopBy: end
-                all:
-                  - not: {has: {nthChild: 6, regex: "."}}
-                  - has: {nthChild: 1, pattern: $P0}
-                  - has: {nthChild: 2, pattern: $P1}
-                  - has: {nthChild: 3, pattern: $P2}
-                  - has: {nthChild: 4, pattern: $P3}
-                  - has: {nthChild: 5, pattern: $P4}
+                field: body
+                has:
+                  kind: call_expression
+                  stopBy: end
+                  all:
+                    - has: {field: function, regex: "^self\\."}
+                    - has:
+                        field: arguments
+                        kind: arguments
+                        all:
+                          - not: {has: {nthChild: 6, regex: "."}}
+                          - has: {nthChild: 1, pattern: $P0}
+                          - has: {nthChild: 2, pattern: $P1}
+                          - has: {nthChild: 3, pattern: $P2}
+                          - has: {nthChild: 4, pattern: $P3}
+                          - has: {nthChild: 5, pattern: $P4}
     - has:
         field: body
         kind: block
