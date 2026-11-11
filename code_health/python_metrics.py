@@ -84,6 +84,27 @@ class AnalyzedFunction:
     metrics: FunctionMetrics
 
 
+COMPREHENSIONS = (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)
+SCOPES = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+DIRECT_COMP_STMTS = (ast.Assign, ast.AnnAssign, ast.AugAssign, ast.Return, ast.Expr)
+
+
+def is_unparenthesized_comp(stmt: ast.AST, expr: ast.AST | None) -> bool:
+    return isinstance(expr, COMPREHENSIONS) and (
+        stmt.end_lineno,
+        stmt.end_col_offset,
+    ) == (expr.end_lineno, expr.end_col_offset)
+
+
+def is_elif(node: ast.If) -> bool:
+    return (
+        len(node.orelse) == 1
+        and isinstance(node.orelse[0], ast.If)
+        and node.orelse[0].col_offset == node.col_offset
+        and node.orelse[0].lineno > node.lineno
+    )
+
+
 def compute_nesting(scope_node: ast.AST) -> int:
     max_depth = 0
 
@@ -93,12 +114,12 @@ def compute_nesting(scope_node: ast.AST) -> int:
 
     def walk_stmt(node: ast.stmt, depth: int) -> None:
         nonlocal max_depth
-        if depth > max_depth:
-            max_depth = depth
-
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        max_depth = max(max_depth, depth)
+        if isinstance(node, SCOPES):
             return
-
+        if isinstance(node, ast.Expr) and is_unparenthesized_comp(node, node.value):
+            max_depth = max(max_depth, depth + 1)
+            return
         if isinstance(node, (ast.For, ast.AsyncFor, ast.While)):
             walk_stmts(node.body, depth + 1)
             walk_stmts(node.orelse, depth + 1)
@@ -108,15 +129,16 @@ def compute_nesting(scope_node: ast.AST) -> int:
             return
         if isinstance(node, ast.If):
             walk_stmts(node.body, depth + 1)
-            if len(node.orelse) == 1 and isinstance(node.orelse[0], ast.If):
+            if is_elif(node):
                 walk_stmt(node.orelse[0], depth)
             else:
                 walk_stmts(node.orelse, depth + 1)
             return
-        if isinstance(node, ast.Try):
+        if isinstance(node, (ast.Try, ast.TryStar)):
             walk_stmts(node.body, depth + 1)
-            for handler in node.handlers:
-                walk_stmts(handler.body, depth + 2)
+            if isinstance(node, ast.Try):
+                for handler in node.handlers:
+                    walk_stmts(handler.body, depth + 2)
             walk_stmts(node.orelse, depth + 1)
             walk_stmts(node.finalbody, depth + 1)
             return
@@ -124,9 +146,9 @@ def compute_nesting(scope_node: ast.AST) -> int:
             for case in node.cases:
                 walk_stmts(case.body, depth + 2)
             return
-        for child in ast.iter_child_nodes(node):
-            if isinstance(child, ast.stmt):
-                walk_stmt(child, depth)
+        walk_stmts(
+            [c for c in ast.iter_child_nodes(node) if isinstance(c, ast.stmt)], depth
+        )
 
     body = getattr(scope_node, "body", [])
     if isinstance(body, list):
@@ -134,73 +156,67 @@ def compute_nesting(scope_node: ast.AST) -> int:
     return max_depth
 
 
+def walk_non_orelse_children(
+    node: ast.For | ast.AsyncFor | ast.While,
+    walk_stmt: Callable[[ast.AST], None],
+    walk_expr: Callable[[ast.expr, bool], None],
+) -> None:
+    orelse_ids = {id(stmt) for stmt in node.orelse}
+    for child in ast.iter_child_nodes(node):
+        if id(child) in orelse_ids:
+            continue
+        if isinstance(child, ast.stmt):
+            walk_stmt(child)
+        elif not isinstance(child, SCOPES):
+            walk_expr(child, False)
+
+
 def compute_complexity(scope_node: ast.AST) -> int:
     complexity = 1
 
-    def count_comp(
-        comp: ast.ListComp | ast.SetComp | ast.DictComp | ast.GeneratorExp,
-    ) -> None:
-        nonlocal complexity
-        for gen in comp.generators:
-            complexity += 1
-            complexity += len(gen.ifs)
-
     def walk_expr(expr: ast.expr, direct_statement: bool = False) -> None:
-        if isinstance(
-            expr, (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)
-        ):
-            if direct_statement:
-                count_comp(expr)
+        nonlocal complexity
+        if isinstance(expr, COMPREHENSIONS) and direct_statement:
+            for gen in expr.generators:
+                complexity += 1 + (1 if gen.ifs else 0)
         for child in ast.iter_child_nodes(expr):
-            if not isinstance(
-                child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.stmt)
-            ):
+            if not isinstance(child, (*SCOPES, ast.stmt)):
                 walk_expr(child, False)
 
     def walk_stmt(node: ast.AST) -> None:
         nonlocal complexity
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        if isinstance(node, SCOPES):
             return
-
-        if isinstance(
-            node,
-            (
-                ast.If,
-                ast.For,
-                ast.AsyncFor,
-                ast.While,
-                ast.ExceptHandler,
-                ast.match_case,
-            ),
-        ):
+        if isinstance(node, (ast.For, ast.AsyncFor, ast.While)):
             complexity += 1
-
-        if isinstance(
-            node, (ast.Assign, ast.AnnAssign, ast.AugAssign, ast.Return, ast.Expr)
-        ):
+            walk_non_orelse_children(node, walk_stmt, walk_expr)
+            return
+        if isinstance(node, ast.TryStar):
+            for stmt in (*node.body, *node.orelse, *node.finalbody):
+                walk_stmt(stmt)
+            return
+        if isinstance(node, (ast.If, ast.ExceptHandler, ast.match_case)):
+            complexity += 1
+        if isinstance(node, DIRECT_COMP_STMTS):
             expression = getattr(node, "value", None)
             if expression is not None:
-                walk_expr(expression, direct_statement=True)
+                walk_expr(expression, is_unparenthesized_comp(node, expression))
             for child in ast.iter_child_nodes(node):
                 if child is not expression and not isinstance(
-                    child,
-                    (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.stmt),
+                    child, (*SCOPES, ast.stmt)
                 ):
                     walk_expr(child, False)
-        else:
-            for child in ast.iter_child_nodes(node):
-                if isinstance(child, (ast.stmt, ast.ExceptHandler, ast.match_case)):
-                    walk_stmt(child)
-                elif not isinstance(
-                    child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
-                ):
-                    walk_expr(child, False)
+            return
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, (ast.stmt, ast.ExceptHandler, ast.match_case)):
+                walk_stmt(child)
+            elif not isinstance(child, SCOPES):
+                walk_expr(child, False)
 
     body = getattr(scope_node, "body", [])
     if isinstance(body, list):
         for stmt in body:
             walk_stmt(stmt)
-
     return complexity
 
 

@@ -121,10 +121,21 @@ def argument_names(node: ast.expr) -> list[str] | None:
     return None
 
 
-def assigned_to(name: str, statements) -> list[ast.expr]:
-    """The values the statements assign to the name."""
+BRANCH_CONTAINERS = (
+    ast.If,
+    ast.Try,
+    ast.TryStar,
+    ast.For,
+    ast.AsyncFor,
+    ast.While,
+    ast.Match,
+)
+
+
+def assigned_statements(name: str, statements) -> list[ast.stmt]:
+    """The statements that assign a value to the name."""
     return [
-        statement.value
+        statement
         for statement in statements
         if isinstance(statement, (ast.Assign, ast.AnnAssign))
         and statement.value is not None
@@ -135,14 +146,30 @@ def assigned_to(name: str, statements) -> list[ast.expr]:
     ]
 
 
+def assigned_to(name: str, statements) -> list[ast.expr]:
+    """The values the statements assign to the name."""
+    return [statement.value for statement in assigned_statements(name, statements)]
+
+
+def branched_statement_ids(statements: list[ast.stmt]) -> set[int]:
+    """IDs of statements nested inside a branching or handler block."""
+    branched: set[int] = set()
+    for node in statements:
+        if isinstance(node, BRANCH_CONTAINERS):
+            for child in ast.walk(node):
+                if child is not node and isinstance(child, ast.stmt):
+                    branched.add(id(child))
+    return branched
+
+
 class ModuleStrings:
     """The finite string values of one module's expressions, a name read from
-    the one assignment the module's loaded statements give it and a callee
-    read as it is spelled."""
+    the loaded assignment reaching the use and a callee read as it is spelled."""
 
     def __init__(self, path: str, loaded: list[ast.stmt]):
         self.path = path
-        self.loaded = loaded
+        self.loaded = sorted(loaded, key=lambda s: (s.lineno, s.col_offset))
+        self.branched = branched_statement_ids(self.loaded)
         self.folding: set[int] = set()
 
     def dotted(self, function: ast.expr) -> str:
@@ -150,9 +177,18 @@ class ModuleStrings:
         return SPELLINGS.get(spelled, spelled)
 
     def binding(self, name: str, use: ast.expr) -> tuple:
-        """The one value the module assigns the name, and the scope that does."""
-        assigned = assigned_to(name, self.loaded)
-        return (assigned[0] if len(assigned) == 1 else None), None
+        """The value the module assigns the name before the use, and its scope."""
+        use_pos = (use.lineno, use.col_offset)
+        preceding = [
+            stmt
+            for stmt in assigned_statements(name, self.loaded)
+            if (stmt.end_lineno, stmt.end_col_offset) <= use_pos
+        ]
+        if not preceding:
+            return None, None
+        if len(preceding) > 1 and id(preceding[-1]) in self.branched:
+            return None, None
+        return preceding[-1].value, None
 
     def repository_path(self, expression: ast.expr) -> str | None:
         """The one repository path an expression folds to, relative to the
@@ -160,10 +196,15 @@ class ModuleStrings:
         folded = self.strings(expression)
         if folded is None or len(folded) != 1:
             return None
-        text = folded.pop()
-        if text == ROOT:
+        raw = folded.pop()
+        if raw != ROOT and not raw.startswith(f"{ROOT}/"):
+            return None
+        relative = posixpath.normpath(raw.removeprefix(ROOT).lstrip("/") or ".")
+        if relative == ".":
             return ""
-        return text.removeprefix(f"{ROOT}/") if text.startswith(f"{ROOT}/") else None
+        if relative == ".." or relative.startswith("../"):
+            return None
+        return relative
 
     def strings(self, expression: ast.expr) -> set[str] | None:
         if (text := folded(expression)) is not None:
@@ -362,7 +403,10 @@ class StringValues(ModuleStrings):
         scope = enclosing_scope(use, self.module.parent_of)
         binding = self.module.binding_scope(name, scope)
         if isinstance(binding, ast.Module):
-            return super().binding(name, use)
+            if isinstance(scope, ast.Module):
+                return super().binding(name, use)
+            assigned = assigned_to(name, self.loaded)
+            return (assigned[0] if len(assigned) == 1 else None), None
         if not isinstance(binding, FUNCTIONS[:2]):
             return None, binding
         if name in parameter_names(binding):

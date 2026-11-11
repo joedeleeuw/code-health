@@ -4,18 +4,26 @@ Static analysis and ratchet engine for Python, Rust, and Nix repositories.
 
 `code-health` enforces code quality limits (file length, cyclomatic complexity, nesting depth, parameter counts), deep-module invariants, structural duplication checks, AST import cycles, and curated `ast-grep` rules. Excess items must be pinned in `.code-health.json`, where pins act as ceilings that ratchet down and can never be raised.
 
+## Prerequisites
+
+- Python `>=3.12`
+- `uv` (including `uvx`, used to run `basedpyright` for Python unused-code resolution)
+- `ast-grep` on `PATH`
+- `cargo` with `clippy` on `PATH` when analyzing Rust workspaces
+
 ## Installation
 
-Install using `uv` or `pip`:
+Install directly from Git using `uv`:
 
 ```bash
-# As a CLI tool
-uv tool install code-health
+# As a standalone CLI tool
+uv tool install git+https://github.com/joedeleeuw/code-health
 
-# Or into an active virtual environment
-uv pip install code-health
-# or
-pip install code-health
+# Pinned to a specific commit or tag
+uv tool install git+https://github.com/joedeleeuw/code-health@<rev>
+
+# Or run directly without installing
+uvx --from git+https://github.com/joedeleeuw/code-health code-health
 ```
 
 ## Quick Start

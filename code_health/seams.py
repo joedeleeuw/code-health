@@ -19,6 +19,7 @@ are configuration, not seams. A call to a class is a call to its __init__.
 import ast
 import re
 from collections import defaultdict
+from dataclasses import dataclass, field
 
 from code_health.imports import Modules
 from code_health.symbols import FUNCTIONS, Evaluation, Symbols, parents
@@ -145,18 +146,32 @@ def initializer(symbols: Symbols, cls: ast.ClassDef) -> ast.AST | None:
     return None
 
 
+@dataclass
+class CallIndex:
+    resolved: dict[int, list[tuple[str, ast.Call]]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
+    unresolved: dict[str, list[tuple[str, ast.Call]]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
+
+
 def record_call(
-    resolved_calls: dict[int, list[tuple[str, ast.Call]]],
+    calls: CallIndex,
     symbols: Symbols,
     path: str,
     call: ast.Call,
 ) -> None:
     targets = Evaluation(symbols, path, call).resolve(call.func)
+    matched = False
     for kind, target in targets or []:
         if kind == "class" and isinstance(target, ast.ClassDef):
             target = initializer(symbols, target)
         if kind in ("function", "class") and target is not None:
-            resolved_calls[id(target)].append((path, call))
+            calls.resolved[id(target)].append((path, call))
+            matched = True
+    if not matched and (callee := name_of(call.func)):
+        calls.unresolved[callee].append((path, call))
 
 
 def owned_functions(path: str, statements: list[ast.stmt], owner: str | None):
@@ -171,32 +186,44 @@ def owned_functions(path: str, statements: list[ast.stmt], owner: str | None):
 
 
 def python_index(trees: dict[str, ast.Module], modules: Modules):
-    """Calls by resolved target, production functions with their class, and the
-    repository's module-level function names."""
-    resolved_calls: dict[int, list[tuple[str, ast.Call]]] = defaultdict(list)
+    """Calls by resolved target and unresolved callee name, production
+    functions with their class, and the repository's module-level function
+    names."""
+    calls = CallIndex()
     functions, first_party = [], set()
     parent_of = {path: parents(tree) for path, tree in trees.items()}
     symbols = Symbols(trees, parent_of, modules)
     for path, tree in trees.items():
         for node in ast.walk(tree):
             if isinstance(node, ast.Call):
-                record_call(resolved_calls, symbols, path, node)
+                record_call(calls, symbols, path, node)
         if TEST.search(path):
             continue
         first_party.update(
             node.name for node in tree.body if isinstance(node, FUNCTIONS)
         )
         functions += owned_functions(path, tree.body, None)
-    return resolved_calls, functions, first_party
+    return calls, functions, first_party
 
 
-def unused_injections(owner, function, resolved_calls, first_party) -> list[str]:
+def unused_injections(
+    owner: str | None,
+    function: ast.FunctionDef | ast.AsyncFunctionDef,
+    calls: CallIndex,
+    first_party: set[str],
+) -> list[str]:
     """The function's injected dependencies that no production call passes."""
+    callee = (
+        owner.rsplit(".", 1)[-1]
+        if function.name == "__init__" and owner
+        else function.name
+    )
     positional = [a.arg for a in function.args.posonlyargs + function.args.args]
     offset = 1 if positional[:1] in (["self"], ["cls"]) else 0
     used = injected(function)
     label = f"{owner}.{function.name}" if owner else function.name
-    target_calls = resolved_calls.get(id(function), [])
+    target_calls = calls.resolved.get(id(function), [])
+    unresolved_calls = calls.unresolved.get(callee, [])
     found = []
     for parameter, default in defaults(function).items():
         if not is_dependency(default, first_party) or parameter not in used:
@@ -205,7 +232,9 @@ def unused_injections(owner, function, resolved_calls, first_party) -> list[str]
             positional.index(parameter) - offset if parameter in positional else None
         )
         callers = [
-            where for where, call in target_calls if passes(call, parameter, index)
+            where
+            for where, call in (*target_calls, *unresolved_calls)
+            if passes(call, parameter, index)
         ]
         if not any(not TEST.search(where) for where in callers):
             found.append(
@@ -218,9 +247,9 @@ def unused_injections(owner, function, resolved_calls, first_party) -> list[str]
 def test_only_seams(
     trees: dict[str, ast.Module], modules: Modules
 ) -> dict[str, list[str]]:
-    resolved_calls, functions, first_party = python_index(trees, modules)
+    calls, functions, first_party = python_index(trees, modules)
     found: dict[str, list[str]] = {}
     for path, owner, function in functions:
-        if unused := unused_injections(owner, function, resolved_calls, first_party):
+        if unused := unused_injections(owner, function, calls, first_party):
             found.setdefault(path, []).extend(unused)
     return found
