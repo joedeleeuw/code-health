@@ -1,0 +1,6 @@
+- id: pattern-rules
+  name: code-health pattern rules
+  description: Run the code-health ast-grep rules over the changed files. Needs ast-grep on PATH.
+  entry: hooks/pattern-rules
+  language: script
+  types_or: [python, rust, shell, json, yaml, markdown]

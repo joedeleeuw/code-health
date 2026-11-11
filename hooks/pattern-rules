@@ -1,0 +1,2 @@
+#!/bin/sh
+exec ast-grep scan --config "$(dirname "$0")/../code_health/sgconfig.yml" "$@"
