@@ -42,9 +42,11 @@ for clone in CLONES:
             cwd=found[0],
             capture_output=True,
             text=True,
-            check=True,
-        ).stdout
-        for row in filter(None, scanned.split("\n")):
+            check=False,
+        )
+        if scanned.returncode not in (0, 1):
+            raise SystemExit(f"{clone['name']}: ast-grep exited {scanned.returncode}")
+        for row in filter(None, scanned.stdout.split("\n")):
             hits[clone["role"], json.loads(row)["ruleId"]] += 1
 roles = sorted(files)
 print("rule".ljust(34) + "".join(f"{role + ' /1k files':>28}" for role in roles))

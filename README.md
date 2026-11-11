@@ -35,7 +35,7 @@ pre-commit:
 |---|---|
 | `anemic-error-rust` | Function returns Result<T, String> or erases error types via .map_err(\|e\| e.to_string()); use a typed domain error enum or error crate type. |
 | `blocking-in-async-rust` | Blocking thread::sleep, synchronous std::fs I/O, or synchronous std::process::Command execution inside an async function or block stalls the async runtime executor; use tokio::time::sleep, tokio::fs, tokio::process::Command, or spawn_blocking. |
-| `closed-string-field-rust` | A status, kind, state, level, mode, role, category or severity field is a String, so any text is a valid case. |
+| `closed-string-field-rust` | A status, kind, state, level, mode, role or severity field is a String, so any text is a valid case. |
 | `closed-string-rust` | A struct field stores a closed case space as String instead of an enum. |
 | `compat-identifier-rust` | Compatibility/retirement name declared, or one receiver probed under a fallback key. |
 | `dated-comment-rust` | Dated provenance prose in a comment. |
