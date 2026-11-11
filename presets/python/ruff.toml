@@ -13,9 +13,15 @@ extend-select = [
     "SIM116",  # if/elif chain that is a dict lookup
     "SLF001",  # private member access, in test files only
     "TID251",  # banned API
-    "RUF006",  # dangling asyncio task
-    "TRY004",  # wrong exception type for a type check
-    "DTZ",     # naive datetimes
+    "RUF006",   # dangling asyncio task
+    "TRY004",   # wrong exception type for a type check
+    "DTZ",      # naive datetimes
+    "ASYNC210", # blocking HTTP call in async function
+    "ASYNC220", # blocking subprocess creation in async function
+    "ASYNC221", # blocking process wait in async function
+    "ASYNC230", # blocking file open in async function
+    "ASYNC251", # blocking time.sleep in async function
+    "PGH003",   # blanket type: ignore without error code
 ]
 
 [lint.mccabe]

@@ -1,0 +1,19 @@
+id: path-prefix-containment-python
+language: Python
+valid:
+  - |
+    if not out_path.resolve().is_relative_to(quarantine_dir.resolve()):
+        raise ValueError("escaped")
+  - |
+    if not os.path.realpath(candidate).startswith(os.path.realpath(root) + os.sep):
+        raise ValueError("escaped")
+  - |
+    if os.path.realpath(candidate).startswith("/nix/store/"):
+        use_store(candidate)
+invalid:
+  - |
+    if not str(out_path.resolve()).startswith(str(quarantine_dir.resolve())):
+        raise ValueError("escaped")
+  - |
+    if not os.path.abspath(candidate).startswith(os.path.abspath(root)):
+        raise ValueError("escaped")

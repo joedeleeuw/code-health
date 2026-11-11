@@ -1,0 +1,56 @@
+id: silent-decode-discard-python
+language: Python
+severity: error
+message: Boundary JSON, YAML, or TOML decode failure is caught and collapsed into None or an empty value; let invalid input fail loudly or handle the parse error explicitly.
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/site-packages/**"
+  - "**/vendor/**"
+  - "**/Vendor/**"
+  - "**/third_party/**"
+  - "**/tests/**"
+  - "**/test/**"
+  - "**/testing/**"
+  - "**/examples/**"
+  - "**/test_*.py"
+  - "**/*_test.py"
+  - "**/conftest.py"
+rule:
+  kind: try_statement
+  all:
+    - not:
+        inside:
+          kind: function_definition
+          has:
+            field: name
+            regex: "^_?(try|sniff|probe|detect|maybe)_"
+          stopBy:
+            kind: function_definition
+    - has:
+        field: body
+        has:
+          kind: call
+          has:
+            field: function
+            regex: "^(json\\.(loads|load)|(yaml|ruamel\\.yaml)\\.(safe_load|load)|(tomllib|tomli|toml)\\.(loads|load))$"
+          stopBy:
+            kind: try_statement
+    - has:
+        kind: except_clause
+        all:
+          - regex: "^except(\\s*:|\\s*\\(?[^:]*\\b(Exception|BaseException|ValueError|JSONDecodeError|YAMLError|TOMLDecodeError|DecodeError|ScannerError|ParserError)\\b)"
+          - has:
+              kind: return_statement
+              any:
+                - regex: "^return\\s+None$"
+                - has:
+                    any:
+                      - kind: dictionary
+                        regex: "^\\{\\s*\\}$"
+                      - kind: list
+                        regex: "^\\[\\s*\\]$"
+                      - kind: string
+                        regex: '^(""|'''')$'
+              stopBy:
+                kind: try_statement

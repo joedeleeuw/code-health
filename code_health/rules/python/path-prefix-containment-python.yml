@@ -1,0 +1,30 @@
+id: path-prefix-containment-python
+language: Python
+severity: error
+message: String .startswith() on a resolved path without a trailing separator accepts sibling directories such as /root-backup; check containment with Path.is_relative_to() or os.path.commonpath().
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/site-packages/**"
+  - "**/vendor/**"
+  - "**/Vendor/**"
+  - "**/third_party/**"
+  - "**/tests/**"
+  - "**/test/**"
+  - "**/testing/**"
+  - "**/examples/**"
+  - "**/test_*.py"
+  - "**/*_test.py"
+  - "**/conftest.py"
+rule:
+  kind: call
+  all:
+    - any:
+        - pattern: os.path.abspath($$$).startswith($$$)
+        - pattern: os.path.realpath($$$).startswith($$$)
+        - pattern: str($P.resolve($$$)).startswith($$$)
+    - not:
+        has:
+          field: arguments
+          any:
+            - regex: '(os\.sep|\+\s*["''][/\\]|,\s*["'']["'']\s*\)|[/\\]["'']\s*\))'

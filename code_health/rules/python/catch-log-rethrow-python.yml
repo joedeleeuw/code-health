@@ -1,0 +1,60 @@
+id: catch-log-rethrow-python
+language: Python
+severity: error
+message: Catching an exception only to log it and immediately re-raise duplicates error logs at every stack frame; add domain context with raise ... from e or log once at the top-level boundary.
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/site-packages/**"
+  - "**/vendor/**"
+  - "**/Vendor/**"
+  - "**/third_party/**"
+  - "**/tests/**"
+  - "**/test/**"
+  - "**/testing/**"
+  - "**/examples/**"
+  - "**/test_*.py"
+  - "**/*_test.py"
+  - "**/conftest.py"
+rule:
+  kind: except_clause
+  has:
+    kind: block
+    all:
+      - has:
+          kind: expression_statement
+          has:
+            kind: call
+            has:
+              field: function
+              kind: attribute
+              all:
+                - has:
+                    field: object
+                    regex: "^(log|logger|logging|_?log|_?logger)$"
+                - has:
+                    field: attribute
+                    regex: "^(error|exception|critical|warning|warn)$"
+          stopBy: neighbor
+      - not:
+          has:
+            nthChild:
+              position: 2
+              ofRule:
+                kind: expression_statement
+            stopBy: neighbor
+      - has:
+          kind: raise_statement
+          not:
+            has:
+              kind: call
+              stopBy: end
+          stopBy: neighbor
+      - not:
+          has:
+            not:
+              any:
+                - kind: expression_statement
+                - kind: raise_statement
+                - kind: comment
+            stopBy: neighbor

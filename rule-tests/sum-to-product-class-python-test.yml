@@ -1,0 +1,21 @@
+id: sum-to-product-class-python
+language: Python
+valid:
+  - |
+    @dataclass(frozen=True)
+    class CompilationSuccess:
+        pdf_path: Path
+  - |
+    class CompilationError(Exception):
+        pass
+invalid:
+  - |
+    @dataclass(frozen=True)
+    class CompilationResult:
+        success: bool
+        pdf_path: Path | None = None
+        error: str | None = None
+  - |
+    class ProvisionResponse(BaseModel):
+        ok: bool = True
+        failure_reason: Optional[str] = None

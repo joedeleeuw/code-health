@@ -1,0 +1,50 @@
+id: sum-to-product-class-python
+language: Python
+severity: error
+message: Class flattens mutually exclusive success/failure outcomes into a boolean ok/success flag plus an optional error field; model distinct outcomes as a union of closed types or raise an exception.
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/site-packages/**"
+  - "**/vendor/**"
+  - "**/Vendor/**"
+  - "**/third_party/**"
+  - "**/tests/**"
+  - "**/test/**"
+  - "**/testing/**"
+  - "**/examples/**"
+  - "**/test_*.py"
+  - "**/*_test.py"
+  - "**/conftest.py"
+rule:
+  kind: class_definition
+  has:
+    field: body
+    kind: block
+    all:
+      - has:
+          kind: expression_statement
+          has:
+            kind: assignment
+            all:
+              - has:
+                  field: left
+                  kind: identifier
+                  regex: "^(ok|is_ok|success|succeeded|is_error|failed)$"
+              - has:
+                  field: type
+                  regex: "^bool$"
+          stopBy: neighbor
+      - has:
+          kind: expression_statement
+          has:
+            kind: assignment
+            all:
+              - has:
+                  field: left
+                  kind: identifier
+                  regex: "^(error|err|error_message|err_msg|failure_reason)$"
+              - has:
+                  field: type
+                  regex: "(Optional\\[|None)"
+          stopBy: neighbor

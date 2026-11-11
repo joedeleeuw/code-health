@@ -1,0 +1,30 @@
+id: error-string-branch-python
+language: Python
+valid:
+  - |
+    try:
+        fetch()
+    except TimeoutError:
+        retry()
+  - |
+    try:
+        fetch()
+    except HttpError as err:
+        if err.status_code == 429:
+            backoff()
+        raise
+invalid:
+  - |
+    try:
+        fetch()
+    except Exception as err:
+        if "429" in str(err):
+            backoff()
+        else:
+            raise
+  - |
+    try:
+        commit()
+    except RuntimeError as exc:
+        if "empty changeset" not in str(exc).lower():
+            raise

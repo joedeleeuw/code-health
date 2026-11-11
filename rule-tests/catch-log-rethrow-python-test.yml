@@ -1,0 +1,28 @@
+id: catch-log-rethrow-python
+language: Python
+valid:
+  - |
+    try:
+        run_step()
+    except OSError as err:
+        raise StepFailedError("step failed") from err
+  - |
+    try:
+        run_step()
+    except OSError as err:
+        self.record_failure(err)
+        logger.error("step failed: %s", err)
+        raise
+invalid:
+  - |
+    try:
+        run_step()
+    except Exception as err:
+        logger.error("step failed: %s", err)
+        raise
+  - |
+    try:
+        load_plugin()
+    except ImportError:
+        logging.exception("plugin load failed")
+        raise

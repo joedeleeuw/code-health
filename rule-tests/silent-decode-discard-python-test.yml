@@ -1,0 +1,32 @@
+id: silent-decode-discard-python
+language: Python
+valid:
+  - |
+    def load_config(path):
+        return json.loads(path.read_text(encoding="utf-8"))
+  - |
+    def _try_parse_json(raw: str):
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError:
+            return None
+  - |
+    async def handle_ws(ws, message: str) -> None:
+        try:
+            payload = json.loads(message)
+        except json.JSONDecodeError:
+            await ws.send("invalid")
+            return
+invalid:
+  - |
+    def read_manifest(path):
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return None
+  - |
+    def load_frontmatter(block: str):
+        try:
+            return yaml.safe_load(block)
+        except yaml.YAMLError:
+            return {}
