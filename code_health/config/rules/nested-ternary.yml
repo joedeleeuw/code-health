@@ -1,10 +1,9 @@
 id: nested-ternary
 language: Python
-severity: warning
+severity: error
 message: Nested conditional expression. Compose in the simplest form; use a case table or statements.
 metadata:
   directive: G8
-  source: "ai-contexts/AGENT.md#code"
 rule:
   kind: conditional_expression
   has:

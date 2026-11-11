@@ -1,6 +1,6 @@
 id: compat-identifier-python
 language: Python
-severity: warning
+severity: error
 message: Compatibility/retirement name declared. No backwards compatibility and no codified removals; delete the old path instead.
 ignores:
   - "**/gen/**"
@@ -15,7 +15,6 @@ ignores:
   - "**/*_pb2_grpc.py"
 metadata:
   directive: G5
-  source: "ai-contexts/AGENT.md#code"
 rule:
   kind: identifier
   all:

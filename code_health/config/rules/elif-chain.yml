@@ -1,10 +1,9 @@
 id: elif-chain
 language: Python
-severity: warning
+severity: error
 message: If/elif chain with 3+ elifs. Declare the case space as a typed table or discriminated union instead.
 metadata:
   directive: G9
-  source: "ai-contexts/AGENT.md#code"
 rule:
   kind: if_statement
   has:

@@ -1,10 +1,9 @@
 id: ls-capture-assignment-bash
 language: Bash
-severity: warning
+severity: error
 message: Variable takes one path from ls output, so a glob that matches nothing or several entries assigns an empty or wrong value without failing. Name the path, or count the matches and fail when it is not one.
 metadata:
   directive: G7
-  source: "ai-contexts/AGENT.md#code"
 rule:
   kind: variable_assignment
   has:

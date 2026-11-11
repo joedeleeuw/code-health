@@ -1,6 +1,6 @@
 id: anemic-error-rust
 language: Rust
-severity: warning
+severity: error
 message: Function returns Result<T, String> or erases error types via .map_err(|e| e.to_string()); use a typed domain error enum or error crate type.
 ignores:
   - "**/gen/**"
@@ -14,7 +14,6 @@ ignores:
   - "**/*_test.rs"
 metadata:
   directive: G7
-  source: "ai-contexts/AGENT.md#code"
 rule:
   all:
     - not:
@@ -73,7 +72,7 @@ rule:
 ---
 id: silent-result-discard-rust
 language: Rust
-severity: warning
+severity: error
 message: Boundary serde decode, filesystem I/O, or Result failure is silently collapsed into Option, an empty value, or discarded; propagate or handle the error explicitly.
 ignores:
   - "**/gen/**"
@@ -87,7 +86,6 @@ ignores:
   - "**/*_test.rs"
 metadata:
   directive: G7
-  source: "ai-contexts/AGENT.md#code"
 utils:
   serde-decode-function:
     kind: scoped_identifier
@@ -352,7 +350,7 @@ rule:
 ---
 id: blocking-in-async-rust
 language: Rust
-severity: warning
+severity: error
 message: Blocking thread::sleep, synchronous std::fs I/O, or synchronous std::process::Command execution inside an async function or block stalls the async runtime executor; use tokio::time::sleep, tokio::fs, tokio::process::Command, or spawn_blocking.
 ignores:
   - "**/gen/**"
@@ -366,7 +364,6 @@ ignores:
   - "**/*_test.rs"
 metadata:
   directive: G7
-  source: "ai-contexts/AGENT.md#code"
 utils:
   async-scope:
     any:

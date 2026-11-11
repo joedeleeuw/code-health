@@ -1,6 +1,6 @@
 id: closed-string
 language: Python
-severity: warning
+severity: error
 message: A str parameter or field is closed by a literal set at runtime. Declare the case space in its type (a Literal alias or an Enum) so callers and checkers see the cases.
 ignores:
   - "**/gen/**"
@@ -16,7 +16,6 @@ ignores:
   - "**/conftest.py"
 metadata:
   directive: G9
-  source: "ai-contexts/AGENT.md#code (Declare the case space first)"
 utils:
   # ("shadow", "apply"), {"a", "b"}, ["a", "b"]: two or more string literals
   literal-set:

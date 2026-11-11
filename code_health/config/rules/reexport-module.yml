@@ -1,6 +1,6 @@
 id: reexport-module
 language: Python
-severity: warning
+severity: error
 message: Module whose only statements import names from elsewhere. A re-export is a hop, not an owner; importers name the owner module directly.
 ignores:
   - "**/__init__.py"
@@ -11,7 +11,6 @@ ignores:
   - "**/site-packages/**"
 metadata:
   directive: G10
-  source: "ai-contexts/AGENT.md#code (a module that re-exports one symbol); skills/codebase-design/SKILL.md#principles (The deletion test)"
 rule:
   kind: module
   has: {kind: import_from_statement}

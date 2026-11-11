@@ -1,6 +1,6 @@
 id: single-call-hop-rust
 language: Rust
-severity: warning
+severity: error
 message: Private function only forwards its parameters, in order, to one first-party call; call the target directly or give the wrapper a job.
 ignores:
   - "**/gen/**"

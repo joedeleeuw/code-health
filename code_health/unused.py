@@ -120,6 +120,7 @@ any file. The order changes how long the answer takes, never the answer.
 Imports and local variables are left to Ruff's F401 and F841.
 """
 
+from functools import cache
 import ast
 import posixpath
 import re
@@ -767,6 +768,22 @@ class UnusedCode:
                 return True
         return False
 
+    @cache
+    def declared(
+        self, symbols: frozenset[Site], twins: frozenset[Site]
+    ) -> tuple[set[Site], set[tuple[str, str]]]:
+        """Every site the symbols and their imported twins resolve to, and the
+        outside names the twins resolve to. Rebindings of one name share one
+        family, so each asks for the same answer."""
+        declared, outside = {*symbols, *twins}, set()
+        for symbol in [*symbols, *twins]:
+            for found in self.resolver.declarations(symbol):
+                if found.site is not None:
+                    declared.add(found.site)
+                elif symbol in twins:
+                    outside.add((found.module, found.name))
+        return declared, outside
+
     def unread(self, site: Site, candidate: Candidate, symbols: list[Site]) -> bool:
         owner, name = self.owners.get(site), candidate.name
         related = self.related_classes()
@@ -775,13 +792,7 @@ class UnusedCode:
         ):
             return False
         twins = self.imported.get((id(candidate.scope), name), [])
-        declared, outside = {*symbols, *twins}, set()
-        for symbol in [*symbols, *twins]:
-            for found in self.resolver.declarations(symbol):
-                if found.site is not None:
-                    declared.add(found.site)
-                elif symbol in twins:
-                    outside.add((found.module, found.name))
+        declared, outside = self.declared(frozenset(symbols), frozenset(twins))
         member = owner is not None or candidate.kind == "attribute"
         assigned_only = candidate.kind in ASSIGNED_KINDS
         sought = Sought(declared, outside, assigned_only, member)

@@ -1,6 +1,6 @@
 id: test-imports-private
 language: Python
-severity: warning
+severity: error
 message: A test imports a private name. The interface is the test surface; test through the module's public entry points, or make the name part of the interface.
 # test files only: a helper or mock module beside the tests is not a test
 files:
@@ -12,7 +12,6 @@ ignores:
   - "**/site-packages/**"
 metadata:
   directive: D1
-  source: "skills/codebase-design/SKILL.md#principles (The interface is the test surface)"
 utils:
   # a private helper of the test suite itself is not the product's internals
   product-import:

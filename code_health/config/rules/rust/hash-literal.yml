@@ -12,7 +12,6 @@ ignores:
   - "**/third_party/**"
 metadata:
   directive: S1
-  source: "cloud-rl-train AGENTS.md#process"
 rule:
   kind: string_content
   regex: "^[0-9a-fA-F]{64}$"

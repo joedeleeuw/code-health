@@ -1,6 +1,6 @@
 id: compat-identifier-rust
 language: Rust
-severity: warning
+severity: error
 message: Compatibility/retirement name declared, or one receiver probed under a fallback key. No backwards compatibility and no codified removals; delete the old path instead.
 ignores:
   - "**/gen/**"
@@ -16,7 +16,6 @@ ignores:
   - "**/*_test.rs"
 metadata:
   directive: G5
-  source: "ai-contexts/AGENT.md#code"
 rule:
   all:
     - not:

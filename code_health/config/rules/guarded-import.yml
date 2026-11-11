@@ -1,10 +1,9 @@
 id: guarded-import
 language: Python
-severity: warning
+severity: error
 message: Guarded import. Support properly by consuming the published artifact; do not stub or guard a missing dependency.
 metadata:
   directive: G14
-  source: "ai-contexts/AGENT.md#code"
 rule:
   kind: try_statement
   all:

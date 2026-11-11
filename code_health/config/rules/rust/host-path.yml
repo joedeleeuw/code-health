@@ -1,6 +1,6 @@
 id: host-path-rust
 language: Rust
-severity: warning
+severity: error
 message: Host-absolute path in a repository file (tracked or untracked; only ignored files are skipped). Use HOME-relative or config-driven paths.
 ignores:
   - "**/fixtures/**"
@@ -14,7 +14,6 @@ ignores:
   - "**/*_test.rs"
 metadata:
   directive: S4
-  source: "cloud-rl-train AGENTS.md#process"
 rule:
   all:
     - any:

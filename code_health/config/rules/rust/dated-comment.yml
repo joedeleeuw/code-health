@@ -1,6 +1,6 @@
 id: dated-comment-rust
 language: Rust
-severity: warning
+severity: error
 message: Dated provenance prose in a comment. History belongs in field notes and commit bodies, not in code.
 ignores:
   - "**/gen/**"
@@ -10,7 +10,6 @@ ignores:
   - "**/third_party/**"
 metadata:
   directive: S5
-  source: "cloud-rl-train AGENTS.md#process"
 rule:
   any:
     - kind: line_comment

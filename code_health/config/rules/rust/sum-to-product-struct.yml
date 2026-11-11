@@ -1,6 +1,6 @@
 id: sum-to-product-struct-rust
 language: Rust
-severity: warning
+severity: error
 message: Struct flattens a success/failure sum type into a boolean flag plus an Option<_> error field; model the mutually exclusive outcomes as Result<T, E> or a tagged enum.
 ignores:
   - "**/gen/**"
@@ -15,7 +15,6 @@ ignores:
   - "**/*_test.rs"
 metadata:
   directive: W4
-  source: "ai-contexts/AGENT.md#code"
 rule:
   kind: struct_item
   all:

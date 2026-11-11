@@ -1,6 +1,6 @@
 id: vague-name-python
 language: Python
-severity: warning
+severity: error
 message: Vague declared name. Names say what the value is; filler nouns, suffixes and prefixes carry nothing.
 ignores:
   - "**/gen/**"
@@ -9,7 +9,6 @@ ignores:
   - "**/*_pb2_grpc.py"
 metadata:
   directive: G21
-  source: "ai-contexts/AGENT.md#code"
 rule:
   all:
     - any:

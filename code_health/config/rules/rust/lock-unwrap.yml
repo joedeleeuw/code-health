@@ -1,6 +1,6 @@
 id: lock-unwrap-rust
 language: Rust
-severity: warning
+severity: error
 message: A lock is taken with .unwrap(), so one panic while it is held poisons it and every later lock() panics too. Recover the guard with unwrap_or_else(PoisonError::into_inner), propagate the error, or use a lock that does not poison.
 ignores:
   - "**/gen/**"

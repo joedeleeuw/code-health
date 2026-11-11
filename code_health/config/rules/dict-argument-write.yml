@@ -1,6 +1,6 @@
 id: dict-argument-write
 language: Python
-severity: warning
+severity: error
 message: A function writes its result into a dict it was handed and returns nothing. Return the result instead of producing the side effect, so callers and tests read it from the interface.
 ignores:
   - "**/gen/**"
@@ -17,7 +17,6 @@ ignores:
   - "**/conftest.py"
 metadata:
   directive: D2
-  source: "skills/codebase-design/SKILL.md#designing-for-testability (2. Return results, don't produce side effects)"
 utils:
   key-write:
     any:

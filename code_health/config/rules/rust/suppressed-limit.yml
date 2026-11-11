@@ -1,6 +1,6 @@
 id: suppressed-limit-rust
 language: Rust
-severity: warning
+severity: error
 message: A size or safety lint from the preset is silenced with allow or expect and no reason; fix the code so the lint passes, change the limit for the whole workspace in clippy.toml, or state the reason in the attribute.
 ignores:
   - "**/gen/**"

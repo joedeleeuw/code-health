@@ -1,6 +1,6 @@
 id: dated-comment-python
 language: Python
-severity: warning
+severity: error
 message: Dated provenance prose in a comment. History belongs in field notes and commit bodies, not in code.
 ignores:
   - "**/gen/**"
@@ -10,7 +10,6 @@ ignores:
   - "**/*_pb2.py"
 metadata:
   directive: S5
-  source: "cloud-rl-train AGENTS.md#process"
 rule:
   kind: comment
   all:
@@ -19,7 +18,7 @@ rule:
 ---
 id: dated-comment-bash
 language: Bash
-severity: warning
+severity: error
 message: Dated provenance prose in a comment. History belongs in field notes and commit bodies, not in code.
 ignores:
   - "**/gen/**"
@@ -29,7 +28,6 @@ ignores:
   - "**/*_pb2.py"
 metadata:
   directive: S5
-  source: "cloud-rl-train AGENTS.md#process"
 rule:
   kind: comment
   all:

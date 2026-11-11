@@ -1,6 +1,6 @@
 id: untyped-value-probe-rust
 language: Rust
-severity: warning
+severity: error
 message: Untyped Value key probe or open Map<String, Value> field/parameter defers schema validation past the boundary; decode once into a closed #[derive(Deserialize)] struct or enum.
 ignores:
   - "**/gen/**"
@@ -15,7 +15,6 @@ ignores:
   - "**/*_test.rs"
 metadata:
   directive: G4
-  source: "ai-contexts/AGENT.md#code"
 constraints:
   KEY:
     kind: string_literal
@@ -49,7 +48,7 @@ rule:
 ---
 id: sql-string-interpolation-rust
 language: Rust
-severity: warning
+severity: error
 message: format! interpolates a value into SQL statement text (quoted or compared), bypassing bound parameters; pass values through the driver's bindings (?1, $1, params![]).
 ignores:
   - "**/gen/**"
@@ -64,7 +63,6 @@ ignores:
   - "**/*_test.rs"
 metadata:
   directive: G4
-  source: "ai-contexts/AGENT.md#code"
 rule:
   kind: macro_invocation
   all:

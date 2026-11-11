@@ -1,6 +1,6 @@
 id: closed-string-rust
 language: Rust
-severity: warning
+severity: error
 message: A struct field stores a closed case space as String instead of an enum. Declare the cases in a Rust enum (#[derive(Serialize, Deserialize)]) so the compiler enforces exhaustiveness.
 ignores:
   - "**/gen/**"
@@ -14,7 +14,6 @@ ignores:
   - "**/*_test.rs"
 metadata:
   directive: G9
-  source: "ai-contexts/AGENT.md#code (Declare the case space first)"
 utils:
   string-literal-arm:
     kind: match_arm
@@ -53,7 +52,7 @@ rule:
 ---
 id: closed-string-field-rust
 language: Rust
-severity: warning
+severity: error
 message: A status, kind, state, level, mode, role, category or severity field is a String, so any text is a valid case. Declare the cases in a Rust enum (#[derive(Serialize, Deserialize)]) so the compiler enforces exhaustiveness.
 ignores:
   - "**/gen/**"
@@ -67,7 +66,6 @@ ignores:
   - "**/*_test.rs"
 metadata:
   directive: G9
-  source: "ai-contexts/AGENT.md#code (Declare the case space first)"
 rule:
   kind: field_declaration
   all:
