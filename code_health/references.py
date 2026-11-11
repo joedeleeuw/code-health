@@ -169,6 +169,10 @@ def python_strings(tree: ast.Module) -> Iterator[str]:
                 yield node.value
 
 
+class Unparsable(Exception):
+    """A data file that is not valid JSON or YAML."""
+
+
 def parsed(root: Path, path: str):
     """The JSON or YAML documents of a data file."""
     text = (root / path).read_text()
@@ -179,7 +183,7 @@ def parsed(root: Path, path: str):
             return [json.loads(text)]
         return list(yaml.load_all(text, Loader))
     except (ValueError, yaml.YAMLError) as error:
-        raise SystemExit(f"code-health: cannot parse {path}: {error}") from error
+        raise Unparsable(str(error)) from error
 
 
 def strings(root: Path, path: str, documents: list, repository: Path) -> Iterator[str]:
@@ -334,14 +338,19 @@ def shadows(document) -> list[str]:
 def measure_references(
     root: Path, files: list[str], listed: list[str], trees: dict[str, ast.Module]
 ) -> tuple[dict, dict]:
-    """The dead_paths and shadow_key_prose counts, and the findings behind them."""
-    documents_by_path = {
-        path: parsed(root, path)
-        if path.endswith((".json", ".jsonc", ".yaml", ".yml"))
-        else []
-        for path in files
-        if path.endswith((".md", ".json", ".jsonc", ".yaml", ".yml"))
-    }
+    """The dead_paths, shadow_key_prose and unparsable counts, and the findings
+    behind them. A data file that does not parse is a finding and is left out
+    of the other two."""
+    documents_by_path: dict[str, list] = {}
+    unparsable: dict[str, list[str]] = {}
+    for path in files:
+        if path.endswith(".md"):
+            documents_by_path[path] = []
+        elif path.endswith((".json", ".jsonc", ".yaml", ".yml")):
+            try:
+                documents_by_path[path] = parsed(root, path)
+            except Unparsable as error:
+                unparsable[path] = [str(error)]
     documents_by_path.update({path: [tree] for path, tree in trees.items()})
     shadowed = {
         path: [found for document in documents for found in shadows(document)]
@@ -351,5 +360,6 @@ def measure_references(
     findings = {
         "dead_paths": dead_paths(root, documents_by_path, listed),
         "shadow_key_prose": {path: found for path, found in shadowed.items() if found},
+        "unparsable": unparsable,
     }
     return {name: counted(found) for name, found in findings.items()}, findings

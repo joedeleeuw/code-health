@@ -15,7 +15,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from code_health import counted, keyed, stop
+from code_health import counted, keyed
 from code_health.distribution import Distributions
 from code_health.environments import Environments, environments
 from code_health.hops import (
@@ -262,14 +262,17 @@ def analyze_functions(trees: dict[str, ast.Module]) -> list[AnalyzedFunction]:
     return sorted(analyzed, key=lambda f: (f.file_path, f.start_line))
 
 
-def python_trees(root: Path, files: list[str]) -> dict[str, ast.Module]:
-    trees = {}
+def python_trees(
+    root: Path, files: list[str]
+) -> tuple[dict[str, ast.Module], dict[str, list[str]]]:
+    """The tree of each file Python parses, and the error of each it cannot."""
+    trees, unparsable = {}, {}
     for path in files:
         try:
             trees[path] = ast.parse((root / path).read_bytes(), path)
         except (SyntaxError, ValueError) as error:
-            stop(f"cannot parse {path}: {error}")
-    return trees
+            unparsable[path] = [str(error)]
+    return trees, unparsable
 
 
 def parameter_rows(path: str, tree: ast.AST) -> list[tuple[int, str, int]]:

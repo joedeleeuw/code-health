@@ -30,6 +30,7 @@ FOUND = (
     "clone_pairs",
     "cycles",
     "unused",
+    "unparsable",
 )
 CHECKS = (*CONFIGURED, *FOUND)
 

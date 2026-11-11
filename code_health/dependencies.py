@@ -35,7 +35,7 @@ from packaging.requirements import InvalidRequirement, Requirement
 from packaging.utils import canonicalize_name
 from pydantic import BaseModel, Field, ValidationError
 
-from code_health import ERROR_EXIT, run
+from code_health import ERROR_EXIT, run, stop
 from code_health.imports import Modules
 from code_health.manifests import Manifests
 from code_health.projects import PyProject
@@ -252,7 +252,10 @@ def dependency_trees(
         if missing:
             incomplete.append(f"incomplete: {missing}")
         for directory, listed in directories:
-            trees |= python_trees(directory, listed)
+            found, unparsable = python_trees(directory, listed)
+            for path, errors in unparsable.items():
+                stop(f"cannot parse {directory / path}: {errors[0]}")
+            trees |= found
     return trees, incomplete
 
 

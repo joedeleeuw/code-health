@@ -196,4 +196,4 @@ vague-name-python = ["tests/*"]
 
 - **`exclude`**: Globs left out of the analysis.
 - **`limits`**: The size limits.
-- **`allowed`**: Maps a check name (the word before the colon in a finding, such as `single_call_hops`, `unused`, `nesting`) or a rule ID (ast-grep rule IDs, `deadnix`, `statix-<code>`) to file globs. A finding of that check in a matching file is not reported. A glob that matches no measured file stops the check.
+- **`allowed`**: Maps a check name (the word before the colon in a finding, such as `single_call_hops`, `unused`, `nesting`, `unparsable`) or a rule ID (ast-grep rule IDs, `deadnix`, `statix-<code>`) to file globs. A finding of that check in a matching file is not reported. A glob that matches no measured file stops the check.

@@ -31,6 +31,10 @@ whose shape a class exported by a dependency that pyproject.toml declares
 already has, read from the environment of the PYTHON interpreter. Every declared
 distribution that applies there must be installed.
 
+A Python, JSON or YAML file that does not parse is itself a finding
+("unparsable") and is left out of the checks that need its contents; every
+other check still runs.
+
 Exit status: 0 when nothing is found outside the allowed files, 1 when a
 finding is or a class restates a dependency's class, 2 when the check
 cannot run (an unreadable file, a failed tool, a missing interpreter or a
@@ -134,6 +138,7 @@ class TrackedSources(NamedTuple):
     files: list[str]
     languages: dict[str, str | None]
     trees: dict[str, ast.Module]
+    unparsable: dict[str, list[str]]
 
 
 def sources(root: Path, exclude: list[str]) -> TrackedSources:
@@ -143,10 +148,10 @@ def sources(root: Path, exclude: list[str]) -> TrackedSources:
     skipped = [*exclude, *SKIPPED]
     files = [p for p in listed if not any(fnmatch.fnmatch(p, g) for g in skipped)]
     languages = source_languages(root, files)
-    trees = python_trees(
+    trees, unparsable = python_trees(
         root, [p for p, language in languages.items() if language == "Python"]
     )
-    return TrackedSources(listed, files, languages, trees)
+    return TrackedSources(listed, files, languages, trees, unparsable)
 
 
 def measure(root: Path, tracked: TrackedSources) -> tuple[dict, dict]:
@@ -159,6 +164,8 @@ def measure(root: Path, tracked: TrackedSources) -> tuple[dict, dict]:
     )
     merged_values = values | counts
     merged_findings = findings | found
+    merged_findings["unparsable"] = found["unparsable"] | tracked.unparsable
+    merged_values["unparsable"] = counted(merged_findings["unparsable"])
     merged_values["file_lines"] = merged_values["file_lines"] | {
         path: len((root / path).read_bytes().splitlines())
         for path, language in tracked.languages.items()
