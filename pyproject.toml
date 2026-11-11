@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "code-health"
-version = "0.1.0"
+version = "0.1.2"
 description = "Whole-workspace static analysis for Python and Nix, with a Rust preset"
 requires-python = ">=3.12"
 license = "MIT"
@@ -20,4 +20,4 @@ dependencies = [
 code-health = "code_health.cli:main"
 
 [tool.code-health]
-exclude = ["code_health/rule-tests/*"]
+exclude = ["rule-tests/*"]

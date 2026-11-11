@@ -1,6 +1,6 @@
 target-version = "py312"
 extend-exclude = [
-    "code_health/rule-tests/*",
+    "rule-tests/*",
 ]
 
 [lint]

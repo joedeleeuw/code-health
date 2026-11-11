@@ -3,4 +3,4 @@ ruleDirs:
 utilDirs:
   - utils
 testConfigs:
-  - testDir: rule-tests
+  - testDir: ../rule-tests
