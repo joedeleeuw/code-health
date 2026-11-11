@@ -5,8 +5,10 @@ An environment is a virtual environment a project folder holds: a directory
 with a pyvenv.cfg directly in the root or in a folder that declares a project.
 Environments are not tracked, so a folder that holds none in a linked worktree
 is read with those the same folder holds in the repository's primary checkout.
-A folder that holds none in either and has a uv.lock gets the environment uv
-builds from that lock, as running the project would. A measured script that
+A folder that holds none in either and has a uv.lock is read with the packages
+that lock names, which uv installs outside the checkout: one environment per
+lock, beside uv's own cache, without the project itself. The checker writes no
+environment into a repository. A measured script that
 declares inline dependencies runs in the environment uv keeps for it, built
 the same way when it is missing.
 
@@ -16,6 +18,8 @@ running the checker. An import no environment provides is reported by the
 resolver, so a missing environment shows as findings rather than as silence.
 """
 
+import hashlib
+import os
 import posixpath
 import re
 import sys
@@ -54,12 +58,28 @@ def held(folder: Path) -> list[Path]:
     )
 
 
+def locked_environment(root: Path, folder: str) -> Path:
+    """The environment holding the packages a folder's uv.lock names, built
+    beside uv's cache when it is missing and shared by every checkout with
+    that lock."""
+    lock = (root / folder / "uv.lock").read_bytes()
+    cache = Path(run(["uv", "cache", "dir"], root).strip()).parent
+    environment = cache / "code-health/environments" / hashlib.sha256(lock).hexdigest()
+    if not (environment / "pyvenv.cfg").is_file():
+        sync = ["uv", "sync", "--quiet", "--locked", "--no-install-workspace"]
+        run(
+            [*sync, "--project", folder or "."],
+            root,
+            environment={**os.environ, "UV_PROJECT_ENVIRONMENT": str(environment)},
+        )
+    return environment
+
+
 def project_environments(root: Path, primary: Path, folder: str) -> list[Path]:
     """The environments of one project folder of the checkout at root."""
     found = held(root / folder) or held(primary / folder)
     if not found and (root / folder / "uv.lock").is_file():
-        run(["uv", "sync", "--quiet", "--locked", "--project", folder or "."], root)
-        found = held(root / folder)
+        found = [locked_environment(root, folder)]
     return found
 
 
