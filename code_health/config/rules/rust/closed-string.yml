@@ -50,3 +50,32 @@ rule:
                 ofRule:
                   matches: string-literal-arm
               matches: string-literal-arm
+---
+id: closed-string-field-rust
+language: Rust
+severity: warning
+message: A status, kind, state, level, mode, role, category or severity field is a String, so any text is a valid case. Declare the cases in a Rust enum (#[derive(Serialize, Deserialize)]) so the compiler enforces exhaustiveness.
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/target/**"
+  - "**/vendor/**"
+  - "**/third_party/**"
+  - "**/tests/**"
+  - "**/tests.rs"
+  - "**/*_tests.rs"
+  - "**/*_test.rs"
+metadata:
+  directive: G9
+  source: "ai-contexts/AGENT.md#code (Declare the case space first)"
+rule:
+  kind: field_declaration
+  all:
+    - has:
+        field: name
+        regex: "^(status|kind|state|level|mode|role|type_|category|severity)$"
+    - has:
+        field: type
+        regex: "^(String|Option<String>)$"
+    - not:
+        inside: {matches: test-scope, stopBy: end}

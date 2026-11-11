@@ -1,0 +1,27 @@
+id: lock-unwrap-rust
+language: Rust
+severity: warning
+message: A lock is taken with .unwrap(), so one panic while it is held poisons it and every later lock() panics too. Recover the guard with unwrap_or_else(PoisonError::into_inner), propagate the error, or use a lock that does not poison.
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/target/**"
+  - "**/vendor/**"
+  - "**/third_party/**"
+  - "**/tests/**"
+  - "**/tests.rs"
+  - "**/*_tests.rs"
+  - "**/*_test.rs"
+  - "**/benches/**"
+  - "**/*test_support*"
+  - "**/*test-support*/**"
+  - "**/*mock*"
+  - "**/examples/**"
+rule:
+  all:
+    - any:
+        - pattern: $LOCK.lock().unwrap()
+        - pattern: $LOCK.read().unwrap()
+        - pattern: $LOCK.write().unwrap()
+    - not:
+        inside: {matches: test-scope, stopBy: end}

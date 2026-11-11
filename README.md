@@ -17,6 +17,7 @@ Rust is checked by the tools a Rust workspace already runs. `code-health` runs n
 1. Copy `presets/rust/clippy.toml` to the workspace root (or merge it into yours). It sets the complexity, nesting and argument thresholds and the banned methods. Clippy counts `self` as an argument and the function body as one nesting level.
 2. Paste `presets/rust/cargo-config.toml` into the workspace's `.cargo/config.toml`. It defines `cargo lint`: Clippy over every crate and target with the preset's lints and rustc's dead-code and unused warnings denied. The levels ride on the command, so no crate has to opt in.
 3. Run the pattern rules with `ast-grep scan --config <checkout>/presets/rust/sgconfig.yml`.
+4. Install `cargo-machete` and run `cargo machete` for dependencies no code uses. A deliberate exception goes in the crate's `Cargo.toml` under `[package.metadata.cargo-machete]` as `ignored = ["name"]`.
 
 `vague-name-rust` is off by default; `presets/rust/sgconfig-off.yml` runs it.
 
