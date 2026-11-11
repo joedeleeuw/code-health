@@ -6,26 +6,30 @@ Static analysis for Python and Nix repositories, plus a Rust preset for Clippy a
 
 ## Use the rules alone
 
-The pattern rules are plain [ast-grep](https://ast-grep.github.io) rules. They need a checkout of this repository and `ast-grep`, nothing else:
+The pattern rules are plain [ast-grep](https://ast-grep.github.io) rules under `code_health/rules/<language>/`. They need a checkout of this repository and `ast-grep`, nothing else:
 
 ```bash
 git clone https://github.com/joedeleeuw/code-health
 cd your-repo
-ast-grep scan --config ../code-health/presets/sgconfig.yml
+ast-grep scan --config ../code-health/code_health/sgconfig.yml
 ```
 
-A match exits 1, so the same line works as a hook. With lefthook:
+ast-grep applies each rule only to files of its language, so the one config serves any repository. A match exits 1, so the same line works as a hook. With lefthook:
 
 ```yaml
 pre-commit:
   jobs:
     - name: pattern-rules
-      run: ast-grep scan --config ../code-health/presets/sgconfig.yml
+      run: ast-grep scan --config ../code-health/code_health/sgconfig.yml
 ```
 
-- `presets/sgconfig.yml` runs every rule for every language; `presets/rust/sgconfig.yml` runs only the Rust rules.
-- To run a subset, copy the rule files you want into your own rule directory. The Rust rules also need `code_health/config/utils`.
+- `code_health/sgconfig-off.yml` runs the rules under `rules-off/`: correct matches that a graded sample found mostly not worth changing.
+- To run a subset, copy the rule files you want into your own rule directory. The Rust rules also need `code_health/utils/`.
 - To accept a finding, put `// ast-grep-ignore: <rule-id>` (or `#` in Python, Bash and YAML) on the line above it.
+
+## Python preset
+
+`presets/python/ruff.toml` holds the [ruff](https://docs.astral.sh/ruff) settings that go with the Python rules: unused imports and locals, the complexity and argument limits, and a ban on `contextlib.suppress`. Point your own config at it with `extend = "../code-health/presets/python/ruff.toml"` (top level of `ruff.toml`, or under `[tool.ruff]` in `pyproject.toml`), or paste its tables into `ruff.toml`. In `pyproject.toml` each pasted table name needs the `tool.ruff.` prefix; without it ruff ignores the table silently.
 
 ## Rules
 

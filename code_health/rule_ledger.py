@@ -1,4 +1,4 @@
-"""The one owner of retired published rule IDs: code_health/config/retired-rule-ids.json
+"""The one owner of retired published rule IDs: code_health/retired-rule-ids.json
 maps each ID that code-health or process-review published and withdrew to why
 it went and what replaced it. code-health and process-review both read it
 through this module, so a consumer that still names the ID fails with the
@@ -12,9 +12,9 @@ import yaml
 
 from code_health import stop
 
-CONFIG_DIR = Path(__file__).resolve().parent / "config"
-LEDGER = CONFIG_DIR / "retired-rule-ids.json"
-SGCONFIG = CONFIG_DIR / "sgconfig.yml"
+PACKAGE = Path(__file__).resolve().parent
+LEDGER = PACKAGE / "retired-rule-ids.json"
+SGCONFIG = PACKAGE / "sgconfig.yml"
 
 
 def catalog_rule_files() -> list[Path]:

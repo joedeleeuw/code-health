@@ -1,27 +1,3 @@
-id: approval-key-json
-language: Json
-severity: error
-message: Approval/status key in a config. Approval is a human process step, not persisted state.
-ignores:
-  - "**/mocks/**"
-  - "**/fixtures/**"
-  - "**/__fixtures__/**"
-  - "**/testdata/**"
-metadata:
-  directive: S9
-rule:
-  kind: pair
-  all:
-    - has:
-        field: key
-        regex: "(?i)(authori[sz]|approv|qualif|permit|attest|receipt)"
-    - has:
-        field: value
-        any:
-          - kind: "true"
-          - kind: "false"
-          - kind: object
----
 id: approval-key-yaml
 language: Yaml
 severity: error

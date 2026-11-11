@@ -1,4 +1,0 @@
-ruleDirs:
-  - ../code_health/config/rules
-utilDirs:
-  - ../code_health/config/utils

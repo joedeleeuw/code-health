@@ -20,4 +20,4 @@ dependencies = [
 code-health = "code_health.cli:main"
 
 [tool.code-health]
-exclude = ["code_health/config/rule-tests/*"]
+exclude = ["code_health/rule-tests/*"]

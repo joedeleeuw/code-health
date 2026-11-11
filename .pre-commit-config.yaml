@@ -30,7 +30,7 @@ repos:
         types: [python]
       - id: code-health-ast-grep-test
         name: code-health ast-grep rule tests
-        entry: ast-grep test --config code_health/config/sgconfig.yml --skip-snapshot-tests
+        entry: ast-grep test --config code_health/sgconfig.yml --skip-snapshot-tests
         language: system
         pass_filenames: false
         always_run: true

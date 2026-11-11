@@ -1,0 +1,15 @@
+id: host-path-markdown
+language: Markdown
+severity: error
+message: Host-absolute path in a repository file (tracked or untracked; only ignored files are skipped). Use repo-relative links or HOME-relative paths.
+ignores:
+  - "**/fixtures/**"
+  - "**/__fixtures__/**"
+metadata:
+  directive: S4
+rule:
+  any:
+    - kind: inline
+      regex: "(?:^|[^A-Za-z0-9_.~/-]|[A-Za-z][A-Za-z0-9+.-]*://[^/\\s]*)/(Users|home)/[^/]+/"
+    - kind: link_destination
+      regex: "^(?:[A-Za-z][A-Za-z0-9+.-]*://[^/\\s]*)?/(Users|home)/[^/]+/"

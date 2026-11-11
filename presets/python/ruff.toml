@@ -1,0 +1,28 @@
+[lint]
+extend-select = [
+    "F401",    # unused import
+    "F841",    # unused local variable
+    "C901",    # complexity
+    "PLR0913", # too many arguments
+    "BLE001",  # blind except
+    "S110",    # try/except/pass
+    "S112",    # try/except/continue
+    "PLW1510", # subprocess.run without check
+    "B904",    # raise without from inside except
+    "B905",    # zip without strict
+    "SIM116",  # if/elif chain that is a dict lookup
+    "SLF001",  # private member access
+    "TID251",  # banned API
+    "RUF006",  # dangling asyncio task
+    "TRY004",  # wrong exception type for a type check
+    "DTZ",     # naive datetimes
+]
+
+[lint.mccabe]
+max-complexity = 25
+
+[lint.pylint]
+max-args = 5
+
+[lint.flake8-tidy-imports.banned-api]
+"contextlib.suppress".msg = "Fail loudly; do not suppress exceptions."
