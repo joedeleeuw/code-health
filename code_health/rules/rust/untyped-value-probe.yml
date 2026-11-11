@@ -98,6 +98,10 @@ rule:
                       - kind: parameter
                       - not:
                           inside:
+                            kind: closure_parameters
+                            stopBy: neighbor
+                      - not:
+                          inside:
                             matches: trait-impl-fn
                             stopBy:
                               kind: function_item

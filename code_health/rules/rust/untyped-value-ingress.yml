@@ -1,0 +1,89 @@
+id: untyped-value-ingress-rust
+language: Rust
+severity: error
+message: Boundary payload is decoded into an untyped Value, Table, or Mapping instead of a closed #[derive(Deserialize)] struct or enum; parse once at the boundary into the domain type.
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/target/**"
+  - "**/vendor/**"
+  - "**/third_party/**"
+  - "**/tests/**"
+  - "**/examples/**"
+  - "**/benches/**"
+  - "**/tests.rs"
+  - "**/*_tests.rs"
+  - "**/*_test.rs"
+metadata:
+  directive: G4
+utils:
+  untyped-tree-type-file:
+    kind: source_file
+    has:
+      kind: use_declaration
+      regex: "(serde_json|serde_yaml|yaml_serde|toml)::(.*\\b(Value|Table|Mapping)\\b|\\*)"
+      stopBy: end
+rule:
+  all:
+    - not:
+        inside:
+          matches: test-scope
+          stopBy: end
+    - any:
+        - kind: call_expression
+          all:
+            - has:
+                field: function
+                kind: generic_function
+                all:
+                  - has:
+                      field: function
+                      regex: "((serde_json|serde_yaml|yaml_serde|toml)::(from_str|from_slice|from_reader)|\\.json)$"
+                  - has:
+                      field: type_arguments
+                      any:
+                        - regex: "^<\\s*(serde_json::(value::)?|serde_yaml::|yaml_serde::|toml::)(Value|Table|Mapping)\\s*>$"
+                        - all:
+                            - regex: "^<\\s*(Value|Table|Mapping)\\s*>$"
+                            - inside:
+                                matches: untyped-tree-type-file
+                                stopBy: end
+            - not:
+                has:
+                  field: arguments
+                  has:
+                    kind: call_expression
+                    has:
+                      field: function
+                      regex: "^(serde_json::)?to_string"
+                    stopBy: end
+        - kind: let_declaration
+          all:
+            - has:
+                field: type
+                any:
+                  - regex: "^(serde_json::(value::)?|serde_yaml::|yaml_serde::|toml::)(Value|Table|Mapping)$"
+                  - all:
+                      - regex: "^(Value|Table|Mapping)$"
+                      - inside:
+                          matches: untyped-tree-type-file
+                          stopBy: end
+            - has:
+                field: value
+                has:
+                  kind: call_expression
+                  has:
+                    field: function
+                    regex: "((serde_json|serde_yaml|yaml_serde|toml)::(from_str|from_slice|from_reader)|\\.json)$"
+                  stopBy:
+                    kind: block
+            - not:
+                has:
+                  field: value
+                  has:
+                    kind: call_expression
+                    has:
+                      field: function
+                      regex: "^(serde_json::)?to_string"
+                    stopBy:
+                      kind: block

@@ -1,0 +1,31 @@
+id: error-cause-erasure-rust
+language: Rust
+valid:
+  - |
+    fn preserve_source(res: Result<(), std::io::Error>) -> Result<(), AppError> {
+        res.map_err(AppError::Io)
+    }
+  - |
+    fn preserve_source_with_ctx(path: &str, res: Result<(), std::io::Error>) -> Result<(), AppError> {
+        res.map_err(|err| AppError::Read {
+            path: format!("{path}"),
+            source: err,
+        })
+    }
+  - |
+    fn direct_string_owned_by_anemic_error(res: Result<(), std::io::Error>) -> Result<(), String> {
+        res.map_err(|err| err.to_string())
+    }
+invalid:
+  - |
+    fn wrap_to_string(res: Result<(), rusqlite::Error>) -> Result<(), AppError> {
+        res.map_err(|err| AppError::Database(err.to_string()))
+    }
+  - |
+    fn wrap_format(res: Result<(), std::io::Error>) -> Result<(), AppError> {
+        res.map_err(|err| AppError::IoMsg(format!("read failed: {err}")))
+    }
+  - |
+    fn wrap_anyhow(res: Result<(), std::io::Error>) -> anyhow::Result<()> {
+        res.map_err(|err| anyhow::anyhow!("read failed: {err}"))
+    }

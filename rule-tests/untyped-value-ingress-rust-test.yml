@@ -1,0 +1,32 @@
+id: untyped-value-ingress-rust
+language: Rust
+valid:
+  - |
+    fn parse_typed(raw: &str) -> Result<Config, serde_json::Error> {
+        serde_json::from_str::<Config>(raw)
+    }
+  - |
+    fn parse_let_typed(raw: &[u8]) -> Result<Config, serde_json::Error> {
+        let cfg: Config = serde_json::from_slice(raw)?;
+        Ok(cfg)
+    }
+invalid:
+  - |
+    fn parse_json_turbofish(raw: &str) -> Result<serde_json::Value, serde_json::Error> {
+        serde_json::from_str::<serde_json::Value>(raw)
+    }
+  - |
+    use serde_json::Value;
+
+    fn parse_let_value(raw: &str) -> Result<Value, serde_json::Error> {
+        let doc: Value = serde_json::from_str(raw)?;
+        Ok(doc)
+    }
+  - |
+    async fn fetch_json(resp: reqwest::Response) -> Result<serde_json::Value, reqwest::Error> {
+        resp.json::<serde_json::Value>().await
+    }
+  - |
+    fn parse_toml_table(raw: &str) -> Result<toml::Table, toml::de::Error> {
+        toml::from_str::<toml::Table>(raw)
+    }

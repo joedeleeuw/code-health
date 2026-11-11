@@ -1,0 +1,99 @@
+id: untyped-value-boundary-rust
+language: Rust
+severity: error
+message: Raw serde_json::Value in a function parameter, return type, or struct field defers schema validation into callers and callees; use a closed #[derive(Serialize, Deserialize)] struct or enum.
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/target/**"
+  - "**/vendor/**"
+  - "**/third_party/**"
+  - "**/tests/**"
+  - "**/examples/**"
+  - "**/benches/**"
+  - "**/tests.rs"
+  - "**/*_tests.rs"
+  - "**/*_test.rs"
+metadata:
+  directive: G4
+utils:
+  json-value-import-file:
+    kind: source_file
+    has:
+      kind: use_declaration
+      regex: "serde_json::(.*\\bValue\\b|\\*)"
+      stopBy: end
+  json-value-type:
+    any:
+      - kind: scoped_type_identifier
+        regex: "^serde_json::(value::)?Value$"
+      - all:
+          - kind: type_identifier
+            regex: "^Value$"
+          - not:
+              inside:
+                kind: scoped_type_identifier
+                stopBy: neighbor
+          - inside:
+              matches: json-value-import-file
+              stopBy: end
+rule:
+  all:
+    - not:
+        inside:
+          matches: test-scope
+          stopBy: end
+    - matches: json-value-type
+    - not:
+        inside:
+          kind: generic_type
+          has:
+            field: type
+            regex: "(HashMap|BTreeMap|IndexMap|FxHashMap|Map)$"
+          stopBy:
+            any:
+              - kind: field_declaration
+              - kind: parameter
+              - kind: function_item
+              - kind: function_signature_item
+    - any:
+        - inside:
+            all:
+              - kind: field_declaration
+              - not:
+                  matches: serde-flatten-field
+            stopBy:
+              any:
+                - kind: field_declaration
+                - kind: block
+        - inside:
+            all:
+              - kind: parameter
+              - not:
+                  inside:
+                    kind: closure_parameters
+                    stopBy: neighbor
+              - not:
+                  inside:
+                    matches: trait-impl-fn
+                    stopBy:
+                      kind: function_item
+            stopBy:
+              any:
+                - kind: parameter
+                - kind: block
+        - inside:
+            all:
+              - kind: function_item
+              - not:
+                  matches: trait-impl-fn
+            field: return_type
+            stopBy:
+              any:
+                - kind: function_item
+                - kind: block
+        - inside:
+            kind: function_signature_item
+            field: return_type
+            stopBy:
+              kind: function_signature_item

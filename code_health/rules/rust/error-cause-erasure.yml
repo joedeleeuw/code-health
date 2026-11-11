@@ -1,0 +1,84 @@
+id: error-cause-erasure-rust
+language: Rust
+severity: error
+message: .map_err wraps a formatted error string or anyhow! message instead of preserving the underlying error cause; carry #[source]/#[from] on a typed variant or use .context(...).
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/target/**"
+  - "**/vendor/**"
+  - "**/third_party/**"
+  - "**/tests/**"
+  - "**/examples/**"
+  - "**/benches/**"
+  - "**/tests.rs"
+  - "**/*_tests.rs"
+  - "**/*_test.rs"
+metadata:
+  directive: G7
+rule:
+  kind: call_expression
+  all:
+    - not:
+        inside:
+          matches: test-scope
+          stopBy: end
+    - has:
+        field: function
+        kind: field_expression
+        has:
+          field: field
+          regex: "^map_err$"
+    - has:
+        field: arguments
+        has:
+          kind: closure_expression
+          all:
+            - has:
+                field: parameters
+                has:
+                  kind: identifier
+                  pattern: $E
+            - any:
+                - has:
+                    field: body
+                    kind: macro_invocation
+                    has:
+                      field: macro
+                      regex: "^(anyhow::)?anyhow$"
+                - all:
+                    - not:
+                        has:
+                          field: body
+                          any:
+                            - pattern: $E.to_string()
+                            - pattern: $E.to_owned()
+                            - pattern: String::from($E)
+                            - kind: macro_invocation
+                              has:
+                                field: macro
+                                regex: "^(std::)?format$"
+                            - kind: block
+                    - has:
+                        field: body
+                        all:
+                          - has:
+                              any:
+                                - pattern: $E.to_string()
+                                - pattern: $E.to_owned()
+                                - pattern: String::from($E)
+                                - kind: macro_invocation
+                                  has:
+                                    field: macro
+                                    regex: "^(std::)?format$"
+                              stopBy:
+                                kind: closure_expression
+                          - not:
+                              has:
+                                kind: field_initializer
+                                has:
+                                  kind: identifier
+                                  pattern: $E
+                                  stopBy: neighbor
+                                stopBy:
+                                  kind: closure_expression

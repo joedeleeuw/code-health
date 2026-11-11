@@ -1,0 +1,96 @@
+id: value-roundtrip-rust
+language: Rust
+severity: error
+message: Data is serialized into serde_json::Value or JSON text only to be reparsed or mutated by string key in the same scope; construct or transform the typed Rust struct directly.
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/target/**"
+  - "**/vendor/**"
+  - "**/third_party/**"
+  - "**/tests/**"
+  - "**/examples/**"
+  - "**/benches/**"
+  - "**/tests.rs"
+  - "**/*_tests.rs"
+  - "**/*_test.rs"
+metadata:
+  directive: G4
+constraints:
+  KEY:
+    kind: string_literal
+    regex: '^"'
+rule:
+  all:
+    - not:
+        inside:
+          matches: test-scope
+          stopBy: end
+    - any:
+        - kind: call_expression
+          all:
+            - has:
+                field: function
+                regex: "^(serde_json::)?from_value"
+            - has:
+                field: arguments
+                has:
+                  any:
+                    - kind: call_expression
+                      has:
+                        field: function
+                        regex: "^(serde_json::)?to_value"
+                    - kind: macro_invocation
+                      has:
+                        field: macro
+                        regex: "^(serde_json::)?json$"
+                  stopBy:
+                    kind: closure_expression
+        - kind: call_expression
+          all:
+            - has:
+                field: function
+                regex: "^(serde_json::)?from_str"
+            - has:
+                field: arguments
+                has:
+                  kind: call_expression
+                  has:
+                    field: function
+                    regex: "^(serde_json::)?to_string"
+                  stopBy:
+                    kind: closure_expression
+        - kind: let_declaration
+          all:
+            - any:
+                - has:
+                    field: pattern
+                    kind: identifier
+                    pattern: $VAR
+                - has:
+                    field: pattern
+                    has:
+                      kind: identifier
+                      pattern: $VAR
+                      stopBy: neighbor
+            - has:
+                field: value
+                kind: macro_invocation
+                all:
+                  - has:
+                      field: macro
+                      regex: "^(serde_json::)?json$"
+                  - has:
+                      kind: token_tree
+                      regex: "^\\(\\s*\\{"
+            - inside:
+                kind: block
+                has:
+                  any:
+                    - pattern: $VAR[$KEY]
+                    - pattern: $VAR.get($KEY)
+                    - pattern: $VAR.get_mut($KEY)
+                    - pattern: $VAR.as_object_mut()
+                  stopBy:
+                    kind: function_item
+                stopBy: neighbor

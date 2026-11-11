@@ -1,0 +1,103 @@
+id: error-string-branch-rust
+language: Rust
+severity: error
+message: Control flow branches on substrings of a rendered error message instead of matching a typed error variant or structured status code.
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/target/**"
+  - "**/vendor/**"
+  - "**/third_party/**"
+  - "**/tests/**"
+  - "**/examples/**"
+  - "**/benches/**"
+  - "**/tests.rs"
+  - "**/*_tests.rs"
+  - "**/*_test.rs"
+metadata:
+  directive: G7
+constraints:
+  PRED:
+    regex: "^(contains|starts_with|ends_with)$"
+  PAT:
+    kind: string_literal
+    regex: '^"'
+rule:
+  all:
+    - not:
+        inside:
+          matches: test-scope
+          stopBy: end
+    - any:
+        - all:
+            - any:
+                - pattern: $ERR.to_string().$PRED($PAT)
+                - pattern: $ERR.to_string().to_lowercase().$PRED($PAT)
+                - pattern: $ERR.to_string().to_ascii_lowercase().$PRED($PAT)
+            - has:
+                kind: identifier
+                pattern: $ERR
+                regex: "(?i)(^e$|^err$|^error$|_err$|_error$|^err_|^error_)"
+                stopBy: end
+            - not:
+                inside:
+                  kind: match_pattern
+                  stopBy:
+                    kind: match_arm
+            - inside:
+                any:
+                  - kind: if_expression
+                  - kind: match_arm
+                stopBy:
+                  kind: function_item
+        - kind: match_arm
+          has:
+            field: pattern
+            kind: match_pattern
+            all:
+              - regex: "^Err\\s*\\([\\s\\S]*\\bif\\b"
+              - has:
+                  kind: call_expression
+                  has:
+                    field: function
+                    kind: field_expression
+                    has:
+                      field: field
+                      regex: "^(contains|starts_with|ends_with)$"
+                  stopBy: end
+        - kind: if_expression
+          all:
+            - has:
+                field: condition
+                kind: let_condition
+                has:
+                  field: pattern
+                  kind: tuple_struct_pattern
+                  all:
+                    - has:
+                        field: type
+                        regex: "^Err$"
+                    - has:
+                        kind: identifier
+                        not:
+                          regex: "^Err$"
+                        pattern: $E
+            - has:
+                field: consequence
+                has:
+                  kind: if_expression
+                  has:
+                    field: condition
+                    any:
+                      - pattern: $E.$PRED($PAT)
+                      - pattern: $E.to_lowercase().$PRED($PAT)
+                      - pattern: $E.to_ascii_lowercase().$PRED($PAT)
+                      - has:
+                          any:
+                            - pattern: $E.$PRED($PAT)
+                            - pattern: $E.to_lowercase().$PRED($PAT)
+                            - pattern: $E.to_ascii_lowercase().$PRED($PAT)
+                          stopBy:
+                            kind: block
+                  stopBy:
+                    kind: function_item

@@ -1,0 +1,43 @@
+id: error-string-branch-rust
+language: Rust
+valid:
+  - |
+    fn match_typed_variant(res: Result<(), ApiError>) -> bool {
+        matches!(res, Err(ApiError::Unauthorized))
+    }
+  - |
+    fn check_normal_string(line: &str) -> bool {
+        if line.contains("error") {
+            return true;
+        }
+        false
+    }
+invalid:
+  - |
+    fn branch_on_to_string(res: Result<(), ApiError>) -> bool {
+        match res {
+            Ok(()) => false,
+            Err(err) => {
+                if err.to_string().contains("401") {
+                    true
+                } else {
+                    false
+                }
+            }
+        }
+    }
+  - |
+    fn match_guard_on_msg(res: Result<(), String>) -> bool {
+        match res {
+            Err(e) if e.contains("timeout") => true,
+            _ => false,
+        }
+    }
+  - |
+    fn if_let_err_branch(res: Result<(), String>) {
+        if let Err(err) = res {
+            if err.starts_with("ENOENT") {
+                recover();
+            }
+        }
+    }

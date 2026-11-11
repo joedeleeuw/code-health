@@ -1,0 +1,22 @@
+id: untyped-json-response-rust
+language: Rust
+valid:
+  - |
+    fn typed_response(resp: StatusResponse) -> Result<StatusResponse, AppError> {
+        Ok(resp)
+    }
+  - |
+    impl ExternalHandler for Tool {
+        fn handle(&self) -> Result<serde_json::Value, AppError> {
+            Ok(serde_json::json!({ "status": "ok" }))
+        }
+    }
+invalid:
+  - |
+    fn adhoc_bag() -> Result<serde_json::Value, AppError> {
+        Ok(json!({ "status": "ok", "count": 3 }))
+    }
+  - |
+    fn qualified_bag() -> Result<serde_json::Value, AppError> {
+        Ok(serde_json::json!({ "ok": true }))
+    }

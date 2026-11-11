@@ -1,0 +1,57 @@
+id: untyped-value-boundary-rust
+language: Rust
+valid:
+  - |
+    use serde_json::Value;
+
+    struct WireEnvelope {
+        pub kind: String,
+        #[serde(flatten)]
+        pub extra: Value,
+    }
+  - |
+    use serde_json::Value;
+
+    impl ExternalTrait for Handler {
+        fn call(&self, input: Value) -> Value {
+            input
+        }
+    }
+  - |
+    use serde_json::Value;
+
+    fn other_crate_value(input: &sqlmodel_core::Value) -> usize {
+        let _ = Value::Null;
+        input.len()
+    }
+  - |
+    use serde_json::Value;
+
+    struct OwnedByProbeRule {
+        pub bag: std::collections::HashMap<String, Value>,
+    }
+  - |
+    use serde_json::Value;
+
+    fn callback_consumer() {
+        let _cb = |options: Value, code: &str| code.len() + options.to_string().len();
+    }
+invalid:
+  - |
+    use serde_json::Value;
+
+    fn accept_value(payload: &Value) -> usize {
+        payload.to_string().len()
+    }
+  - |
+    fn return_qualified() -> Result<serde_json::Value, DomainError> {
+        todo!()
+    }
+  - |
+    struct InternalRecord {
+        pub metadata: Option<serde_json::Value>,
+    }
+  - |
+    pub trait ToolSpec {
+        fn invoke(&self, args: serde_json::Value) -> serde_json::Value;
+    }

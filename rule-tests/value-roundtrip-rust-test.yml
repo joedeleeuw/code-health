@@ -1,0 +1,32 @@
+id: value-roundtrip-rust
+language: Rust
+valid:
+  - |
+    fn serialize_for_wire(cfg: &Config) -> Result<String, serde_json::Error> {
+        serde_json::to_string(cfg)
+    }
+  - |
+    fn wire_payload(name: &str) -> serde_json::Value {
+        serde_json::json!({ "name": name })
+    }
+invalid:
+  - |
+    fn roundtrip_value(src: &Source) -> Result<Target, serde_json::Error> {
+        serde_json::from_value(serde_json::to_value(src)?)
+    }
+  - |
+    fn roundtrip_macro() -> Result<Target, serde_json::Error> {
+        serde_json::from_value(serde_json::json!({ "k": 1 }))
+    }
+  - |
+    fn roundtrip_str(src: &Source) -> Result<Target, serde_json::Error> {
+        serde_json::from_str(&serde_json::to_string(src)?)
+    }
+  - |
+    fn build_and_mutate(flag: bool) -> serde_json::Value {
+        let mut out = serde_json::json!({ "ok": true });
+        if flag {
+            out["extra"] = serde_json::json!(1);
+        }
+        out
+    }
