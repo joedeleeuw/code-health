@@ -1,0 +1,18 @@
+[alias]
+lint = [
+  "clippy",
+  "--workspace",
+  "--all-targets",
+  "--",
+  "-Dclippy::disallowed_methods",
+  "-Dclippy::disallowed_types",
+  "-Dclippy::let_underscore_must_use",
+  "-Dclippy::let_underscore_lock",
+  "-Dclippy::map_err_ignore",
+  "-Dclippy::manual_unwrap_or_default",
+  "-Dclippy::await_holding_lock",
+  "-Dclippy::await_holding_refcell_ref",
+  "-Dclippy::cognitive_complexity",
+  "-Dclippy::excessive_nesting",
+  "-Dclippy::too_many_arguments",
+]

@@ -12,8 +12,8 @@ spans, JSON objects whose dotted keys shadow the file's own leaves, seams with
 one adapter, and injected dependencies that only tests override. Measured Nix
 files get native Statix and deadnix findings, ratcheted by rule and file;
 both commands must be available on PATH when those files exist. Rust lints
-are not run here: presets/rust holds the Clippy settings and lint levels a Rust
-workspace adopts in its own Cargo.toml and clippy.toml.
+are not run here: presets/rust holds the Clippy settings and the cargo alias a Rust
+workspace adopts in its own clippy.toml and .cargo/config.toml.
 
 The repository's code-health config holds the limits and the pins. A value over
 its limit needs a pin, and a pin is a ceiling that only goes down. A pin above its
