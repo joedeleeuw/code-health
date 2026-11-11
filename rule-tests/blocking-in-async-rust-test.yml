@@ -1,0 +1,62 @@
+id: blocking-in-async-rust
+language: Rust
+valid:
+  - |
+    use tokio::fs;
+    use tokio::process::Command;
+
+    async fn nonblocking() {
+        let _ = fs::read_to_string("input").await;
+        let _ = Command::new("program").output().await;
+    }
+  - |
+    #[cfg(all(test, unix))]
+    mod tests {
+        async fn test_only() {
+            let _ = std::fs::read_to_string("input");
+            let _ = std::process::Command::new("program").output();
+        }
+    }
+invalid:
+  - |
+    use std::fs;
+    use tokio::fs as async_fs;
+
+    async fn mixed_imports() {
+        let _ = fs::read_to_string("input");
+    }
+  - |
+    use std::process::Command;
+    use tokio::process::Command as AsyncCommand;
+
+    async fn mixed_imports() {
+        let _ = Command::new("program").output();
+    }
+  - |
+    use std::fs::{self};
+    use tokio::fs as async_fs;
+
+    async fn mixed_grouped_imports() {
+        let _ = fs::read_to_string("input");
+    }
+  - |
+    use std::process::{Command};
+    use tokio::process::Command as AsyncCommand;
+
+    async fn mixed_grouped_imports() {
+        let _ = Command::new("program").output();
+    }
+  - |
+    #[cfg(any(test, unix))]
+    mod maybe_tests {
+        async fn production() {
+            let _ = std::fs::read_to_string("input");
+        }
+    }
+  - |
+    #[cfg(not(test))]
+    mod production {
+        async fn blocking() {
+            let _ = std::process::Command::new("program").output();
+        }
+    }

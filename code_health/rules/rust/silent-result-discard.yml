@@ -1,0 +1,277 @@
+id: silent-result-discard-rust
+language: Rust
+severity: error
+message: Boundary serde decode, filesystem I/O, or Result failure is silently collapsed into Option, an empty value, or discarded; propagate or handle the error explicitly.
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/target/**"
+  - "**/vendor/**"
+  - "**/third_party/**"
+  - "**/tests/**"
+  - "**/tests.rs"
+  - "**/*_tests.rs"
+  - "**/*_test.rs"
+metadata:
+  directive: G7
+utils:
+  serde-decode-function:
+    kind: scoped_identifier
+    regex: "^(serde_json|serde_yaml|yaml_serde|toml)::(from_str|from_slice|from_reader|from_value)$"
+  serde-decode-call:
+    kind: call_expression
+    has:
+      field: function
+      any:
+        - matches: serde-decode-function
+        - kind: generic_function
+          has:
+            field: function
+            matches: serde-decode-function
+  row-get-function:
+    kind: field_expression
+    all:
+      - has:
+          field: value
+          kind: identifier
+          regex: "^(row|[a-z_]+_row)$"
+      - has:
+          field: field
+          regex: "^(get|try_get|get_named)$"
+  row-get-call:
+    kind: call_expression
+    has:
+      field: function
+      any:
+        - matches: row-get-function
+        - kind: generic_function
+          has:
+            field: function
+            matches: row-get-function
+  ok-wrapped-decode-or-row:
+    kind: call_expression
+    has:
+      field: function
+      kind: field_expression
+      all:
+        - has:
+            field: field
+            regex: "^ok$"
+        - has:
+            field: value
+            any:
+              - matches: serde-decode-call
+              - matches: row-get-call
+  silent-default-expr:
+    any:
+      - pattern: Vec::new()
+      - pattern: String::new()
+      - pattern: HashMap::new()
+      - pattern: BTreeMap::new()
+      - pattern: Default::default()
+      - pattern: vec![]
+      - pattern: None
+      - kind: boolean_literal
+      - all:
+          - kind: integer_literal
+          - regex: "^0$"
+      - all:
+          - kind: float_literal
+          - regex: "^0\\.0$"
+      - all:
+          - kind: string_literal
+          - regex: '^""$'
+  direct-map-or-silent-default:
+    kind: call_expression
+    all:
+      - has:
+          field: function
+          kind: field_expression
+          all:
+            - has:
+                field: field
+                regex: "^(map_or|map_or_else)$"
+            - has:
+                field: value
+                any:
+                  - matches: serde-decode-call
+                  - matches: row-get-call
+      - has:
+          field: arguments
+          has:
+            any:
+              - matches: silent-default-expr
+              - kind: closure_expression
+                has:
+                  field: body
+                  matches: silent-default-expr
+  option-fallback-chain:
+    kind: call_expression
+    has:
+      field: function
+      kind: field_expression
+      all:
+        - has:
+            field: field
+            regex: "^(unwrap_or|unwrap_or_default|unwrap_or_else|map_or|map_or_else)$"
+        - has:
+            field: value
+            any:
+              - matches: ok-wrapped-decode-or-row
+              - has:
+                  matches: ok-wrapped-decode-or-row
+                  stopBy:
+                    kind: arguments
+  sniffer-fn:
+    kind: function_item
+    has:
+      field: name
+      regex: "^(try|sniff|probe|extract|detect|maybe)_"
+rule:
+  all:
+    - not:
+        inside:
+          matches: test-scope
+          stopBy: end
+    - any:
+        - matches: option-fallback-chain
+        - matches: direct-map-or-silent-default
+        - kind: call_expression
+          all:
+            - has:
+                field: function
+                kind: field_expression
+                all:
+                  - has:
+                      field: field
+                      regex: "^(ok|unwrap_or|unwrap_or_default|unwrap_or_else)$"
+                  - has:
+                      field: value
+                      matches: serde-decode-call
+            - not:
+                inside:
+                  any:
+                    - matches: option-fallback-chain
+                    - kind: for_expression
+                    - kind: while_expression
+                    - kind: loop_expression
+                    - matches: sniffer-fn
+                  stopBy: end
+        - kind: call_expression
+          all:
+            - has:
+                field: function
+                kind: field_expression
+                all:
+                  - has:
+                      field: field
+                      regex: "^(unwrap_or|unwrap_or_default|unwrap_or_else)$"
+                  - has:
+                      field: value
+                      matches: row-get-call
+            - not:
+                inside:
+                  matches: option-fallback-chain
+                  stopBy: end
+        - kind: call_expression
+          all:
+            - pattern: $VAR.$METHOD($$$)
+            - has:
+                field: function
+                kind: field_expression
+                all:
+                  - has:
+                      field: value
+                      kind: identifier
+                  - has:
+                      field: field
+                      regex: "^(ok|unwrap_or|unwrap_or_default|unwrap_or_else)$"
+            - inside:
+                kind: block
+                stopBy:
+                  kind: function_item
+                has:
+                  kind: let_declaration
+                  all:
+                    - has:
+                        field: pattern
+                        pattern: $VAR
+                    - has:
+                        field: value
+                        any:
+                          - matches: serde-decode-call
+                          - matches: row-get-call
+            - not:
+                inside:
+                  any:
+                    - kind: for_expression
+                    - kind: while_expression
+                    - kind: loop_expression
+                    - matches: sniffer-fn
+                  stopBy: end
+        - kind: call_expression
+          has:
+            field: function
+            kind: field_expression
+            all:
+              - has:
+                  field: field
+                  regex: "^(unwrap_or_default|unwrap_or|unwrap_or_else)$"
+              - has:
+                  field: value
+                  kind: call_expression
+                  has:
+                    field: function
+                    regex: "^(std::)?fs::(read_to_string|read|read_dir|metadata|canonicalize)$"
+        - kind: if_expression
+          all:
+            - not:
+                any:
+                  - has:
+                      field: alternative
+                      kind: else_clause
+                  - inside:
+                      any:
+                        - kind: for_expression
+                        - kind: while_expression
+                        - kind: loop_expression
+                        - matches: sniffer-fn
+                      stopBy: end
+            - has:
+                field: condition
+                kind: let_condition
+                all:
+                  - has:
+                      field: pattern
+                      regex: "^Ok\\("
+                  - has:
+                      field: value
+                      any:
+                        - matches: serde-decode-call
+                        - matches: row-get-call
+                        - kind: call_expression
+                          has:
+                            field: function
+                            regex: "^(std::)?fs::(read_to_string|read|read_dir|write|create_dir_all|remove_file)$"
+        - kind: match_arm
+          all:
+            - has:
+                field: pattern
+                kind: match_pattern
+                regex: "^Err\\(\\s*_[A-Za-z0-9_]*\\s*\\)$"
+            - has:
+                field: value
+                any:
+                  - pattern: Vec::new()
+                  - pattern: String::new()
+                  - pattern: HashMap::new()
+                  - pattern: BTreeMap::new()
+                  - pattern: Default::default()
+                  - pattern: vec![]
+                  - pattern: None
+                  - pattern: "false"
+                  - pattern: Ok(None)
+                  - pattern: Ok(Vec::new())
+                  - pattern: Ok(String::new())
+                  - pattern: Ok(false)
+                  - pattern: Err($MSG)

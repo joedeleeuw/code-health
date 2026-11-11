@@ -1,0 +1,68 @@
+id: anemic-error-rust
+language: Rust
+valid:
+  - |
+    fn typed(input: Result<(), Error>) -> Result<(), DomainError> {
+        input.map_err(DomainError::from)
+    }
+  - |
+    fn cleanup_without_erasure(input: Result<(), Error>) -> Result<(), DomainError> {
+        input.map_err(|error| {
+            error.to_string();
+            cleanup()
+        })
+    }
+  - |
+    #[cfg(all(test, unix))]
+    fn test_only(input: Result<(), Error>) -> Result<(), String> {
+        input.map_err(|error| { error.to_string() })
+    }
+invalid:
+  - |
+    fn erase(input: Result<(), Error>) -> Result<(), String> {
+        input.map_err(|error| error.to_string())
+    }
+  - |
+    fn erase_display(input: Result<(), Error>) -> Result<(), String> {
+        input.map_err(|error| format!("{}", error))
+    }
+  - |
+    fn erase_interpolation(input: Result<(), Error>) -> Result<(), String> {
+        input.map_err(|error| format!("{error}"))
+    }
+  - |
+    fn erase_block(input: Result<(), Error>) -> Result<(), String> {
+        input.map_err(|error| { error.to_string() })
+    }
+  - |
+    fn erase_after_cleanup(input: Result<(), Error>) -> Result<(), String> {
+        input.map_err(|error| {
+            first_cleanup();
+            second_cleanup();
+            error.to_string()
+        })
+    }
+  - |
+    fn erase_display_after_cleanup(input: Result<(), Error>) -> Result<(), String> {
+        input.map_err(|error| {
+            cleanup();
+            format!("{}", error)
+        })
+    }
+  - |
+    fn erase_interpolation_block(input: Result<(), Error>) -> Result<(), String> {
+        input.map_err(|error| { format!("{error}") })
+    }
+  - |
+    fn scoped(input: u8) -> std::result::Result<u8, String> {
+        Ok(input)
+    }
+  - |
+    fn core_scoped(input: u8) -> core::result::Result<u8, String> {
+        Ok(input)
+    }
+  - |
+    #[cfg(any(test, unix))]
+    fn maybe_test(input: Result<(), Error>) -> Result<(), String> {
+        input.map_err(|error| { error.to_string() })
+    }

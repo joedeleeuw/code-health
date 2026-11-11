@@ -1,0 +1,144 @@
+id: blocking-in-async-rust
+language: Rust
+severity: error
+message: Blocking thread::sleep, synchronous std::fs I/O, or synchronous std::process::Command execution inside an async function or block stalls the async runtime executor; use tokio::time::sleep, tokio::fs, tokio::process::Command, or spawn_blocking.
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/target/**"
+  - "**/vendor/**"
+  - "**/third_party/**"
+  - "**/tests/**"
+  - "**/tests.rs"
+  - "**/*_tests.rs"
+  - "**/*_test.rs"
+metadata:
+  directive: G7
+utils:
+  async-scope:
+    any:
+      - kind: function_item
+        has:
+          kind: function_modifiers
+          regex: "\\basync\\b"
+      - kind: async_block
+      - kind: closure_expression
+        regex: "^async\\b"
+  exec-boundary:
+    any:
+      - kind: function_item
+      - kind: async_block
+      - kind: closure_expression
+  blocking-escape:
+    kind: call_expression
+    has:
+      field: function
+      regex: "(spawn_blocking|block_in_place)$"
+  async-fs-import:
+    kind: source_file
+    has:
+      kind: use_declaration
+      regex: "(tokio|async_std|smol)::(?:fs\\s*;|.*\\bfs\\s*[,}])"
+      stopBy: end
+  async-command-import:
+    kind: source_file
+    has:
+      kind: use_declaration
+      regex: "(tokio|async_std|smol)::(?:process::Command\\s*;|.*\\bCommand\\s*[,}])"
+      stopBy: end
+  sync-fs-import:
+    kind: source_file
+    has:
+      kind: use_declaration
+      regex: "std::fs(?:\\s*;|\\s*::\\{[^}]*\\bself\\b)"
+      stopBy: end
+  sync-command-import:
+    kind: source_file
+    has:
+      kind: use_declaration
+      all:
+        - regex: "std::process::(?:Command\\b|.*\\{[^}]*\\bCommand\\b)"
+        - not:
+            regex: "\\bCommand\\s+as\\s+\\w+"
+      stopBy: end
+  sync-command-call:
+    kind: call_expression
+    any:
+      - has:
+          field: function
+          kind: scoped_identifier
+          regex: "^std::process::Command::new$"
+      - all:
+          - has:
+              field: function
+              kind: scoped_identifier
+              regex: "^Command::new$"
+          - any:
+              - inside:
+                  matches: sync-command-import
+                  stopBy: end
+              - not:
+                  inside:
+                    matches: async-command-import
+                    stopBy: end
+rule:
+  kind: call_expression
+  all:
+    - not:
+        inside:
+          matches: test-scope
+          stopBy: end
+    - not:
+        inside:
+          kind: await_expression
+          stopBy:
+            any:
+              - kind: arguments
+              - kind: expression_statement
+              - matches: exec-boundary
+    - any:
+        - has:
+            field: function
+            kind: scoped_identifier
+            regex: "^(std::)?thread::sleep$"
+        - has:
+            field: function
+            kind: scoped_identifier
+            regex: "^std::fs::(read_to_string|read|write|read_dir|create_dir|create_dir_all|remove_file|remove_dir|remove_dir_all|copy|rename|metadata|symlink_metadata|canonicalize)$"
+        - all:
+            - has:
+                field: function
+                kind: scoped_identifier
+                regex: "^fs::(read_to_string|read|write|read_dir|create_dir|create_dir_all|remove_file|remove_dir|remove_dir_all|copy|rename|metadata|symlink_metadata|canonicalize)$"
+            - any:
+                - inside:
+                    matches: sync-fs-import
+                    stopBy: end
+                - not:
+                    inside:
+                      matches: async-fs-import
+                      stopBy: end
+        - has:
+            field: function
+            kind: field_expression
+            all:
+              - has:
+                  field: field
+                  regex: "^(output|status|wait|wait_with_output)$"
+              - has:
+                  field: value
+                  kind: call_expression
+                  any:
+                    - matches: sync-command-call
+                    - has:
+                        matches: sync-command-call
+                        stopBy: end
+    - inside:
+        matches: async-scope
+        stopBy:
+          matches: exec-boundary
+    - not:
+        inside:
+          matches: blocking-escape
+          stopBy:
+            matches: async-scope

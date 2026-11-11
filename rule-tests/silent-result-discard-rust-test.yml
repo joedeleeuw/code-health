@@ -1,0 +1,81 @@
+id: silent-result-discard-rust
+language: Rust
+valid:
+  - |
+    fn load(raw: &str) -> Result<Config, serde_json::Error> {
+        serde_json::from_str::<Config>(raw)
+    }
+  - |
+    fn try_parse_config(raw: &str) -> Option<Config> {
+        serde_json::from_str::<Config>(raw).ok()
+    }
+  - |
+    fn read_row(row: &Row) -> Result<String, SqlError> {
+        row.try_get("id")
+    }
+  - |
+    fn parse_with_warning(raw: serde_json::Value, warnings: &mut Vec<String>) -> Option<Config> {
+        serde_json::from_value(raw).map_or_else(
+            |err| {
+                warnings.push(err.to_string());
+                None
+            },
+            Some,
+        )
+    }
+invalid:
+  - |
+    fn parse_direct(raw: &str) -> Option<Config> {
+        serde_json::from_str(raw).ok()
+    }
+  - |
+    fn parse_turbofish(raw: &str) -> Option<Config> {
+        serde_json::from_str::<Config>(raw).ok()
+    }
+  - |
+    fn parse_ok_map_or(raw: &str) -> usize {
+        serde_json::from_str::<Vec<String>>(raw).ok().map_or(0, |items| items.len())
+    }
+  - |
+    fn parse_ok_map_or_else(raw: &str) -> Config {
+        toml::from_str::<Config>(raw).ok().map_or_else(Config::empty, |cfg| cfg)
+    }
+  - |
+    fn parse_ok_unwrap_or_default(raw: &str) -> Config {
+        serde_json::from_str::<Config>(raw).ok().unwrap_or_default()
+    }
+  - |
+    fn try_parse_ok_unwrap_or(raw: &str, fallback: Config) -> Config {
+        serde_json::from_str::<Config>(raw).ok().unwrap_or(fallback)
+    }
+  - |
+    fn parse_ok_unwrap_or_else(raw: &str) -> Config {
+        toml::from_str(raw).ok().unwrap_or_else(Config::empty)
+    }
+  - |
+    fn row_generic_ok_unwrap_or_default(row: &Row) -> String {
+        row.get::<_, String>(0).ok().unwrap_or_default()
+    }
+  - |
+    fn row_named_ok_unwrap_or_default(row: &Row) -> i64 {
+        row.get_named::<i64>("latency").ok().unwrap_or_default()
+    }
+  - |
+    fn row_ok_unwrap_or_default(row: &Row) -> String {
+      row.try_get("name").ok().unwrap_or_default()
+    }
+  - |
+    fn intermediate_binding_ok(raw: &str) -> Option<Config> {
+      let parsed = serde_json::from_str::<Config>(raw);
+      parsed.ok()
+    }
+  - |
+    fn if_let_ok_serde_without_else(raw: &str, out: &mut Vec<Config>) {
+      if let Ok(cfg) = serde_json::from_str::<Config>(raw) {
+        out.push(cfg);
+      }
+    }
+  - |
+    fn fs_read_unwrap_or_else(path: &str) -> String {
+      std::fs::read_to_string(path).unwrap_or_else(|_| String::new())
+    }
