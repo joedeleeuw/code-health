@@ -35,14 +35,14 @@ pre-commit:
 |---|---|
 | `anemic-error-rust` | Function returns Result<T, String> or erases error types via .map_err(\|e\| e.to_string()); use a typed domain error enum or error crate type. |
 | `blocking-in-async-rust` | Blocking thread::sleep, synchronous std::fs I/O, or synchronous std::process::Command execution inside an async function or block stalls the async runtime executor; use tokio::time::sleep, tokio::fs, tokio::process::Command, or spawn_blocking. |
-| `closed-string-field-rust` | A status, kind, state, level, mode, role or severity field is a String, so any text is a valid case. |
+| `closed-string-field-rust` (off by default) | A status, kind, state, level, mode, role or severity field is a String, so any text is a valid case. |
 | `closed-string-rust` | A struct field stores a closed case space as String instead of an enum. |
 | `compat-identifier-rust` | Compatibility/retirement name declared, or one receiver probed under a fallback key. |
 | `dated-comment-rust` | Dated provenance prose in a comment. |
 | `elif-chain-rust` | If/else-if chain with 3+ else-ifs. |
 | `hash-literal-rust` (off by default) | Hash pin of a repo-tracked file (64-hex literal). |
 | `host-path-rust` | Host-absolute path in a repository file (tracked or untracked; only ignored files are skipped). |
-| `lock-unwrap-rust` | A lock is taken with .unwrap(), so one panic while it is held poisons it and every later lock() panics too. |
+| `lock-unwrap-rust` (off by default) | A lock is taken with .unwrap(), so one panic while it is held poisons it and every later lock() panics too. |
 | `secret-call-rust` | Direct secret-store call (secret-tool, op, security). |
 | `silent-result-discard-rust` | Boundary serde decode, filesystem I/O, or Result failure is silently collapsed into Option, an empty value, or discarded; propagate or handle the error explicitly. |
 | `single-call-hop-rust` | Private function only forwards its parameters, in order, to one first-party call; call the target directly or give the wrapper a job. |
@@ -116,7 +116,7 @@ Rust is checked by the tools a Rust workspace already runs. `code-health` runs n
 3. Run the pattern rules with `ast-grep scan --config <checkout>/presets/rust/sgconfig.yml`.
 4. Install `cargo-machete` and run `cargo machete` for dependencies no code uses. A deliberate exception goes in the crate's `Cargo.toml` under `[package.metadata.cargo-machete]` as `ignored = ["name"]`.
 
-`vague-name-rust` is off by default; `presets/rust/sgconfig-off.yml` runs it.
+`vague-name-rust`, `lock-unwrap-rust` and `closed-string-field-rust` are off by default: they match what they say, but in a graded sample most of their findings were not worth changing. `presets/rust/sgconfig-off.yml` runs them.
 
 `cargo lint` then fails on the preset's lints. The pattern rule `suppressed-limit-rust` reports an `allow` or `expect` of one of those lints that states no reason.
 
