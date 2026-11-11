@@ -1,0 +1,56 @@
+id: unbounded-http-client-rust
+language: Rust
+severity: error
+message: reqwest::get, Client::new(), or ureq::get/post constructs an HTTP request or client with no timeout; configure Client::builder().timeout(...) or AgentBuilder::new().timeout(...) so hung peers cannot stall callers indefinitely.
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/target/**"
+  - "**/vendor/**"
+  - "**/third_party/**"
+  - "**/tests/**"
+  - "**/test_utils/**"
+  - "**/test-utils/**"
+  - "**/testing/**"
+  - "**/examples/**"
+  - "**/benches/**"
+  - "**/tests.rs"
+  - "**/*_tests.rs"
+  - "**/*_test.rs"
+utils:
+  reqwest-client-import:
+    kind: source_file
+    has:
+      kind: use_declaration
+      regex: "reqwest::(.*\\bClient\\b|\\*)"
+      stopBy: end
+rule:
+  kind: call_expression
+  all:
+    - not:
+        inside:
+          matches: test-scope
+          stopBy: end
+    - not:
+        inside:
+          kind: call_expression
+          has:
+            field: function
+            kind: field_expression
+            has:
+              field: field
+              regex: "^timeout$"
+          stopBy: end
+    - any:
+        - has:
+            field: function
+            kind: scoped_identifier
+            regex: "^(reqwest::(blocking::)?get|reqwest::(blocking::)?Client::new|ureq::(get|post|put|delete|patch|head|Agent::new))$"
+        - all:
+            - has:
+                field: function
+                kind: scoped_identifier
+                regex: "^Client::new$"
+            - inside:
+                matches: reqwest-client-import
+                stopBy: end

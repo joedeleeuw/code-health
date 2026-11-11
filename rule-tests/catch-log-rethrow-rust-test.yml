@@ -1,0 +1,34 @@
+id: catch-log-rethrow-rust
+language: Rust
+valid:
+  - |
+    fn load(path: &str) -> Result<String, AppError> {
+        std::fs::read_to_string(path).map_err(|err| AppError::Io { path: path.into(), source: err })
+    }
+  - |
+    fn maybe_load(path: &str) -> Option<String> {
+        std::fs::read_to_string(path)
+            .inspect_err(|err| tracing::warn!("optional config unreadable: {err}"))
+            .ok()
+    }
+  - |
+    #[test]
+    fn logs_in_test() -> Result<(), std::io::Error> {
+        let _ = std::fs::read_to_string("x").inspect_err(|e| eprintln!("{e}"))?;
+        Ok(())
+    }
+invalid:
+  - |
+    fn load(path: &str) -> Result<String, std::io::Error> {
+        let content = std::fs::read_to_string(path)
+            .inspect_err(|err| tracing::error!("read failed: {err}"))?;
+        Ok(content)
+    }
+  - |
+    fn load_mapped(path: &str) -> Result<String, std::io::Error> {
+        let content = std::fs::read_to_string(path).map_err(|err| {
+            log::warn!("read failed: {err}");
+            err
+        })?;
+        Ok(content)
+    }

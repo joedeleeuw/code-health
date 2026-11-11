@@ -1,0 +1,36 @@
+id: reexport-module-rust
+language: Rust
+severity: error
+message: Re-export-only shim module adds an indirection hop without owning behavior; import from the defining module or re-export at the crate boundary (lib.rs / mod.rs).
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/target/**"
+  - "**/vendor/**"
+  - "**/third_party/**"
+  - "**/tests/**"
+  - "**/examples/**"
+  - "**/benches/**"
+  - "**/lib.rs"
+  - "**/mod.rs"
+  - "**/main.rs"
+  - "**/prelude.rs"
+  - "**/tests.rs"
+  - "**/*_tests.rs"
+  - "**/*_test.rs"
+rule:
+  kind: source_file
+  all:
+    - has:
+        kind: use_declaration
+        has:
+          kind: visibility_modifier
+    - not:
+        has:
+          not:
+            any:
+              - kind: use_declaration
+              - kind: line_comment
+              - kind: block_comment
+              - kind: attribute_item
+              - kind: inner_attribute_item

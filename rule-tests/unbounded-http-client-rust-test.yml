@@ -1,0 +1,44 @@
+id: unbounded-http-client-rust
+language: Rust
+valid:
+  - |
+    use reqwest::Client;
+    use std::time::Duration;
+    fn build_http() -> reqwest::Result<Client> {
+        Client::builder().timeout(Duration::from_secs(10)).build()
+    }
+  - |
+    use std::time::Duration;
+    fn fetch(url: &str) -> Result<ureq::Response, ureq::Error> {
+        ureq::get(url).timeout(Duration::from_secs(5)).call()
+    }
+  - |
+    struct Client;
+    impl Client {
+        fn new() -> Self { Self }
+    }
+    fn local_client() -> Client {
+        Client::new()
+    }
+  - |
+    #[cfg(test)]
+    mod tests {
+        #[tokio::test]
+        async fn smoke() {
+            let _ = reqwest::get("http://localhost:8080").await;
+        }
+    }
+invalid:
+  - |
+    async fn fetch_status(url: &str) -> reqwest::Result<reqwest::Response> {
+        reqwest::get(url).await
+    }
+  - |
+    use reqwest::Client;
+    fn make_client() -> Client {
+        Client::new()
+    }
+  - |
+    fn blocking_fetch(url: &str) -> Result<ureq::Response, ureq::Error> {
+        ureq::get(url).call()
+    }

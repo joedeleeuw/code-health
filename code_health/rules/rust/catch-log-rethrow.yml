@@ -1,0 +1,80 @@
+id: catch-log-rethrow-rust
+language: Rust
+severity: error
+message: Logging an error inside inspect_err or map_err and immediately propagating it unmodified with ? duplicates error logs across stack frames; add domain context or log once at the top-level boundary.
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/target/**"
+  - "**/vendor/**"
+  - "**/third_party/**"
+  - "**/tests/**"
+  - "**/examples/**"
+  - "**/benches/**"
+  - "**/tests.rs"
+  - "**/*_tests.rs"
+  - "**/*_test.rs"
+rule:
+  kind: try_expression
+  all:
+    - not:
+        inside:
+          matches: test-scope
+          stopBy: end
+    - any:
+        - has:
+            kind: call_expression
+            all:
+              - has:
+                  field: function
+                  kind: field_expression
+                  has:
+                    field: field
+                    regex: "^inspect_err$"
+              - has:
+                  field: arguments
+                  has:
+                    kind: macro_invocation
+                    has:
+                      field: macro
+                      regex: "(warn|error|eprintln)$"
+                    stopBy: end
+            stopBy: neighbor
+        - has:
+            kind: call_expression
+            all:
+              - has:
+                  field: function
+                  kind: field_expression
+                  has:
+                    field: field
+                    regex: "^map_err$"
+              - has:
+                  field: arguments
+                  has:
+                    kind: closure_expression
+                    all:
+                      - has:
+                          field: parameters
+                          has:
+                            kind: identifier
+                            pattern: $E
+                      - has:
+                          field: body
+                          kind: block
+                          all:
+                            - not:
+                                has:
+                                  kind: let_declaration
+                                  stopBy: neighbor
+                            - has:
+                                kind: macro_invocation
+                                has:
+                                  field: macro
+                                  regex: "(warn|error|eprintln)$"
+                                stopBy: end
+                            - has:
+                                kind: identifier
+                                pattern: $E
+                                stopBy: neighbor
+            stopBy: neighbor
