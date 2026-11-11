@@ -100,6 +100,7 @@ def load_jsonc(path: Path) -> object:
         without_trailing_commas(without_comments(path.read_text(encoding="utf-8")))
     )
 
+
 EXTENSIONS = frozenset(
     "py pyi md json jsonc jsonl yaml yml toml txt sh bash zsh fish ts tsx js"
     " mjs cjs jsx rs go c h cpp sql html css csv ipynb cfg ini conf j2 patch"

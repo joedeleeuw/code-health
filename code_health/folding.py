@@ -25,7 +25,7 @@ import posixpath
 from itertools import product
 
 from code_health.bindings import ModuleUses
-from code_health.symbols import enclosing_scope, parameter_names
+from code_health.symbols import enclosing_scope, local_nodes, parameter_names
 
 FUNCTIONS = (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)
 
@@ -367,5 +367,5 @@ class StringValues(ModuleStrings):
             return None, binding
         if name in parameter_names(binding):
             return PARAMETER, binding
-        assigned = assigned_to(name, ast.walk(binding))
+        assigned = assigned_to(name, local_nodes(binding))
         return (assigned[0] if len(assigned) == 1 else None), binding

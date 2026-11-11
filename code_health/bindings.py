@@ -56,7 +56,6 @@ MOCK_ASSERTIONS = frozenset(
 CAPTURES = (ast.ExceptHandler, ast.MatchAs, ast.MatchStar)
 
 
-
 def bound_names(node: ast.AST) -> list[str]:
     """The names a node of a scope binds in it: a stored name, a definition, an
     import or a capture."""

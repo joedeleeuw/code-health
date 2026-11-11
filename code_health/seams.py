@@ -159,6 +159,17 @@ def record_call(
             resolved_calls[id(target)].append((path, call))
 
 
+def owned_functions(path: str, statements: list[ast.stmt], owner: str | None):
+    """The statements' functions and the methods of their classes at any
+    depth, each with its dotted class; function bodies are not entered."""
+    for node in statements:
+        if isinstance(node, FUNCTIONS):
+            yield path, owner, node
+        elif isinstance(node, ast.ClassDef):
+            nested = f"{owner}.{node.name}" if owner else node.name
+            yield from owned_functions(path, node.body, nested)
+
+
 def python_index(trees: dict[str, ast.Module], modules: Modules):
     """Calls by resolved target, production functions with their class, and the
     repository's module-level function names."""
@@ -172,14 +183,10 @@ def python_index(trees: dict[str, ast.Module], modules: Modules):
                 record_call(resolved_calls, symbols, path, node)
         if TEST.search(path):
             continue
-        for node in tree.body:
-            if isinstance(node, FUNCTIONS):
-                first_party.add(node.name)
-            owned = node.body if isinstance(node, ast.ClassDef) else [node]
-            owner = node.name if isinstance(node, ast.ClassDef) else None
-            functions += [
-                (path, owner, item) for item in owned if isinstance(item, FUNCTIONS)
-            ]
+        first_party.update(
+            node.name for node in tree.body if isinstance(node, FUNCTIONS)
+        )
+        functions += owned_functions(path, tree.body, None)
     return resolved_calls, functions, first_party
 
 

@@ -137,18 +137,24 @@ def compute_nesting(scope_node: ast.AST) -> int:
 def compute_complexity(scope_node: ast.AST) -> int:
     complexity = 1
 
-    def count_comp(comp: ast.ListComp | ast.SetComp | ast.DictComp | ast.GeneratorExp) -> None:
+    def count_comp(
+        comp: ast.ListComp | ast.SetComp | ast.DictComp | ast.GeneratorExp,
+    ) -> None:
         nonlocal complexity
         for gen in comp.generators:
             complexity += 1
             complexity += len(gen.ifs)
 
     def walk_expr(expr: ast.expr, direct_statement: bool = False) -> None:
-        if isinstance(expr, (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)):
+        if isinstance(
+            expr, (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)
+        ):
             if direct_statement:
                 count_comp(expr)
         for child in ast.iter_child_nodes(expr):
-            if not isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.stmt)):
+            if not isinstance(
+                child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.stmt)
+            ):
                 walk_expr(child, False)
 
     def walk_stmt(node: ast.AST) -> None:
@@ -156,23 +162,38 @@ def compute_complexity(scope_node: ast.AST) -> int:
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
             return
 
-        if isinstance(node, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.ExceptHandler, ast.match_case)):
+        if isinstance(
+            node,
+            (
+                ast.If,
+                ast.For,
+                ast.AsyncFor,
+                ast.While,
+                ast.ExceptHandler,
+                ast.match_case,
+            ),
+        ):
             complexity += 1
 
-        if isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign, ast.Return, ast.Expr)):
+        if isinstance(
+            node, (ast.Assign, ast.AnnAssign, ast.AugAssign, ast.Return, ast.Expr)
+        ):
             expression = getattr(node, "value", None)
             if expression is not None:
                 walk_expr(expression, direct_statement=True)
             for child in ast.iter_child_nodes(node):
                 if child is not expression and not isinstance(
-                    child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.stmt)
+                    child,
+                    (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.stmt),
                 ):
                     walk_expr(child, False)
         else:
             for child in ast.iter_child_nodes(node):
                 if isinstance(child, (ast.stmt, ast.ExceptHandler, ast.match_case)):
                     walk_stmt(child)
-                elif not isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                elif not isinstance(
+                    child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+                ):
                     walk_expr(child, False)
 
     body = getattr(scope_node, "body", [])
