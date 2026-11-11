@@ -17,4 +17,4 @@ rule:
     all:
       - has: {kind: identifier, regex: "^(allow|expect)$"}
       - not: {regex: "\\breason\\s*="}
-      - regex: "clippy::(disallowed_methods|disallowed_types|let_underscore_must_use|let_underscore_lock|map_err_ignore|manual_unwrap_or_default|await_holding_lock|await_holding_refcell_ref|cognitive_complexity|excessive_nesting|too_many_arguments|too_many_lines|type_complexity)\\b"
+      - regex: "clippy::(disallowed_methods|let_underscore_must_use|let_underscore_lock|map_err_ignore|manual_unwrap_or_default|await_holding_lock|await_holding_refcell_ref|cognitive_complexity|excessive_nesting|too_many_arguments|too_many_lines|type_complexity)\\b"

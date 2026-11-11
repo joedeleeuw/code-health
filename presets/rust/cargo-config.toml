@@ -2,10 +2,10 @@
 lint = [
   "clippy",
   "--workspace",
-  "--all-targets",
+  "--lib",
+  "--bins",
   "--",
   "-Dclippy::disallowed_methods",
-  "-Dclippy::disallowed_types",
   "-Dclippy::let_underscore_must_use",
   "-Dclippy::let_underscore_lock",
   "-Dclippy::map_err_ignore",

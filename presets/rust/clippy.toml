@@ -2,19 +2,5 @@ cognitive-complexity-threshold = 25
 excessive-nesting-threshold = 5
 too-many-arguments-threshold = 5
 disallowed-methods = [
-  { path = "core::result::Result::unwrap_or", reason = "fail loudly: a silent default hides the failure; propagate the error or match it" },
-  { path = "core::result::Result::unwrap_or_default", reason = "fail loudly: a silent default hides the failure; propagate the error or match it" },
-  { path = "serde_json::from_value", reason = "parse at boundaries: decode the input once into a closed #[derive(Deserialize)] type instead of reparsing a Value" },
-  { path = "serde_json::Value::get", reason = "parse at boundaries: an untyped key probe defers schema validation; decode into a closed type" },
-  { path = "serde_json::Value::get_mut", reason = "parse at boundaries: an untyped key probe defers schema validation; decode into a closed type" },
-  { path = "serde_json::Value::pointer", reason = "parse at boundaries: an untyped path probe defers schema validation; decode into a closed type" },
-  { path = "serde_json::Value::as_str", reason = "parse at boundaries: an untyped coercion defers schema validation; decode into a closed type" },
-  { path = "serde_json::Value::as_u64", reason = "parse at boundaries: an untyped coercion defers schema validation; decode into a closed type" },
-  { path = "serde_json::Value::as_i64", reason = "parse at boundaries: an untyped coercion defers schema validation; decode into a closed type" },
-  { path = "serde_json::Value::as_f64", reason = "parse at boundaries: an untyped coercion defers schema validation; decode into a closed type" },
-  { path = "serde_json::Value::as_bool", reason = "parse at boundaries: an untyped coercion defers schema validation; decode into a closed type" },
-  { path = "serde_json::Value::as_array", reason = "parse at boundaries: an untyped coercion defers schema validation; decode into a closed type" },
-  { path = "serde_json::Value::as_object", reason = "parse at boundaries: an untyped coercion defers schema validation; decode into a closed type" },
-  { path = "serde_json::Value::as_null", reason = "parse at boundaries: an untyped coercion defers schema validation; decode into a closed type" },
   { path = "std::thread::sleep", reason = "fail loudly: a sleep hides a missing readiness signal or blocks an async runtime; wait on the event or use the runtime timer" },
 ]

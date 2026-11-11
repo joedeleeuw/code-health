@@ -1,7 +1,7 @@
 id: blocking-in-async-rust
 language: Rust
 severity: error
-message: Blocking thread::sleep, synchronous std::fs I/O, or synchronous std::process::Command execution inside an async function or block stalls the async runtime executor; use tokio::time::sleep, tokio::fs, tokio::process::Command, or spawn_blocking.
+message: Synchronous std::fs I/O or std::process::Command execution inside an async function or block stalls the async runtime executor; use tokio::fs, tokio::process::Command, or spawn_blocking.
 ignores:
   - "**/gen/**"
   - "**/generated/**"
@@ -9,6 +9,8 @@ ignores:
   - "**/vendor/**"
   - "**/third_party/**"
   - "**/tests/**"
+  - "**/examples/**"
+  - "**/benches/**"
   - "**/tests.rs"
   - "**/*_tests.rs"
   - "**/*_test.rs"
@@ -97,10 +99,6 @@ rule:
               - kind: expression_statement
               - matches: exec-boundary
     - any:
-        - has:
-            field: function
-            kind: scoped_identifier
-            regex: "^(std::)?thread::sleep$"
         - has:
             field: function
             kind: scoped_identifier

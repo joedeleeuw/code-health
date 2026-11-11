@@ -10,6 +10,10 @@ valid:
         let _ = Command::new("program").output().await;
     }
   - |
+    async fn sleep_owned_by_clippy() {
+        std::thread::sleep(std::time::Duration::from_millis(1));
+    }
+  - |
     #[cfg(all(test, unix))]
     mod tests {
         async fn test_only() {
