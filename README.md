@@ -30,7 +30,7 @@ pre-commit:
 
 ## Python preset
 
-`presets/python/ruff.toml` holds the [ruff](https://docs.astral.sh/ruff) settings that go with the Python rules: unused imports and locals, the complexity and argument limits, and a ban on `contextlib.suppress`. `presets/python/ruff-off.toml` extends it with bans that are house policy and off by default: mocks and `@deprecated`. Point your own config at one of them with `extend = "../code-health/presets/python/ruff.toml"` (top level of `ruff.toml`, or under `[tool.ruff]` in `pyproject.toml`), or paste its tables into `ruff.toml`. In `pyproject.toml` each pasted table name needs the `tool.ruff.` prefix; without it ruff ignores the table silently.
+`presets/python/ruff.toml` holds the [ruff](https://docs.astral.sh/ruff) settings that go with the Python rules: unused imports and locals, the complexity and argument limits, a ban on `contextlib.suppress`, and private-attribute access in test files (outside tests the rule is noise: mature libraries hit it more than agent-written code). `presets/python/ruff-off.toml` extends it with bans that are house policy and off by default: mocks and `@deprecated`. Point your own config at one of them with `extend = "../code-health/presets/python/ruff.toml"` (top level of `ruff.toml`, or under `[tool.ruff]` in `pyproject.toml`), or paste its tables into `ruff.toml`. In `pyproject.toml` each pasted table name needs the `tool.ruff.` prefix; without it ruff ignores the table silently.
 
 ## Rules
 
