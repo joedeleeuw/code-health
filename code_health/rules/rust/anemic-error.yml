@@ -1,7 +1,7 @@
 id: anemic-error-rust
 language: Rust
 severity: error
-message: Function returns Result<T, String> or erases error types via .map_err(|e| e.to_string()); use a typed domain error enum or error crate type.
+message: Signature or alias uses Result<T, String>, or .map_err erases a typed error into String; use a typed domain error enum or error crate type.
 ignores:
   - "**/gen/**"
   - "**/generated/**"
@@ -9,6 +9,8 @@ ignores:
   - "**/vendor/**"
   - "**/third_party/**"
   - "**/tests/**"
+  - "**/examples/**"
+  - "**/benches/**"
   - "**/tests.rs"
   - "**/*_tests.rs"
   - "**/*_test.rs"
@@ -22,36 +24,52 @@ rule:
           stopBy: end
     - any:
         - pattern: $EXPR.map_err(|$E| $E.to_string())
-        - pattern: $EXPR.map_err(|$E| format!("{}", $E))
-        - all:
-            - pattern: $EXPR.map_err(|$E| format!($$$))
+        - pattern: $EXPR.map_err(|$E| $E.to_owned())
+        - pattern: $EXPR.map_err(|$E| String::from($E))
+        - pattern: $EXPR.map_err(ToString::to_string)
+        - pattern: $EXPR.map_err(String::from)
+        - kind: call_expression
+          all:
             - has:
-                kind: string_literal
-                regex: "^\"\\{[A-Za-z_]\\w*\\}\"$"
-                stopBy: end
-        - all:
-            - pattern: $EXPR.map_err(|$E| { $$$ })
-            - any:
-                - has:
-                    all:
-                      - pattern: $E.to_string()
-                      - inside: {kind: block, stopBy: neighbor}
-                    stopBy: end
-                - has:
-                    all:
-                      - pattern: format!("{}", $E)
-                      - inside: {kind: block, stopBy: neighbor}
-                    stopBy: end
-                - has:
-                    all:
-                      - kind: macro_invocation
-                        regex: "^format!"
-                      - has:
-                          kind: string_literal
-                          regex: "^\"\\{[A-Za-z_]\\w*\\}\"$"
-                          stopBy: end
-                      - inside: {kind: block, stopBy: neighbor}
-                    stopBy: end
+                field: function
+                kind: field_expression
+                has:
+                  field: field
+                  regex: "^map_err$"
+            - has:
+                field: arguments
+                has:
+                  kind: closure_expression
+                  any:
+                    - has:
+                        field: body
+                        any:
+                          - kind: macro_invocation
+                            has:
+                              field: macro
+                              regex: "^(std::)?format$"
+                          - kind: block
+                            has:
+                              kind: macro_invocation
+                              has:
+                                field: macro
+                                regex: "^(std::)?format$"
+                              stopBy: neighbor
+                    - all:
+                        - has:
+                            field: parameters
+                            has:
+                              kind: identifier
+                              pattern: $E
+                        - has:
+                            field: body
+                            kind: block
+                            has:
+                              any:
+                                - pattern: $E.to_string()
+                                - pattern: $E.to_owned()
+                                - pattern: String::from($E)
+                              stopBy: neighbor
         - kind: generic_type
           all:
             - has:
@@ -64,8 +82,34 @@ rule:
             - has:
                 field: type_arguments
                 kind: type_arguments
-                regex: ",\\s*String\\s*>$"
-            - inside:
-                kind: function_item
-                field: return_type
-                stopBy: {kind: function_item}
+                regex: ",\\s*(std::string::)?String\\s*>$"
+            - any:
+                - inside:
+                    all:
+                      - kind: function_item
+                      - not:
+                          matches: trait-impl-fn
+                    field: return_type
+                    stopBy:
+                      any:
+                        - kind: function_item
+                        - kind: block
+                - inside:
+                    kind: function_signature_item
+                    field: return_type
+                    stopBy:
+                      kind: function_signature_item
+                - inside:
+                    all:
+                      - kind: type_item
+                      - not:
+                          inside:
+                            kind: impl_item
+                            has:
+                              field: trait
+                              regex: "."
+                            stopBy:
+                              kind: type_item
+                    field: type
+                    stopBy:
+                      kind: type_item

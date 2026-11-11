@@ -5,6 +5,14 @@ rule:
     - kind: mod_item
     - kind: function_item
     - kind: impl_item
+    - kind: struct_item
+    - kind: enum_item
+    - kind: type_item
+    - kind: const_item
+    - kind: static_item
+    - kind: trait_item
+    - kind: use_declaration
+    - kind: macro_invocation
     - kind: expression_statement
     - kind: let_declaration
   follows:

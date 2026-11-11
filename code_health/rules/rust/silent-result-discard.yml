@@ -9,6 +9,8 @@ ignores:
   - "**/vendor/**"
   - "**/third_party/**"
   - "**/tests/**"
+  - "**/examples/**"
+  - "**/benches/**"
   - "**/tests.rs"
   - "**/*_tests.rs"
   - "**/*_test.rs"
@@ -230,6 +232,14 @@ rule:
                   - has:
                       field: alternative
                       kind: else_clause
+                  - has:
+                      field: consequence
+                      has:
+                        kind: return_expression
+                        stopBy:
+                          any:
+                            - kind: function_item
+                            - kind: closure_expression
                   - inside:
                       any:
                         - kind: for_expression
@@ -274,4 +284,3 @@ rule:
                   - pattern: Ok(Vec::new())
                   - pattern: Ok(String::new())
                   - pattern: Ok(false)
-                  - pattern: Err($MSG)

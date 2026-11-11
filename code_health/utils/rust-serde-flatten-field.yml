@@ -1,0 +1,13 @@
+id: serde-flatten-field
+language: Rust
+rule:
+  kind: field_declaration
+  follows:
+    kind: attribute_item
+    regex: "\\bserde\\s*\\([^)]*\\bflatten\\b"
+    stopBy:
+      not:
+        any:
+          - kind: attribute_item
+          - kind: line_comment
+          - kind: block_comment

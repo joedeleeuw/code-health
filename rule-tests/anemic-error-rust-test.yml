@@ -13,6 +13,27 @@ valid:
         })
     }
   - |
+    fn receiver_has_format_block(x: &str) -> Result<(), DomainError> {
+        let msg = { format!("{x}") };
+        parse_msg(&msg).map_err(|err| {
+            log_failure(&err);
+            DomainError::Parse(err)
+        })
+    }
+  - |
+    impl ExternalTrait for Handler {
+        fn run(&self) -> Result<(), String> {
+            Ok(())
+        }
+    }
+  - |
+    impl core::str::FromStr for Mode {
+        type Err = String;
+        fn from_str(raw: &str) -> Result<Self, Self::Err> {
+            Ok(Mode)
+        }
+    }
+  - |
     #[cfg(all(test, unix))]
     fn test_only(input: Result<(), Error>) -> Result<(), String> {
         input.map_err(|error| { error.to_string() })
@@ -23,12 +44,20 @@ invalid:
         input.map_err(|error| error.to_string())
     }
   - |
+    fn erase_pointfree(input: Result<(), Error>) -> Result<(), String> {
+        input.map_err(ToString::to_string)
+    }
+  - |
     fn erase_display(input: Result<(), Error>) -> Result<(), String> {
         input.map_err(|error| format!("{}", error))
     }
   - |
     fn erase_interpolation(input: Result<(), Error>) -> Result<(), String> {
         input.map_err(|error| format!("{error}"))
+    }
+  - |
+    fn erase_with_context(input: Result<(), Error>) -> Result<(), String> {
+        input.map_err(|error| format!("failed to load config: {error}"))
     }
   - |
     fn erase_block(input: Result<(), Error>) -> Result<(), String> {
@@ -46,7 +75,7 @@ invalid:
     fn erase_display_after_cleanup(input: Result<(), Error>) -> Result<(), String> {
         input.map_err(|error| {
             cleanup();
-            format!("{}", error)
+            format!("context: {}", error)
         })
     }
   - |
@@ -61,6 +90,12 @@ invalid:
     fn core_scoped(input: u8) -> core::result::Result<u8, String> {
         Ok(input)
     }
+  - |
+    pub trait Runner {
+        fn execute(&self) -> Result<(), String>;
+    }
+  - |
+    pub type AppResult<T> = Result<T, String>;
   - |
     #[cfg(any(test, unix))]
     fn maybe_test(input: Result<(), Error>) -> Result<(), String> {

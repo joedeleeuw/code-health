@@ -1,0 +1,13 @@
+id: trait-impl-fn
+language: Rust
+rule:
+  kind: function_item
+  inside:
+    kind: declaration_list
+    inside:
+      kind: impl_item
+      has:
+        field: trait
+        regex: "."
+      stopBy: neighbor
+    stopBy: neighbor

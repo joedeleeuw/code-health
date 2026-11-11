@@ -23,6 +23,20 @@ valid:
             Some,
         )
     }
+  - |
+    fn propagate_domain_error(res: Result<u32, RawErr>) -> Result<u32, DomainErr> {
+        match res {
+            Ok(v) => Ok(v),
+            Err(_e) => Err(DomainErr::Timeout),
+        }
+    }
+  - |
+    fn fast_path_then_detailed_error(bytes: &[u8]) -> Result<Config, DetailedErr> {
+        if let Ok(cfg) = serde_json::from_slice(bytes) {
+            return Ok(cfg);
+        }
+        Err(diagnose_failure(bytes))
+    }
 invalid:
   - |
     fn parse_direct(raw: &str) -> Option<Config> {

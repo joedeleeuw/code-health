@@ -9,6 +9,7 @@ ignores:
   - "**/vendor/**"
   - "**/third_party/**"
   - "**/tests/**"
+  - "**/examples/**"
   - "**/benches/**"
   - "**/tests.rs"
   - "**/*_tests.rs"
@@ -19,8 +20,26 @@ constraints:
   KEY:
     kind: string_literal
     regex: '^"'
+  KEY2:
+    kind: string_literal
+    regex: '^"'
+  K3:
+    kind: string_literal
+    regex: '^"'
+  PTR:
+    kind: string_literal
+    regex: '^"/'
+  FN:
+    not:
+      regex: "^(toml_edit::)?Item$"
   METHOD:
-    regex: "^(as_str|as_u64|as_i64|as_f64|as_bool|as_array|as_object)$"
+    regex: "^(as_str|as_u64|as_i64|as_f64|as_bool|as_array|as_object|as_null|as_integer|as_float|as_table|as_datetime|as_mapping|as_sequence)$"
+utils:
+  value-file:
+    kind: source_file
+    has:
+      regex: "\\b(serde_json|serde_yaml|yaml_serde|toml::(Value|Table|from_))"
+      stopBy: end
 rule:
   all:
     - not:
@@ -31,17 +50,58 @@ rule:
         - pattern: $OBJ.get($KEY).and_then(|$V| $V.$METHOD())
         - pattern: $OBJ.get($KEY).and_then($FN::$METHOD)
         - pattern: $OBJ[$KEY].$METHOD()
+        - pattern: $OBJ.get($KEY)?.$METHOD()
+        - pattern: $OBJ.pointer($PTR)
+        - all:
+            - pattern: $OBJ[$KEY][$KEY2]
+            - not:
+                inside:
+                  kind: index_expression
+                  stopBy: neighbor
+            - not:
+                inside:
+                  pattern: $OUTER[$K3].$METHOD()
+                  stopBy:
+                    kind: call_expression
+        - kind: let_condition
+          all:
+            - inside:
+                matches: value-file
+                stopBy: end
+            - has:
+                field: pattern
+                regex: "^Some\\("
+            - has:
+                field: value
+                pattern: $OBJ.get($KEY)
         - kind: generic_type
           all:
             - has:
                 field: type
-                regex: "^(std::collections::)?(HashMap|BTreeMap|IndexMap|FxHashMap)$"
+                regex: "^(std::collections::|serde_json::(value::)?|indexmap::|rustc_hash::)?(HashMap|BTreeMap|IndexMap|FxHashMap|Map)$"
             - has:
                 field: type_arguments
                 kind: type_arguments
-                regex: "^<\\s*String\\s*,\\s*(serde_json::|serde_yaml::|toml::)?Value\\s*>$"
-            - inside:
-                any:
-                  - kind: field_declaration
-                  - kind: parameter
-                stopBy: {kind: generic_type}
+                regex: "^<\\s*String\\s*,\\s*(serde_json::(value::)?|serde_yaml::|yaml_serde::|toml::)?Value\\s*>$"
+            - any:
+                - inside:
+                    all:
+                      - kind: field_declaration
+                      - not:
+                          matches: serde-flatten-field
+                    stopBy:
+                      any:
+                        - kind: field_declaration
+                        - kind: block
+                - inside:
+                    all:
+                      - kind: parameter
+                      - not:
+                          inside:
+                            matches: trait-impl-fn
+                            stopBy:
+                              kind: function_item
+                    stopBy:
+                      any:
+                        - kind: parameter
+                        - kind: block
