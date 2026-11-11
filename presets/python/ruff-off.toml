@@ -1,0 +1,9 @@
+extend = "ruff.toml"
+
+[lint.flake8-tidy-imports.banned-api]
+"contextlib.suppress".msg = "Fail loudly; do not suppress exceptions."
+"unittest.mock".msg = "No fakes or mocks; test the real runtime."
+"mock".msg = "No fakes or mocks; test the real runtime."
+"pytest_mock".msg = "No fakes or mocks; test the real runtime."
+"warnings.deprecated".msg = "No deprecation paths; delete legacy code."
+"typing_extensions.deprecated".msg = "No deprecation paths; delete legacy code."

@@ -23,13 +23,13 @@ pre-commit:
       run: ast-grep scan --config ../code-health/code_health/sgconfig.yml
 ```
 
-- `code_health/sgconfig-off.yml` runs the rules under `rules-off/`: correct matches that a graded sample found mostly not worth changing.
+- `code_health/sgconfig-off.yml` runs the rules under `rules-off/`, which are off by default: correct matches that a graded sample found mostly not worth changing.
 - To run a subset, copy the rule files you want into your own rule directory. The Rust rules also need `code_health/utils/`.
 - To accept a finding, put `// ast-grep-ignore: <rule-id>` (or `#` in Python, Bash and YAML) on the line above it.
 
 ## Python preset
 
-`presets/python/ruff.toml` holds the [ruff](https://docs.astral.sh/ruff) settings that go with the Python rules: unused imports and locals, the complexity and argument limits, and a ban on `contextlib.suppress`. Point your own config at it with `extend = "../code-health/presets/python/ruff.toml"` (top level of `ruff.toml`, or under `[tool.ruff]` in `pyproject.toml`), or paste its tables into `ruff.toml`. In `pyproject.toml` each pasted table name needs the `tool.ruff.` prefix; without it ruff ignores the table silently.
+`presets/python/ruff.toml` holds the [ruff](https://docs.astral.sh/ruff) settings that go with the Python rules: unused imports and locals, the complexity and argument limits, and a ban on `contextlib.suppress`. `presets/python/ruff-off.toml` extends it with bans that are house policy and off by default: mocks and `@deprecated`. Point your own config at one of them with `extend = "../code-health/presets/python/ruff.toml"` (top level of `ruff.toml`, or under `[tool.ruff]` in `pyproject.toml`), or paste its tables into `ruff.toml`. In `pyproject.toml` each pasted table name needs the `tool.ruff.` prefix; without it ruff ignores the table silently.
 
 ## Rules
 

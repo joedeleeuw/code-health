@@ -15,35 +15,46 @@ from code_health import stop
 PACKAGE = Path(__file__).resolve().parent
 LEDGER = PACKAGE / "retired-rule-ids.json"
 SGCONFIG = PACKAGE / "sgconfig.yml"
+SGCONFIG_OFF = PACKAGE / "sgconfig-off.yml"
 
 
-def catalog_rule_files() -> list[Path]:
-    """Every rule file ast-grep loads: each ruleDirs entry of the owner
-    sgconfig.yml, walked recursively for .yml and .yaml."""
-    config = yaml.safe_load(SGCONFIG.read_text())
+def rule_files(sgconfig: Path) -> list[Path]:
+    """Every rule file ast-grep loads for a config: each ruleDirs entry,
+    walked recursively for .yml and .yaml."""
+    config = yaml.safe_load(sgconfig.read_text())
     return sorted(
         path
         for folder in config["ruleDirs"]
-        for path in (SGCONFIG.parent / folder).rglob("*")
+        for path in (sgconfig.parent / folder).rglob("*")
         if path.suffix in {".yml", ".yaml"}
     )
 
 
-def catalog_rule_ids() -> set[str]:
-    """Every rule ID in the catalog."""
+def rule_ids(files: list[Path]) -> set[str]:
     return {
         document["id"]
-        for path in catalog_rule_files()
+        for path in files
         for document in yaml.safe_load_all(path.read_text())
         if document
     }
+
+
+def catalog_rule_files() -> list[Path]:
+    """The rule files code-health runs."""
+    return rule_files(SGCONFIG)
+
+
+def catalog_rule_ids() -> set[str]:
+    """Every rule ID code-health runs."""
+    return rule_ids(catalog_rule_files())
 
 
 def ledger_records() -> dict[str, dict[str, str]]:
     """Each ID in the ledger with its reason and replacement. A rule file that
     takes a ledgered ID stops the check."""
     records = json.loads(LEDGER.read_text())
-    reused = sorted(catalog_rule_ids() & records.keys())
+    shipped = catalog_rule_ids() | rule_ids(rule_files(SGCONFIG_OFF))
+    reused = sorted(shipped & records.keys())
     if reused:
         stop(f"rule ID {reused[0]} is listed in {LEDGER}")
     return records
