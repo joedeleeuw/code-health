@@ -1023,6 +1023,96 @@
     "rust"
    ],
    "role": "negative-control"
+  },
+  {
+   "name": "vscode",
+   "remote": "https://github.com/microsoft/vscode.git",
+   "rev": "f42f0a1102cedb0047aed92bcdf1f4ba422d02b8",
+   "languages": [
+    "typescript"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "vite",
+   "remote": "https://github.com/vitejs/vite.git",
+   "rev": "39d63b8479c6314caab9b78a05d3aaaf36a86b2c",
+   "languages": [
+    "typescript"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "typescript-eslint",
+   "remote": "https://github.com/typescript-eslint/typescript-eslint.git",
+   "rev": "2838b498d03ef3a3808fa714f43ea653f4e589b0",
+   "languages": [
+    "typescript"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "prisma",
+   "remote": "https://github.com/prisma/prisma.git",
+   "rev": "d564551d167d7f2b91deb8f6b74b25f5a64f54df",
+   "languages": [
+    "typescript"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "trpc",
+   "remote": "https://github.com/trpc/trpc.git",
+   "rev": "8eff9ff0ddf4be4a682bf205fb66b00a26901075",
+   "languages": [
+    "typescript"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "query",
+   "remote": "https://github.com/TanStack/query.git",
+   "rev": "8f6da1e2a1b5e9afd774cd12bd3865df5c432984",
+   "languages": [
+    "typescript"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "vue-core",
+   "remote": "https://github.com/vuejs/core.git",
+   "rev": "7ef6817112bb420ef47a7252821b37caae016ac9",
+   "languages": [
+    "typescript"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "zod",
+   "remote": "https://github.com/colinhacks/zod.git",
+   "rev": "19c40d2072288b4cafec851e9d056a72a88e5973",
+   "languages": [
+    "typescript"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "hono",
+   "remote": "https://github.com/honojs/hono.git",
+   "rev": "f6fbaf0299c48eea9e656e03e2ffe7ac755e8823",
+   "languages": [
+    "typescript"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "astro",
+   "remote": "https://github.com/withastro/astro.git",
+   "rev": "d68e4f6340409a201df7c5f77d5d322abfe6c377",
+   "languages": [
+    "typescript"
+   ],
+   "role": "negative-control"
   }
  ]
 }
