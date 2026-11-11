@@ -18,6 +18,8 @@ Rust is checked by the tools a Rust workspace already runs. `code-health` runs n
 2. Paste `presets/rust/cargo-config.toml` into the workspace's `.cargo/config.toml`. It defines `cargo lint`: Clippy over every crate and target with the preset's lints and rustc's dead-code and unused warnings denied. The levels ride on the command, so no crate has to opt in.
 3. Run the pattern rules with `ast-grep scan --config <checkout>/presets/rust/sgconfig.yml`.
 
+`vague-name-rust` is off by default; `presets/rust/sgconfig-off.yml` runs it.
+
 `cargo lint` then fails on the preset's lints. The pattern rule `suppressed-limit-rust` reports an `allow` or `expect` of one of those lints that states no reason.
 
 ## Installation

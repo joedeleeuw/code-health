@@ -1,0 +1,4 @@
+ruleDirs:
+  - ../../code_health/config/rules/rust-off
+utilDirs:
+  - ../../code_health/config/utils
