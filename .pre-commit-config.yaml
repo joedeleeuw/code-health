@@ -35,7 +35,7 @@ repos:
         pass_filenames: false
         always_run: true
       - id: code-health
-        name: code-health ratchet
+        name: code-health
         entry: uv run code-health
         language: system
         pass_filenames: false

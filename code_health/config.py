@@ -2,6 +2,7 @@
 pyproject.toml. A repository without the file or the table gets the defaults."""
 
 import fnmatch
+import re
 import tomllib
 from pathlib import Path
 from typing import Annotated
@@ -32,7 +33,7 @@ class CodeHealthConfig(BaseModel, extra="forbid", strict=True):
 
 
 def nix_lint(check: str) -> bool:
-    return check == "deadnix" or check.startswith("statix-")
+    return check == "deadnix" or bool(re.fullmatch(r"statix-[1-9][0-9]*", check))
 
 
 def load_config(root: Path) -> CodeHealthConfig:
@@ -43,9 +44,12 @@ def load_config(root: Path) -> CodeHealthConfig:
         document = tomllib.loads(path.read_text())
     except OSError as error:
         stop(f"{CONFIG}: {error.strerror}")
-    except tomllib.TOMLDecodeError as error:
+    except (tomllib.TOMLDecodeError, UnicodeDecodeError) as error:
         stop(f"{CONFIG}: {error}")
-    table = document.get("tool", {}).get("code-health", {})
+    tool = document.get("tool", {})
+    if not isinstance(tool, dict):
+        stop(f"{CONFIG}: tool is not a table")
+    table = tool.get("code-health", {})
     try:
         config = CodeHealthConfig.model_validate(table)
     except ValidationError as error:

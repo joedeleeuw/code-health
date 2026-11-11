@@ -287,7 +287,7 @@ def unknown_fields(shaped: ShapedClass) -> list[str]:
 
 @dataclass
 class Restatements:
-    """Restatement findings by the file of their first member, and incomplete
+    """Restatement findings by each file that holds a member, and incomplete
     analysis by the file it stands in."""
 
     findings: dict[str, list[str]]
@@ -502,9 +502,10 @@ class FirstPartyShapes:
                 [shaped for shaped in classes if standing[shaped.identity] is True]
             )
             if restating:
-                findings.setdefault(restating[0].path, []).append(
-                    f"{' = '.join(map(str, restating))} ({fields})"
-                )
+                for path in sorted({shaped.path for shaped in restating}):
+                    findings.setdefault(path, []).append(
+                        f"{' = '.join(map(str, restating))} ({fields})"
+                    )
             possible = self.restating_kinds(
                 [shaped for shaped in classes if standing[shaped.identity] is not False]
             )
@@ -534,8 +535,9 @@ class FirstPartyShapes:
         for path, note in sorted(incomplete):
             by_file.setdefault(path, []).append(note)
         for members in self.function_clones():
-            path = members[0].split("::", 1)[0]
-            findings.setdefault(path, []).append(" = ".join(members))
+            for path in sorted({path for path, _ in members}):
+                sites = " = ".join(site for _, site in members)
+                findings.setdefault(path, []).append(sites)
         return Restatements(findings, by_file)
 
     def production_functions(
@@ -567,11 +569,11 @@ class FirstPartyShapes:
                     found.append((key, f"{path}::{qualname}:{member.lineno}"))
         return found
 
-    def function_clones(self) -> list[list[str]]:
-        by_body: dict[str, list[str]] = {}
+    def function_clones(self) -> list[list[tuple[str, str]]]:
+        by_body: dict[str, list[tuple[str, str]]] = {}
         for path, tree in sorted(self.trees.items()):
             for key, site in self.production_functions(path, tree):
-                by_body.setdefault(key, []).append(site)
+                by_body.setdefault(key, []).append((path, site))
         return sorted(members for members in by_body.values() if len(members) >= 2)
 
     def dependency_clones(self, shapes: "ExportedShapes") -> list[str]:

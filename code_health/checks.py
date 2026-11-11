@@ -1,7 +1,8 @@
 """The checks, and which findings fail one.
 
 Every check counts findings per key: a file, a function in a file, or a rule in
-a file. A count over its limit fails. The size checks take their limit from the
+a file. A finding that spans files, a repeated shape or an import cycle, stands
+in each of them. A count over its limit fails. The size checks take their limit from the
 settings; every other check has limit 0. A finding fails unless the settings
 allow that check in its file: a rule finding is allowed under its rule ID, any
 other under the name of its check.
@@ -16,6 +17,7 @@ INCOMPLETE = (
     "incomplete_import_analysis",
 )
 RULES = ("ast_grep", "nix_lints")
+PER_FUNCTION = ("complexity", "nesting", "params")
 FOUND = (
     "dated_docstrings",
     "dead_paths",
@@ -44,8 +46,10 @@ def failures(
                 continue
             if category in RULES:
                 check, path = key.split("::", 1)
+            elif category in PER_FUNCTION:
+                check, path = category, key.rsplit("::", 1)[0]
             else:
-                check, path = category, key.split("::", 1)[0]
+                check, path = category, key
             if any(fnmatch.fnmatch(path, glob) for glob in allowed.get(check, [])):
                 continue
             lines = [f"{key} = {count} > limit {limit}", *found.get(key, [])]
