@@ -28,6 +28,7 @@ checker knows one: an import there is not unresolved.
 """
 
 import ast
+import io
 import itertools
 import json
 import re
@@ -42,12 +43,6 @@ from code_health import stop
 
 SERVER = ["uvx", "--from", "pyright==1.1.407", "pyright-langserver", "--stdio"]
 LINE_END = re.compile(r"\r\n|\r|\n")
-GAP = r"(?:\s|\\\n)*"
-NAME = r"[^\s\\.,;:()\[\]#]+"
-DOTTED = rf"(?:{NAME}{GAP}\.{GAP})*({NAME})"
-IMPORTED = re.compile(DOTTED)
-IMPORTED_FROM = re.compile(rf"from{GAP}{DOTTED}")
-DEFINED = re.compile(rf"(?:async{GAP})?(?:def|class){GAP}({NAME})")
 WORD = re.compile(r"\w+")
 UNNECESSARY = 1
 PACKAGE_ROOTS = (
@@ -99,19 +94,31 @@ def expression_site(path: str, expression: ast.expr) -> Site | None:
     return None
 
 
-def captured(
-    lines: list[str], line: int, column: int, pattern: re.Pattern
+DOT = (tokenize.OP, ".")
+
+
+def token_name_site(
+    lines: list[str], lineno: int, col_offset: int, parts: list[str]
 ) -> tuple[int, int]:
-    """The line and byte column of the name the pattern captures when matched
-    at a position; a backslash carries the statement onto the next line."""
-    last = line
-    while lines[last - 1].endswith("\\"):
-        last += 1
-    text = "\n".join(lines[line - 1 : last])
-    start = len(lines[line - 1].encode()[:column].decode())
-    name = pattern.match(text, start).start(1)
-    opening = text.rfind("\n", 0, name) + 1
-    return line + text.count("\n", 0, name), len(text[opening:name].encode())
+    """The line and byte column of the last component of the first dotted name
+    spelling parts, tokenized from a line and byte column."""
+    first = lines[lineno - 1]
+    start = len(first.encode()[:col_offset].decode())
+    text = "\n".join([first, *lines[lineno:]])
+    matched = 0
+    for tok in tokenize.generate_tokens(io.StringIO(text).readline):
+        if tok.start[0] == 1 and tok.start[1] < start:
+            continue
+        spelled = (tok.type, tok.string)
+        expected = (tokenize.NAME, parts[matched // 2]) if matched % 2 == 0 else DOT
+        if spelled == expected:
+            matched += 1
+        else:
+            matched = 1 if spelled == (tokenize.NAME, parts[0]) else 0
+        if matched == 2 * len(parts) - 1:
+            row = lineno - 1 + tok.start[0]
+            return row, len(lines[row - 1][: tok.start[1]].encode())
+    raise ValueError(f"line {lineno}: no token spells {'.'.join(parts)}")
 
 
 def imported_modules(node: ast.AST, lines: list[str]) -> list[tuple[int, int, str]]:
@@ -119,11 +126,18 @@ def imported_modules(node: ast.AST, lines: list[str]) -> list[tuple[int, int, st
     each module an import statement names; a relative import names none."""
     if isinstance(node, ast.Import):
         return [
-            (*captured(lines, alias.lineno, alias.col_offset, IMPORTED), alias.name)
+            (
+                *token_name_site(
+                    lines, alias.lineno, alias.col_offset, alias.name.split(".")
+                ),
+                alias.name,
+            )
             for alias in node.names
         ]
     if isinstance(node, ast.ImportFrom) and node.module and not node.level:
-        named = captured(lines, node.lineno, node.col_offset, IMPORTED_FROM)
+        named = token_name_site(
+            lines, node.lineno, node.col_offset, node.module.split(".")
+        )
         return [(*named, node.module)]
     return []
 
@@ -322,7 +336,9 @@ class Resolver:
 
     def definition_site(self, path: str, node) -> Site:
         """The site of the name a def or class statement declares."""
-        located = captured(self.lines[path], node.lineno, node.col_offset, DEFINED)
+        located = token_name_site(
+            self.lines[path], node.lineno, node.col_offset, [node.name]
+        )
         return Site(path, *located)
 
     def file(self, uri: str) -> tuple[str | None, Path, list[str]]:

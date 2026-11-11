@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 import re
 
-from tree_sitter import Node, Parser, Query, QueryCursor, Range
+from tree_sitter import Node, Parser, Query, QueryCursor, Range, Tree
 
 from code_health import stop
 from code_health.rust_crates import RustCrates
@@ -119,6 +119,7 @@ class RustFile:
     source: bytes
     lines: int
     production: bool
+    tree: Tree
     unread_structs: list[int] = field(default_factory=list)
     unread_functions: list[int] = field(default_factory=list)
     structs: list[RustStruct] = field(default_factory=list)
@@ -351,6 +352,7 @@ def parse_rust_file(root: Path, path: str, crates: RustCrates) -> RustFile | Non
         source,
         len(source.splitlines()),
         not test_scope.whole,
+        tree,
     )
     parsed.unread_structs, parsed.unread_functions = unread_lines(
         tree.root_node, test_scope

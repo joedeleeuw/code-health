@@ -48,15 +48,23 @@ import from.
 import ast
 import configparser
 import fnmatch
+import posixpath
 import re
 from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 
-import tomllib
-
 from code_health import stop
+from code_health.manifests import (
+    Manifests,
+    TomlManifest,
+    called_name,
+    config_table,
+    separated,
+    strings,
+    text,
+)
 
 RESERVED = frozenset(
     "ci bin debian doc docs documentation manpages news newsfragments changelog"
@@ -111,9 +119,9 @@ class Distribution:
 class Distributions:
     """The repository's distributions, found next to its Python files."""
 
-    def __init__(self, root: Path, paths: list[str], tracked: Iterable[str]):
+    def __init__(self, manifests: Manifests, tracked: Iterable[str]):
         folders = {""}
-        for path in paths:
+        for path in manifests.trees:
             parent = PurePosixPath(path).parent
             folders.update(str(p) for p in (parent, *parent.parents) if str(p) != ".")
         subdirectories: dict[str, set[str]] = defaultdict(set)
@@ -123,7 +131,7 @@ class Distributions:
                 subdirectories["/".join(parts[:depth])].add(name)
         self.found: list[Distribution] = []
         for folder in sorted(folders):
-            directory = BuildDirectory(root / folder, folder, subdirectories[folder])
+            directory = BuildDirectory(manifests, folder, subdirectories[folder])
             self.found += directory.distributions()
         self.import_roots = sorted({distribution.base for distribution in self.found})
 
@@ -158,57 +166,33 @@ class Distributions:
         return None if unresolved else False
 
 
-def parsed(config: Path, parse):
-    try:
-        return parse(config.read_text(errors="replace"))
-    except (tomllib.TOMLDecodeError, configparser.Error, SyntaxError) as error:
-        stop(f"cannot parse {config}: {error}")
+def backend(project: TomlManifest) -> str | None:
+    """The supported backend the build system declares; setuptools when it
+    declares none, None for any other."""
+    declared = project.setting("build-system", "build-backend")
+    if declared is None:
+        return "setuptools"
+    return BACKENDS.get(text(project.path, "build-system.build-backend", declared))
 
 
-class PyProject:
-    """One parsed pyproject.toml and the settings its optional tables hold."""
+def declares_project(project: TomlManifest) -> bool:
+    return (
+        project.setting("project") is not None
+        or project.setting("tool", "poetry") is not None
+    )
 
-    def __init__(self, path: Path):
-        self.path = path
-        self.document = parsed(path, tomllib.loads)
 
-    def setting(self, *keys: str):
-        """The value under a path of optional tables, None where a table or the
-        key is absent; a path through a value that is not a table stops the
-        check naming the file and the field."""
-        nested = self.document
-        for depth, key in enumerate(keys):
-            config_table(self.path, ".".join(keys[:depth]), nested)
-            if key not in nested:
-                return None
-            nested = nested[key]
-        return nested
-
-    def backend(self) -> str | None:
-        """The supported backend the build system declares; setuptools when it
-        declares none, None for any other."""
-        declared = self.setting("build-system", "build-backend")
-        if declared is None:
-            return "setuptools"
-        return BACKENDS.get(text(self.path, "build-system.build-backend", declared))
-
-    def declares_project(self) -> bool:
-        return (
-            self.setting("project") is not None
-            or self.setting("tool", "poetry") is not None
-        )
-
-    def package_name(self) -> str:
-        """The import name of the project: its distribution name normalized,
-        which PEP 621 and poetry both require."""
-        name = self.setting("project", "name")
-        field_name = "project.name"
-        if name is None:
-            name = self.setting("tool", "poetry", "name")
-            field_name = "tool.poetry.name"
-        if name is None:
-            stop(f"{self.path} declares no project name")
-        return re.sub(r"[-.]+", "_", text(self.path, field_name, name)).lower()
+def package_name(project: TomlManifest) -> str:
+    """The import name of the project: its distribution name normalized,
+    which PEP 621 and poetry both require."""
+    name = project.setting("project", "name")
+    field_name = "project.name"
+    if name is None:
+        name = project.setting("tool", "poetry", "name")
+        field_name = "tool.poetry.name"
+    if name is None:
+        stop(f"{project.path} declares no project name")
+    return re.sub(r"[-.]+", "_", text(project.path, field_name, name)).lower()
 
 
 def literal_strings(node: ast.expr) -> list[str] | None:
@@ -222,49 +206,14 @@ def literal_strings(node: ast.expr) -> list[str] | None:
     return strings if len(strings) == len(node.elts) else None
 
 
-def listed(text: str) -> list[str]:
-    """A setup.cfg list value: entries separated by commas or line breaks."""
-    return [entry for entry in re.split(r"[,\s]+", text) if entry]
-
-
-def strings(config: Path, field_name: str, declared) -> list[str]:
-    """A TOML field that must hold a list of strings, or the check stops naming
-    the file and the field."""
-    if not isinstance(declared, list) or not all(isinstance(v, str) for v in declared):
-        stop(f"{config}: {field_name} is not a list of strings")
-    return declared
-
-
-def config_table(config: Path, field_name: str, declared) -> dict:
-    """A configuration field that must be a table, or the check stops naming the
-    file and the field."""
-    if not isinstance(declared, dict):
-        stop(f"{config}: {field_name} is not a table")
-    return declared
-
-
-def text(config: Path, field_name: str, declared) -> str:
-    """A configuration field that must be a string, or the check stops naming
-    the file and the field."""
-    if not isinstance(declared, str):
-        stop(f"{config}: {field_name} is not a string")
-    return declared
-
-
-def find_packages_call(node: ast.expr) -> bool:
-    return isinstance(node, ast.Call) and (
-        (isinstance(node.func, ast.Name) and node.func.id == "find_packages")
-        or (isinstance(node.func, ast.Attribute) and node.func.attr == "find_packages")
-    )
-
-
 class BuildDirectory:
     """One directory of the repository, the directories directly under it
     that hold a tracked file, and the distributions its build configuration
     declares, with paths relative to the repository root."""
 
-    def __init__(self, directory: Path, folder: str, subdirectories: set[str]):
-        self.directory = directory
+    def __init__(self, manifests: Manifests, folder: str, subdirectories: set[str]):
+        self.manifests = manifests
+        self.directory = manifests.root / folder
         self.folder = folder
         self.subdirectories = subdirectories
 
@@ -273,33 +222,33 @@ class BuildDirectory:
         return "" if joined == "." else joined
 
     def distributions(self) -> list[Distribution]:
-        pyproject = self.directory / "pyproject.toml"
         setup_cfg = self.directory / "setup.cfg"
-        setup_py = self.directory / "setup.py"
-        parser = configparser.ConfigParser(interpolation=None)
-        if setup_cfg.is_file():
-            parsed(setup_cfg, parser.read_string)
-        project = PyProject(pyproject) if pyproject.is_file() else None
+        project = self.manifests.toml(posixpath.join(self.folder, "pyproject.toml"))
+        declared_cfg = self.manifests.ini(posixpath.join(self.folder, "setup.cfg"))
+        parser = (
+            configparser.RawConfigParser() if declared_cfg is None else declared_cfg
+        )
+        setup_py = self.manifests.setup_py(self.folder)
         if project is not None and project.setting("tool", "briefcase", "app"):
             return self.from_briefcase(project)
-        if project is not None and project.backend() == "pbr":
-            if parser.has_option("files", "packages") or not project.declares_project():
+        if project is not None and backend(project) == "pbr":
+            if parser.has_option("files", "packages") or not declares_project(project):
                 return self.from_pbr(setup_cfg, parser)
         configured = parser.has_section("metadata") or parser.has_section("options")
         packaged = configured or parser.has_option("files", "packages")
-        buildable = packaged or setup_py.is_file()
-        declared = project is not None and project.declares_project()
+        buildable = packaged or setup_py is not None
+        declared = project is not None and declares_project(project)
         if declared and (buildable or project.setting("build-system") is not None):
             return self.from_pyproject(project)
         if parser.has_option("files", "packages"):
             return self.from_pbr(setup_cfg, parser)
         if configured:
             return self.from_setup_cfg(parser)
-        if setup_py.is_file():
-            return self.from_setup_py(parsed(setup_py, ast.parse))
+        if setup_py is not None:
+            return self.from_setup_py(setup_py)
         return self.unbuilt(project)
 
-    def unbuilt(self, project: PyProject | None) -> list[Distribution]:
+    def unbuilt(self, project: TomlManifest | None) -> list[Distribution]:
         """What a directory with no setup file and no built project holds:
         nothing without a pyproject.toml; an unresolved distribution where it
         has a build system, or uv is told to package it; otherwise one that
@@ -310,14 +259,14 @@ class BuildDirectory:
         built = packaged or project.setting("build-system") is not None
         return [Distribution(self.folder, "unresolved" if built else "exact")]
 
-    def from_pbr(self, setup_cfg: Path, parser: configparser.ConfigParser):
+    def from_pbr(self, setup_cfg: Path, parser: configparser.RawConfigParser):
         """pbr's own discovery: each package [files] or [options] lists with all
         its subpackages, or the package named after [metadata] name. With a
         [project] table and no [files] packages, pbr builds through setuptools'
         configuration instead."""
         for section in ("files", "options"):
             if parser.has_option(section, "packages"):
-                packages = listed(parser.get(section, "packages"))
+                packages = separated(parser.get(section, "packages"))
                 return [Distribution(self.folder, "tree", set(packages))]
         if not parser.has_option("metadata", "name"):
             stop(f"{setup_cfg} names no package for pbr")
@@ -343,23 +292,23 @@ class BuildDirectory:
         base = self.within("src") if in_src else self.folder
         return [Distribution(base, "tree", {name})]
 
-    def from_pyproject(self, project: PyProject) -> list[Distribution]:
-        backend = project.backend()
-        if backend in ("setuptools", "pbr"):
+    def from_pyproject(self, project: TomlManifest) -> list[Distribution]:
+        declared = backend(project)
+        if declared in ("setuptools", "pbr"):
             return self.from_setuptools_table(project)
-        if backend == "hatchling":
+        if declared == "hatchling":
             return self.from_hatch_tables(project)
-        if backend == "poetry":
+        if declared == "poetry":
             if project.setting("tool", "poetry", "package-mode") is False:
                 return []
             entries = project.setting("tool", "poetry", "packages")
             if entries is None:
-                return self.named(project.package_name())
+                return self.named(package_name(project))
             return self.poetry_packages(project.path, entries)
-        if backend == "flit":
+        if declared == "flit":
             module = project.setting("tool", "flit", "module", "name")
             if module is None:
-                return self.named(project.package_name())
+                return self.named(package_name(project))
             return self.named(text(project.path, "tool.flit.module.name", module))
         return [Distribution(self.folder, "unresolved")]
 
@@ -384,7 +333,7 @@ class BuildDirectory:
             found.append(Distribution(base, "tree", {include}))
         return found
 
-    def from_briefcase(self, project: PyProject) -> list[Distribution]:
+    def from_briefcase(self, project: TomlManifest) -> list[Distribution]:
         """Briefcase ships each application's sources, a package tree each."""
         field_name = "tool.briefcase.app"
         apps = config_table(
@@ -408,7 +357,7 @@ class BuildDirectory:
             ]
         return found
 
-    def from_hatch_tables(self, project: PyProject) -> list[Distribution]:
+    def from_hatch_tables(self, project: TomlManifest) -> list[Distribution]:
         """[tool.hatch.build] and its wheel target: listed packages, the project's
         package when none are listed, unresolved when they select files."""
         declared = (
@@ -436,7 +385,7 @@ class BuildDirectory:
             )
         ]
         if not packages:
-            return self.named(project.package_name())
+            return self.named(package_name(project))
         return [
             Distribution(
                 self.within(str(PurePosixPath(p).parent)),
@@ -446,7 +395,7 @@ class BuildDirectory:
             for p in packages
         ]
 
-    def from_setuptools_table(self, project: PyProject) -> list[Distribution]:
+    def from_setuptools_table(self, project: TomlManifest) -> list[Distribution]:
         """[tool.setuptools]: an explicit package list under its package-dir,
         each with its subpackages under pbr, a packages.find table, or automatic
         discovery when it names neither."""
@@ -459,7 +408,7 @@ class BuildDirectory:
         )
         packages = project.setting("tool", "setuptools", "packages")
         if isinstance(packages, list):
-            kind = "tree" if project.backend() == "pbr" else "exact"
+            kind = "tree" if backend(project) == "pbr" else "exact"
             return [Distribution(base, kind, set(strings(path, field_name, packages)))]
         if packages is None:
             return self.automatic()
@@ -482,18 +431,18 @@ class BuildDirectory:
             for folder in (options["where"] if "where" in options else ["."])
         ]
 
-    def from_setup_cfg(self, parser: configparser.ConfigParser):
+    def from_setup_cfg(self, parser: configparser.RawConfigParser):
         if not parser.has_option("options", "packages"):
             return self.automatic()
         packages = parser.get("options", "packages").strip()
         if not packages.startswith("find"):
-            return [Distribution(self.folder, "exact", set(listed(packages)))]
+            return [Distribution(self.folder, "exact", set(separated(packages)))]
         section = "options.packages.find"
 
         def option_values(option: str) -> list[str]:
             if not parser.has_option(section, option):
                 return []
-            return listed(parser.get(section, option))
+            return separated(parser.get(section, option))
 
         where = option_values("where")
         return [
@@ -524,7 +473,7 @@ class BuildDirectory:
         if exact is not None:
             return [Distribution(self.folder, "exact", set(exact))]
         call = keyword.value
-        if not find_packages_call(call):
+        if not (isinstance(call, ast.Call) and called_name(call) == "find_packages"):
             return [Distribution(self.folder, "unresolved")]
         options = dict(zip(FIND_PACKAGES_PARAMETERS, call.args, strict=False))
         options |= {k.arg: k.value for k in call.keywords}

@@ -221,7 +221,7 @@ def ratcheted(root: Path, baseline: bool) -> list[str]:
                 print(f"code-health: {label}: {path}: {note}", file=sys.stderr)
     document = config.model_dump(exclude_unset=True)
     pins, failures = ratchet(values, findings, document, initialize)
-    if pins != document["pins"]:
+    if pins != document["pins"] or not (root / CONFIG).exists():
         document["pins"] = pins
         (root / CONFIG).write_text(json.dumps(document, indent=2) + "\n")
         if not baseline:
@@ -233,14 +233,14 @@ def dependency_shapes(root: Path, python: str) -> list[str]:
     config, _ = load_config(root, baseline=False)
     tracked = sources(root, config.exclude)
     trees = tracked.trees
-    installed, uncovered = dependency_trees(root, python)
-    dependency, exported, unreadable = exported_shapes(installed)
     projects = Projects(root, trees)
+    installed, uncovered = dependency_trees(projects.manifests, python)
+    dependency, exported, unreadable = exported_shapes(installed)
     shapes = FirstPartyShapes(
         root,
         Modules(trees, projects.source_roots, projects.aliases),
         projects,
-        Distributions(root, list(trees), tracked.listed),
+        Distributions(projects.manifests, tracked.listed),
     )
     exporting = ExportedShapes(dependency, exported, shapes.index.typed)
     findings = [*uncovered, *unreadable, *shapes.dependency_clones(exporting)]

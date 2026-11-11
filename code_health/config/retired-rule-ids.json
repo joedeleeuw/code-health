@@ -38,5 +38,22 @@
   "hash-compare": {
     "reason": "It matched every comparison involving a hash, so it could not tell a redundant re-verification from a real integrity check.",
     "replacement": "process-review L2"
+  },
+  "L4": {
+    "reason": "Retired approval layer rule; replaced by pre-merge automated gates and invariants.",
+    "replacement": "docs/enforcement-map.md"
+  },
+  "L5": {
+    "reason": "Retired narrative history rule; rationale and context belong in commit messages and PR bodies.",
+    "replacement": "git log / PR descriptions"
+  },
+  "worker-gpu-acl-bash": {
+    "reason": "Host-specific Pop-OS rule moved to dotfiles repository rules.",
+    "replacement": "dotfiles/ast-grep/rules/worker-gpu-acl.yml"
+  },
+  "udevadm-drm-trigger-bash": {
+    "reason": "Host-specific Pop-OS rule moved to dotfiles repository rules.",
+    "replacement": "dotfiles/ast-grep/rules/worker-gpu-acl.yml"
   }
 }
+

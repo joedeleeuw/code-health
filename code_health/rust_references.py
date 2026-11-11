@@ -71,8 +71,7 @@ class ReferenceFinder:
     def find(self, parsed: RustFile) -> list[RustReference]:
         if not any(name in parsed.source for name in self.names):
             return []
-        tree = RUST_PARSER.parse(parsed.source)
-        captured = QueryCursor(self.query).captures(tree.root_node)
+        captured = QueryCursor(self.query).captures(parsed.tree.root_node)
         found = []
         for node in captured.get("name", []):
             if node.parent is None or inside_use(node):

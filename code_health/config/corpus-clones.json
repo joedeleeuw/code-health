@@ -1,6 +1,4 @@
 {
-  "root": "/mnt/18tb/clones",
-  "symlink": "~/code/clones",
   "clones": [
     {
       "name": "aft",

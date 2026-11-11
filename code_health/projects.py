@@ -56,14 +56,12 @@ for vendor.txt, the line.
 """
 
 import ast
-import configparser
 import fnmatch
 import os
 import posixpath
 import re
 import shlex
 import sys
-import tomllib
 from pathlib import Path
 from typing import Any, NoReturn
 
@@ -73,6 +71,7 @@ from pydantic import BaseModel, Field, ValidationError
 
 from code_health import ERROR_EXIT
 from code_health.imports import script_roots
+from code_health.manifests import Manifests, called_name, separated
 
 INITIALIZERS = ("__init__.py", "__init__.pyi")
 COMMENT = re.compile(r"(?:^|\s)#.*$")
@@ -248,10 +247,14 @@ class Tool(BaseModel):
 
 
 class ProjectTable(BaseModel):
-    """pyproject.toml's [project]: the tables that name entry points, each a
-    module and, after a colon, the object in it that the installed command or
-    plugin loads."""
+    """pyproject.toml's [project]: project metadata, dependencies and entry points."""
 
+    name: str = ""
+    dependencies: list[str] = []
+    optional_dependencies: dict[str, list[str]] = Field(
+        default={}, alias="optional-dependencies"
+    )
+    dynamic: list[str] = []
     scripts: dict[str, str] = {}
     gui_scripts: dict[str, str] = Field(default={}, alias="gui-scripts")
     entry_points: dict[str, dict[str, str]] = Field(default={}, alias="entry-points")
@@ -314,10 +317,6 @@ def normal(path: str) -> str:
     """A repository-relative directory, the root as the empty path."""
     collapsed = posixpath.normpath(path)
     return "" if collapsed == "." else collapsed
-
-
-def separated(text: str) -> list[str]:
-    return [part for part in re.split(r"[\s,]+", text) if part]
 
 
 def arguments(option: list[str] | str) -> list[str]:
@@ -427,6 +426,7 @@ class Projects:
 
     def __init__(self, root: Path, trees: dict[str, ast.Module]):
         self.root = root
+        self.manifests = Manifests(root, trees)
         self.known = set(trees)
         self.source_roots: set[str] = set()
         self.destinations: dict[str, set[str]] = {}
@@ -445,7 +445,7 @@ class Projects:
             self.tox_ini(folder)
             self.checker_configs(folder)
             declared |= self.setup_cfg(folder, explicit)
-            setup = trees.get(posixpath.join(folder, "setup.py"))
+            setup = self.manifests.setup_py(folder)
             if setup is not None:
                 declared |= self.setup_py(folder, setup, explicit)
             if explicit:
@@ -519,7 +519,7 @@ class Projects:
         exclude."""
         for name in ("mypy.ini", ".mypy.ini", "setup.cfg"):
             source = posixpath.join(folder, name)
-            parser = self.config(source)
+            parser = self.manifests.ini(source)
             if parser is not None:
                 files = parser.get("mypy", "files", fallback="")
                 exclude = parser.get("mypy", "exclude", fallback="")
@@ -549,27 +549,16 @@ class Projects:
     def toml[Document: BaseModel](
         self, source: str, model: type[Document]
     ) -> Document | None:
-        manifest = self.root / source
-        if not manifest.is_file():
+        manifest = self.manifests.toml(source)
+        if manifest is None:
             return None
         try:
-            return model.model_validate(tomllib.loads(manifest.read_text()))
-        except (tomllib.TOMLDecodeError, UnicodeDecodeError, ValidationError) as error:
+            return model.model_validate(manifest.document)
+        except ValidationError as error:
             undecodable(source, error)
-
-    def config(self, source: str) -> configparser.RawConfigParser | None:
-        manifest = self.root / source
-        if not manifest.is_file():
-            return None
-        parser = configparser.RawConfigParser()
-        try:
-            parser.read_string(manifest.read_text(), source)
-        except (configparser.Error, UnicodeDecodeError) as error:
-            undecodable(source, error)
-        return parser
 
     def setup_cfg(self, folder: str, explicit: set[str]) -> bool:
-        parser = self.config(posixpath.join(folder, "setup.cfg"))
+        parser = self.manifests.ini(posixpath.join(folder, "setup.cfg"))
         if parser is None:
             return False
         package_dir = {}
@@ -598,7 +587,7 @@ class Projects:
 
     def pytest_ini(self, folder: str) -> None:
         for name in ("pytest.ini", ".pytest.ini"):
-            parser = self.config(posixpath.join(folder, name))
+            parser = self.manifests.ini(posixpath.join(folder, name))
             if parser is not None:
                 options = parser.items("pytest") if parser.has_section("pytest") else []
                 self.collected(
@@ -606,7 +595,7 @@ class Projects:
                 )
 
     def tox_ini(self, folder: str) -> None:
-        parser = self.config(posixpath.join(folder, "tox.ini"))
+        parser = self.manifests.ini(posixpath.join(folder, "tox.ini"))
         if parser is None:
             return
         if parser.has_section("pytest"):
@@ -675,7 +664,7 @@ class Projects:
         for call in ast.walk(tree):
             if not isinstance(call, ast.Call):
                 continue
-            callee = getattr(call.func, "id", getattr(call.func, "attr", ""))
+            callee = called_name(call)
             if callee == "setup":
                 calls = True
                 for keyword in call.keywords:

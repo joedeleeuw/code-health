@@ -21,8 +21,21 @@ import builtins
 import posixpath
 import re
 from collections import defaultdict
+from typing import TYPE_CHECKING
 
-from code_health.imports import Modules, module_path
+
+if TYPE_CHECKING:
+    from code_health.imports import Modules
+
+
+def module_path(base: str, dotted: str, known: set[str]) -> str | None:
+    """The file that defines a dotted module under a base directory."""
+    stem = posixpath.join(base, *dotted.split(".")) if dotted else base
+    for path in (f"{stem}.py", posixpath.join(stem, "__init__.py")):
+        if path in known:
+            return path
+    return None
+
 
 FUNCTIONS = (ast.FunctionDef, ast.AsyncFunctionDef)
 SCOPES = (ast.Module, ast.ClassDef, *FUNCTIONS, ast.Lambda)
@@ -64,6 +77,81 @@ def terminal(node: ast.expr) -> str | None:
     if isinstance(node, ast.Subscript):
         return terminal(node.value)
     return None
+
+
+def parents(tree: ast.AST) -> dict[int, ast.AST]:
+    return {
+        id(child): node
+        for node in ast.walk(tree)
+        for child in ast.iter_child_nodes(node)
+    }
+
+
+def parameter_names(node: ast.AST) -> list[str]:
+    signature = getattr(node, "args", None)
+    if signature is None:
+        return []
+    names = [
+        argument.arg
+        for argument in (*signature.posonlyargs, *signature.args, *signature.kwonlyargs)
+    ]
+    names += [
+        argument.arg for argument in (signature.vararg, signature.kwarg) if argument
+    ]
+    return names
+
+
+def binds(scope: ast.AST, name: str) -> bool:
+    """The scope binds the name itself: a parameter, an assignment, a
+    definition, an import or a capture, and no global or nonlocal declaration
+    hands the name to an enclosing scope."""
+    body = scope.body if isinstance(scope.body, list) else [scope.body]
+    nodes = [*body]
+    for statement in body:
+        if not isinstance(statement, SCOPES):
+            nodes += local_nodes(statement)
+    if any(
+        isinstance(node, (ast.Global, ast.Nonlocal)) and name in node.names
+        for node in nodes
+    ):
+        return False
+    if name in parameter_names(scope):
+        return True
+    return any(
+        (isinstance(node, (ast.MatchAs, ast.MatchStar)) and node.name == name)
+        or any(bound == name for bound, _ in node_binders(node))
+        for node in nodes
+    )
+
+
+def receiving_call(node: ast.Name, parent_of: dict[int, ast.AST]) -> ast.Call | None:
+    """The call the use is handed to as an argument, keyword, spread or literal
+    element of an argument; None when the use reads the value."""
+    parent = parent_of.get(id(node))
+    grand = parent_of.get(id(parent))
+    if isinstance(parent, ast.Call) and node in parent.args:
+        return parent
+    if isinstance(parent, (ast.keyword, ast.Starred)) and isinstance(grand, ast.Call):
+        return grand
+    if isinstance(parent, (ast.Dict, ast.Tuple, ast.List)):
+        if isinstance(grand, ast.Call) and parent in grand.args:
+            return grand
+        great = parent_of.get(id(grand))
+        if isinstance(grand, ast.keyword) and isinstance(great, ast.Call):
+            return great
+    return None
+
+
+def enclosing_scope(node: ast.AST, parent_of: dict[int, ast.AST]) -> ast.AST:
+    """The scope the node is evaluated in: a nested scope's decorators,
+    bases, defaults and annotations belong to the scope around it."""
+    child, scope = node, parent_of[id(node)]
+    while not isinstance(scope, ast.Module):
+        body = scope.body if isinstance(scope, SCOPES) else None
+        if child is body or (isinstance(body, list) and child in body):
+            return scope
+        child, scope = scope, parent_of[id(scope)]
+    return scope
 
 
 def local_nodes(scope: ast.AST):
@@ -131,7 +219,7 @@ def enclosing_class(scopes: list[ast.AST]) -> ast.ClassDef | None:
 class Symbols:
     """The repository's bindings, resolved on demand and remembered."""
 
-    def __init__(self, trees, parent_of, modules: Modules):
+    def __init__(self, trees, parent_of, modules: "Modules"):
         self.trees = trees
         self.parent_of = parent_of
         self.modules = modules
@@ -434,7 +522,7 @@ class Evaluation:
         symbols: Symbols,
         path: str,
         node: ast.AST,
-        bound_arguments: dict[str, tuple[ast.expr, "Evaluation"]],
+        bound_arguments: dict[str, tuple[ast.expr, "Evaluation"]] | None = None,
     ):
         self.symbols = symbols
         self.path = path
@@ -443,7 +531,7 @@ class Evaluation:
             self.scopes[0], ast.Module
         )
         self.load_line = node.lineno if load_time else None
-        self.bound_arguments = bound_arguments
+        self.bound_arguments = {} if bound_arguments is None else bound_arguments
 
     def resolve(self, expression: ast.expr) -> list | None:
         if isinstance(expression, ast.Name):

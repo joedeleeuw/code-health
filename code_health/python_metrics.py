@@ -1,4 +1,4 @@
-"""Python metrics: size limits from pyscn and the AST, classes that restate one
+"""Python metrics: size limits from the AST, classes that restate one
 instance shape from the AST, import-time cycles from the AST, unused code from
 pyright's resolution of each name, imports that resolve in none of the
 repository's environments, docstrings that carry code or a prose date,
@@ -10,15 +10,12 @@ restatements and cycles they might hide.
 
 import ast
 import re
-import shutil
 import tokenize
 from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
-from tempfile import TemporaryDirectory
 
-from pydantic import AliasPath, BaseModel, Field, ValidationError
-
-from code_health import counted, keyed, run, stop
+from code_health import counted, keyed, stop
 from code_health.distribution import Distributions
 from code_health.environments import Environments, environments
 from code_health.hops import (
@@ -34,8 +31,6 @@ from code_health.restatements import FirstPartyShapes
 from code_health.seams import python_single_adapters, test_only_seams
 from code_health.unused import UnusedCode
 
-PYSCN = ["uvx", "--from", "pyscn==1.32.4", "pyscn", "analyze", "--json"]
-PYSCN += ["--output", "-", "--select", "complexity"]
 DOCUMENTED = (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)
 DATE = re.compile(
     r"(?<![\w/'\"`<>.-])(?:(?:19|20)\d\d-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])"
@@ -75,22 +70,158 @@ NO_FINDINGS = {
 }
 
 
-class FunctionMetrics(BaseModel):
+@dataclass
+class FunctionMetrics:
     complexity: int
     nesting_depth: int
 
 
-class AnalyzedFunction(BaseModel):
+@dataclass
+class AnalyzedFunction:
     file_path: str
     name: str
     start_line: int
     metrics: FunctionMetrics
 
 
-class PyscnReport(BaseModel):
-    functions: list[AnalyzedFunction] = Field(
-        validation_alias=AliasPath("complexity", "functions")
-    )
+def compute_nesting(scope_node: ast.AST) -> int:
+    max_depth = 0
+
+    def walk_stmts(stmts: list[ast.stmt], depth: int) -> None:
+        for stmt in stmts:
+            walk_stmt(stmt, depth)
+
+    def walk_stmt(node: ast.stmt, depth: int) -> None:
+        nonlocal max_depth
+        if depth > max_depth:
+            max_depth = depth
+
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            return
+
+        if isinstance(node, (ast.For, ast.AsyncFor, ast.While)):
+            walk_stmts(node.body, depth + 1)
+            walk_stmts(node.orelse, depth + 1)
+            return
+        if isinstance(node, (ast.With, ast.AsyncWith)):
+            walk_stmts(node.body, depth + 1)
+            return
+        if isinstance(node, ast.If):
+            walk_stmts(node.body, depth + 1)
+            if len(node.orelse) == 1 and isinstance(node.orelse[0], ast.If):
+                walk_stmt(node.orelse[0], depth)
+            else:
+                walk_stmts(node.orelse, depth + 1)
+            return
+        if isinstance(node, ast.Try):
+            walk_stmts(node.body, depth + 1)
+            for handler in node.handlers:
+                walk_stmts(handler.body, depth + 2)
+            walk_stmts(node.orelse, depth + 1)
+            walk_stmts(node.finalbody, depth + 1)
+            return
+        if isinstance(node, ast.Match):
+            for case in node.cases:
+                walk_stmts(case.body, depth + 2)
+            return
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, ast.stmt):
+                walk_stmt(child, depth)
+
+    body = getattr(scope_node, "body", [])
+    if isinstance(body, list):
+        walk_stmts(body, 0)
+    return max_depth
+
+
+def compute_complexity(scope_node: ast.AST) -> int:
+    complexity = 1
+
+    def count_comp(comp: ast.ListComp | ast.SetComp | ast.DictComp | ast.GeneratorExp) -> None:
+        nonlocal complexity
+        for gen in comp.generators:
+            complexity += 1
+            complexity += len(gen.ifs)
+
+    def walk_expr(expr: ast.expr, direct_statement: bool = False) -> None:
+        if isinstance(expr, (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)):
+            if direct_statement:
+                count_comp(expr)
+        for child in ast.iter_child_nodes(expr):
+            if not isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.stmt)):
+                walk_expr(child, False)
+
+    def walk_stmt(node: ast.AST) -> None:
+        nonlocal complexity
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            return
+
+        if isinstance(node, (ast.If, ast.For, ast.AsyncFor, ast.While, ast.ExceptHandler, ast.match_case)):
+            complexity += 1
+
+        if isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign, ast.Return, ast.Expr)):
+            expression = getattr(node, "value", None)
+            if expression is not None:
+                walk_expr(expression, direct_statement=True)
+            for child in ast.iter_child_nodes(node):
+                if child is not expression and not isinstance(
+                    child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.stmt)
+                ):
+                    walk_expr(child, False)
+        else:
+            for child in ast.iter_child_nodes(node):
+                if isinstance(child, (ast.stmt, ast.ExceptHandler, ast.match_case)):
+                    walk_stmt(child)
+                elif not isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                    walk_expr(child, False)
+
+    body = getattr(scope_node, "body", [])
+    if isinstance(body, list):
+        for stmt in body:
+            walk_stmt(stmt)
+
+    return complexity
+
+
+def analyze_functions(trees: dict[str, ast.Module]) -> list[AnalyzedFunction]:
+    analyzed: list[AnalyzedFunction] = []
+    for file_path, tree in trees.items():
+        analyzed.append(
+            AnalyzedFunction(
+                file_path=file_path,
+                name="<module>",
+                start_line=1,
+                metrics=FunctionMetrics(
+                    complexity=compute_complexity(tree),
+                    nesting_depth=compute_nesting(tree),
+                ),
+            )
+        )
+
+        def walk(node: ast.AST, prefix: str) -> None:
+            for child in ast.iter_child_nodes(node):
+                if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    fn_name = f"{prefix}.{child.name}" if prefix else child.name
+                    analyzed.append(
+                        AnalyzedFunction(
+                            file_path=file_path,
+                            name=fn_name,
+                            start_line=child.lineno,
+                            metrics=FunctionMetrics(
+                                complexity=compute_complexity(child),
+                                nesting_depth=compute_nesting(child),
+                            ),
+                        )
+                    )
+                    walk(child, fn_name)
+                elif isinstance(child, ast.ClassDef):
+                    cls_name = f"{prefix}.{child.name}" if prefix else child.name
+                    walk(child, cls_name)
+                else:
+                    walk(child, prefix)
+
+        walk(tree, "")
+    return sorted(analyzed, key=lambda f: (f.file_path, f.start_line))
 
 
 def python_trees(root: Path, files: list[str]) -> dict[str, ast.Module]:
@@ -101,31 +232,6 @@ def python_trees(root: Path, files: list[str]) -> dict[str, ast.Module]:
         except (SyntaxError, ValueError) as error:
             stop(f"cannot parse {path}: {error}")
     return trees
-
-
-def pyscn_report(root: Path, files: list[str]) -> PyscnReport:
-    with TemporaryDirectory(prefix="code-health-python-") as directory:
-        analysis_root = Path(directory)
-        originals = {}
-        for index, path in enumerate(files):
-            analyzed = f"{index}/{Path(path).name}.py"
-            originals[analyzed] = path
-            destination = analysis_root / analyzed
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(root / path, destination)
-        config = analysis_root / ".pyscn.toml"
-        config.write_text(
-            '[analysis]\ninclude_patterns = ["**/*.py"]\n'
-            'exclude_patterns = ["**/.git/**"]\n'
-        )
-        output = run([*PYSCN, "--config", str(config), *originals], analysis_root)
-        try:
-            report = PyscnReport.model_validate_json(output, strict=True)
-        except ValidationError as error:
-            stop(f"invalid pyscn report: {error}")
-    for function in report.functions:
-        function.file_path = originals[function.file_path]
-    return report
 
 
 def parameter_rows(path: str, tree: ast.AST) -> list[tuple[int, str, int]]:
@@ -217,11 +323,7 @@ def measure_python(
     if not trees:
         return NONE, NO_FINDINGS
     files = list(trees)
-    report = pyscn_report(root, files)
-    functions = sorted(
-        report.functions,
-        key=lambda function: (function.file_path, function.start_line),
-    )
+    functions = analyze_functions(trees)
 
     def per_function(metric: Callable[[FunctionMetrics], int]) -> dict[str, int]:
         return keyed(
@@ -237,7 +339,7 @@ def measure_python(
     projects = Projects(root, trees)
     modules = Modules(trees, projects.source_roots, projects.aliases)
     graph = import_cycles(modules)
-    shipped = Distributions(root, files, listed)
+    shipped = Distributions(projects.manifests, listed)
     shapes = FirstPartyShapes(root, modules, projects, shipped)
     restated = shapes.clone_groups()
     decided = decisions(Repository(trees, shipped, modules))
@@ -256,7 +358,7 @@ def measure_python(
         "incomplete_shape_analysis": restated.incomplete,
         "incomplete_import_analysis": graph.incomplete,
         "single_adapter_seams": python_single_adapters(trees),
-        "test_only_seams": test_only_seams(trees),
+        "test_only_seams": test_only_seams(trees, modules),
         "cycles": {"": graph.cycles},
         "clone_pairs": {"": restated.findings},
     }

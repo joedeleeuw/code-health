@@ -23,12 +23,6 @@ repos:
         entry: nixfmt --check
         language: system
         files: \.nix$
-      - id: new-test-files
-        name: no new test files
-        entry: check-new-tests
-        language: system
-        pass_filenames: false
-        always_run: true
       - id: ruff
         name: ruff
         entry: uvx ruff@0.15.12 check --force-exclude

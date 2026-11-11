@@ -20,7 +20,14 @@ import ast
 import builtins
 import re
 
-from code_health.scopes import parameter_names, parents, receiving_call
+from code_health.symbols import (
+    binds,
+    enclosing_scope,
+    local_nodes as own_nodes,
+    parameter_names,
+    parents,
+    receiving_call,
+)
 
 FUNCTIONS = (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)
 SCOPES = (*FUNCTIONS, ast.ClassDef)
@@ -49,28 +56,6 @@ MOCK_ASSERTIONS = frozenset(
 CAPTURES = (ast.ExceptHandler, ast.MatchAs, ast.MatchStar)
 
 
-def enclosing_scope(node: ast.AST, parent_of: dict) -> ast.AST:
-    """The scope the node is evaluated in: a nested scope's decorators,
-    bases, defaults and annotations belong to the scope around it."""
-    child, scope = node, parent_of[id(node)]
-    while not isinstance(scope, ast.Module):
-        body = scope.body if isinstance(scope, SCOPES) else None
-        if child is body or (isinstance(body, list) and child in body):
-            return scope
-        child, scope = scope, parent_of[id(scope)]
-    return scope
-
-
-def own_nodes(scope: ast.AST):
-    """The scope's own nodes: nested scopes are yielded, never entered."""
-    body = scope.body if isinstance(scope.body, list) else [scope.body]
-    pending = list(body)
-    while pending:
-        node = pending.pop()
-        yield node
-        if not isinstance(node, SCOPES):
-            pending.extend(ast.iter_child_nodes(node))
-
 
 def bound_names(node: ast.AST) -> list[str]:
     """The names a node of a scope binds in it: a stored name, a definition, an
@@ -80,13 +65,6 @@ def bound_names(node: ast.AST) -> list[str]:
     if isinstance(node, (ast.Import, ast.ImportFrom)):
         return [alias.asname or alias.name.split(".")[0] for alias in node.names]
     return [node.name] if isinstance(node, (*DEFINITIONS, *CAPTURES)) else []
-
-
-def rebinds(scope: ast.AST, name: str) -> bool:
-    """The scope binds the name as a parameter or in one of its own nodes."""
-    if isinstance(scope, FUNCTIONS) and name in parameter_names(scope):
-        return True
-    return any(name in bound_names(node) for node in own_nodes(scope))
 
 
 def header(scope: ast.AST) -> list[ast.AST]:
@@ -119,7 +97,7 @@ def references(scope: ast.AST, name: str) -> list[ast.expr]:
         node = pending.pop()
         if isinstance(node, SCOPES):
             pending.extend(header(node))
-            if not isinstance(scope, ast.ClassDef) and not rebinds(node, name):
+            if not isinstance(scope, ast.ClassDef) and not binds(node, name):
                 body = node.body if isinstance(node.body, list) else [node.body]
                 pending.extend(body)
             continue

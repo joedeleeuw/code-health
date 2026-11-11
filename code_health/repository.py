@@ -17,8 +17,7 @@ from code_health.imports import (
     loaded_statements,
     module_path,
 )
-from code_health.scopes import parents
-from code_health.symbols import FUNCTIONS, OUTSIDE, Symbols
+from code_health.symbols import FUNCTIONS, OUTSIDE, Symbols, parents
 from code_health.visibility import all_listing, assigned
 
 SOURCE_ROOTS = ("", "src", "python", "lib")

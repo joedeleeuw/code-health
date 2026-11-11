@@ -29,8 +29,12 @@ import re
 import sys
 from dataclasses import dataclass
 
+from code_health.folding import ModuleStrings, folded
+from code_health.symbols import module_path
+
 STANDARD_LIBRARY = sys.stdlib_module_names
 FUNCTIONS = (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)
+LOADED_SKIP = (*FUNCTIONS, ast.ClassDef)
 BLOCKS = (ast.stmt, ast.excepthandler, ast.match_case)
 DEFINITIONS = (
     ast.FunctionDef,
@@ -62,60 +66,7 @@ def main_guard(test: ast.expr) -> bool:
     )
 
 
-def module_path(base: str, dotted: str, known: set[str]) -> str | None:
-    """The file that defines a dotted module under a base directory."""
-    stem = posixpath.join(base, *dotted.split(".")) if dotted else base
-    for path in (f"{stem}.py", posixpath.join(stem, "__init__.py")):
-        if path in known:
-            return path
-    return None
-
-
-STRING_METHODS = ("upper", "lower", "strip", "title", "capitalize", "casefold")
 UNDECIDED = object()
-
-
-def integer(expression: ast.expr) -> int | None:
-    """The integer a literal or a negated literal is."""
-    negated = isinstance(expression, ast.UnaryOp) and isinstance(
-        expression.op, ast.USub
-    )
-    literal = expression.operand if negated else expression
-    if isinstance(literal, ast.Constant) and type(literal.value) is int:
-        return -literal.value if negated else literal.value
-    return None
-
-
-def folded(expression: ast.expr) -> str | None:
-    """The string a constant string expression evaluates to: literals, slices
-    with constant bounds, concatenation and argument-free case methods."""
-    if isinstance(expression, ast.Constant) and isinstance(expression.value, str):
-        return expression.value
-    if isinstance(expression, ast.BinOp) and isinstance(expression.op, ast.Add):
-        left, right = folded(expression.left), folded(expression.right)
-        return None if left is None or right is None else left + right
-    if isinstance(expression, ast.Subscript) and isinstance(
-        expression.slice, ast.Slice
-    ):
-        text = folded(expression.value)
-        bounds = [expression.slice.lower, expression.slice.upper, expression.slice.step]
-        numbers = [None if bound is None else integer(bound) for bound in bounds]
-        if text is None or any(
-            bound is not None and number is None
-            for bound, number in zip(bounds, numbers, strict=True)
-        ):
-            return None
-        return text[slice(*numbers)]
-    if (
-        isinstance(expression, ast.Call)
-        and not expression.args
-        and not expression.keywords
-        and isinstance(expression.func, ast.Attribute)
-        and expression.func.attr in STRING_METHODS
-    ):
-        text = folded(expression.func.value)
-        return None if text is None else getattr(text, expression.func.attr)()
-    return None
 
 
 def globals_write(target: ast.expr) -> ast.expr | None:
@@ -220,6 +171,28 @@ def loaded_statements(tree: ast.Module, skip: tuple = FUNCTIONS, undecided=None)
             )
 
 
+def path_entries(path: str, tree: ast.Module) -> tuple[list[str], list[str]]:
+    """The repository directories the module's top-level statements put at
+    the front and at the end of sys.path."""
+    strings = ModuleStrings(path, list(loaded_statements(tree, LOADED_SKIP)))
+    inserted: list[str] = []
+    appended: list[str] = []
+    for statement in tree.body:
+        if not (
+            isinstance(statement, ast.Expr) and isinstance(statement.value, ast.Call)
+        ):
+            continue
+        call = statement.value
+        callee = ast.unparse(call.func)
+        if callee == "sys.path.insert" and len(call.args) == 2:
+            folder = strings.repository_path(call.args[1])
+            inserted[:0] = [] if folder is None else [folder]
+        elif callee == "sys.path.append" and len(call.args) == 1:
+            folder = strings.repository_path(call.args[0])
+            appended += [] if folder is None else [folder]
+    return inserted, appended
+
+
 def loaded_imports(tree: ast.Module):
     for node in loaded_statements(tree):
         if isinstance(node, (ast.Import, ast.ImportFrom)):
@@ -235,122 +208,6 @@ def script(path: str, known: set[str]) -> bool:
             return False
         folder = posixpath.dirname(folder)
     return True
-
-
-PATH_IDENTITIES = frozenset(
-    {
-        "Path",
-        "pathlib.Path",
-        "str",
-        "os.fspath",
-        "os.path.abspath",
-        "os.path.realpath",
-        "os.path.normpath",
-    }
-)
-PATH_METHODS = ("resolve", "absolute")
-
-
-def joined(folder: str | None, parts: list[ast.expr]) -> str | None:
-    """A repository directory joined with constant string parts; None when a
-    part is not constant or the result leaves the repository."""
-    pieces = [folded(part) for part in parts]
-    if folder is None or None in pieces:
-        return None
-    joined_path = posixpath.normpath(posixpath.join(folder, *pieces))
-    if joined_path == ".":
-        return ""
-    return None if joined_path.startswith("..") else joined_path
-
-
-class PathFolder:
-    """The repository paths a module's top-level expressions built from
-    __file__ name: Path and os.path calls, .parent, .parents[n], the / operator
-    and the names bound to such paths."""
-
-    def __init__(self, path: str, tree: ast.Module):
-        self.path = path
-        self.tree = tree
-        self.names: dict[str, str] = {}
-
-    def fold(self, expression: ast.expr) -> str | None:
-        if isinstance(expression, ast.Name):
-            if expression.id == "__file__":
-                return self.path
-            return self.names.get(expression.id)
-        if isinstance(expression, ast.Attribute) and expression.attr == "parent":
-            inner = self.fold(expression.value)
-            return None if inner is None else posixpath.dirname(inner)
-        if isinstance(expression, ast.BinOp) and isinstance(expression.op, ast.Div):
-            return joined(self.fold(expression.left), [expression.right])
-        if isinstance(expression, ast.Subscript):
-            return self.ancestor(expression)
-        if not isinstance(expression, ast.Call) or expression.keywords:
-            return None
-        return self.call(expression)
-
-    def ancestor(self, expression: ast.Subscript) -> str | None:
-        """The directory that .parents[n] of a folded path names; None when it
-        lies above the repository."""
-        holder, index = expression.value, expression.slice
-        if not (isinstance(holder, ast.Attribute) and holder.attr == "parents"):
-            return None
-        if not (isinstance(index, ast.Constant) and type(index.value) is int):
-            return None
-        folder = self.fold(holder.value)
-        if folder is None or index.value < 0:
-            return None
-        for _ in range(index.value + 1):
-            if not folder:
-                return None
-            folder = posixpath.dirname(folder)
-        return folder
-
-    def call(self, expression: ast.Call) -> str | None:
-        """The repository path a pathlib or os.path call on a folded path
-        names."""
-        callee, arguments = ast.unparse(expression.func), expression.args
-        if isinstance(expression.func, ast.Attribute) and not arguments:
-            if expression.func.attr in PATH_METHODS:
-                return self.fold(expression.func.value)
-            return None
-        if not arguments:
-            return None
-        inner = self.fold(arguments[0])
-        if callee == "os.path.join":
-            return joined(inner, arguments[1:])
-        if len(arguments) != 1 or inner is None:
-            return None
-        if callee == "os.path.dirname":
-            return posixpath.dirname(inner)
-        return inner if callee in PATH_IDENTITIES else None
-
-    def entries(self) -> tuple[list[str], list[str]]:
-        """The repository directories the module's top-level statements put at
-        the front and at the end of sys.path."""
-        inserted: list[str] = []
-        appended: list[str] = []
-        for statement in self.tree.body:
-            if (
-                isinstance(statement, ast.Assign)
-                and len(statement.targets) == 1
-                and isinstance(statement.targets[0], ast.Name)
-            ):
-                folder = self.fold(statement.value)
-                if folder is not None:
-                    self.names[statement.targets[0].id] = folder
-            elif isinstance(statement, ast.Expr) and isinstance(
-                statement.value, ast.Call
-            ):
-                call = statement.value
-                callee = ast.unparse(call.func)
-                if callee == "sys.path.insert" and len(call.args) == 2:
-                    folder = self.fold(call.args[1])
-                    inserted[:0] = [] if folder is None else [folder]
-                elif callee == "sys.path.append" and len(call.args) == 1:
-                    folder = self.fold(call.args[0])
-                    appended += [] if folder is None else [folder]
-        return inserted, appended
 
 
 def runs_as_script(tree: ast.Module) -> bool:
@@ -483,7 +340,7 @@ class Modules:
         if path in self.searched:
             return self.searched[path]
         folder = posixpath.dirname(path)
-        inserted, appended = PathFolder(path, self.trees[path]).entries()
+        inserted, appended = path_entries(path, self.trees[path])
         key = path if inserted or appended else folder
         if key not in self.searched:
             nearest = sorted(
@@ -522,7 +379,7 @@ class Modules:
         file puts on the import path."""
         searched = set(self.roots)
         for path, tree in self.trees.items():
-            inserted, appended = PathFolder(path, tree).entries()
+            inserted, appended = path_entries(path, tree)
             searched.update(inserted, appended)
             if not script(path, self.known):
                 searched.add(package_base(path, module_name(path, self.known)))

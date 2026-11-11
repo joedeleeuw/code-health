@@ -62,8 +62,14 @@ from code_health.bindings import (
 from code_health.collection import TestCollection
 from code_health.distribution import Distributions
 from code_health.folding import ROOT, StringValues
-from code_health.imports import Modules, module_name, runs_as_script
-from code_health.scopes import parameter_names
+from code_health.imports import (
+    LOADED_SKIP,
+    Modules,
+    loaded_statements,
+    module_name,
+    runs_as_script,
+)
+from code_health.symbols import parameter_names
 from code_health.projects import Projects
 
 TYPE_CHECKERS = frozenset({"mypy", "pyright", "basedpyright", "pytype", "pyre_check"})
@@ -300,7 +306,10 @@ class Specimens:
 
     def strings(self, path: str) -> StringValues:
         if path not in self.values:
-            self.values[path] = StringValues(self.module(path), self.trees[path])
+            self.values[path] = StringValues(
+                self.module(path),
+                list(loaded_statements(self.trees[path], LOADED_SKIP)),
+            )
         return self.values[path]
 
     def dynamic_imports(self, path: str) -> None:

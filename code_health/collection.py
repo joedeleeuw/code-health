@@ -23,10 +23,9 @@ import fnmatch
 import posixpath
 
 from code_health.imports import Modules, loaded_imports, loaded_statements
-from code_health.scopes import parents
 from code_health.projects import Collection, Projects, PytestOptions
 from code_health.projects import parents as folders_above
-from code_health.symbols import SCOPES
+from code_health.symbols import SCOPES, parents
 
 UNITTEST_CASES = frozenset(
     {

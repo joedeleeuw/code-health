@@ -89,11 +89,11 @@ from dataclasses import dataclass, field
 
 from code_health.forwarding import formals, forwarded, held, literal
 from code_health.hierarchy import DATA_MODEL
-from code_health.scopes import binds
 from code_health.repository import Repository, root_name, split_reference
 from code_health.symbols import (
     FUNCTIONS,
     Evaluation,
+    binds,
     enclosing_class,
     local_nodes,
 )

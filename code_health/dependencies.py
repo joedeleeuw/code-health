@@ -22,7 +22,6 @@ public names, read from its sources.
 import ast
 import json
 import sys
-import tomllib
 from importlib.metadata import Distribution, distributions
 from pathlib import Path
 from typing import NoReturn
@@ -37,10 +36,12 @@ from packaging.utils import canonicalize_name
 from pydantic import BaseModel, Field, ValidationError
 
 from code_health import ERROR_EXIT, run
-from code_health.bindings import own_nodes
 from code_health.imports import Modules
+from code_health.manifests import Manifests
+from code_health.projects import PyProject
 from code_health.python_metrics import python_trees
 from code_health.shapes import ClassIndex
+from code_health.symbols import local_nodes as own_nodes
 
 ENVIRONMENT = """
 import json, os, platform, sys, sysconfig
@@ -64,22 +65,6 @@ markers = {
 sites = sorted({sysconfig.get_path("purelib"), sysconfig.get_path("platlib")})
 print(json.dumps({"markers": markers, "sites": sites}))
 """
-
-
-class Project(BaseModel, strict=True):
-    """The pyproject.toml [project] keys that declare dependencies; an absent
-    list declares none (PEP 621)."""
-
-    name: str
-    dependencies: list[str] = []
-    optional_dependencies: dict[str, list[str]] = Field(
-        default={}, alias="optional-dependencies"
-    )
-    dynamic: list[str] = []
-
-
-class PyProject(BaseModel, strict=True):
-    project: Project
 
 
 class Environment(BaseModel, extra="forbid", strict=True):
@@ -113,16 +98,18 @@ def invalid(source: str, error: ValidationError) -> NoReturn:
     )
 
 
-def declared(root: Path) -> tuple[str, list[tuple[Requirement, str, int]]]:
+def declared(manifests: Manifests) -> tuple[str, list[tuple[Requirement, str, int]]]:
     """The project's name, and each declared requirement with the extra that
     declares it, empty for a base dependency, and its pyproject.toml line."""
-    text = (root / "pyproject.toml").read_text()
+    manifest = manifests.toml("pyproject.toml")
+    if manifest is None:
+        unresolved("pyproject.toml: the file is missing")
     try:
-        project = PyProject.model_validate(tomllib.loads(text)).project
-    except tomllib.TOMLDecodeError as error:
-        unresolved(f"pyproject.toml: {error}")
+        project = PyProject.model_validate(manifest.document).project
     except ValidationError as error:
         invalid("pyproject.toml", error)
+    if project is None:
+        unresolved("pyproject.toml: [project] table is missing")
     for key in ("dependencies", "optional-dependencies"):
         if key in project.dynamic:
             unresolved(f"pyproject.toml: [project].{key} is dynamic")
@@ -132,7 +119,7 @@ def declared(root: Path) -> tuple[str, list[tuple[Requirement, str, int]]]:
         for extra, entries in project.optional_dependencies.items()
         for entry in entries
     ]
-    lines = text.splitlines()
+    lines = manifests.text("pyproject.toml").splitlines()
     requirements = []
     for entry, extra in declarations:
         line = next(
@@ -223,12 +210,12 @@ def distribution_sources(
 
 
 def dependency_trees(
-    root: Path, python: str
+    manifests: Manifests, python: str
 ) -> tuple[dict[str, ast.Module], list[str]]:
     """The Python sources of every declared distribution that applies to the
     environment, keyed by their path under their import path entry, and the
     distributions whose sources cannot be read."""
-    reported = run([python, "-c", ENVIRONMENT], root)
+    reported = run([python, "-c", ENVIRONMENT], manifests.root)
     try:
         environment = Environment.model_validate_json(reported)
     except ValidationError as error:
@@ -237,7 +224,7 @@ def dependency_trees(
         canonicalize_name(distribution.metadata["Name"]): distribution
         for distribution in distributions(path=environment.sites)
     }
-    name, requirements = declared(root)
+    name, requirements = declared(manifests)
     trees: dict[str, ast.Module] = {}
     incomplete = []
     for requirement, extra, line in requirements:

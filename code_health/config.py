@@ -13,6 +13,14 @@ from code_health.rule_ledger import refuse_ledgered_pins, refuse_unknown_rules
 
 CONFIG = ".code-health.json"
 Count = Annotated[int, Field(strict=True, ge=0)]
+DEFAULT_LIMITS = {
+    "file_lines": 1000,
+    "complexity": 25,
+    "nesting": 4,
+    "params": 5,
+    "docstring_code": 0,
+    "clone_pairs": 0,
+}
 ItemPins = dict[str, Count]
 Limits = create_model(
     "Limits",
@@ -110,10 +118,19 @@ def enforce_ceilings(config: CodeHealthConfig, committed: Ceilings) -> None:
 
 
 def load_config(root: Path, baseline: bool) -> tuple[CodeHealthConfig, set[str]]:
-    try:
-        config = decode_config(CodeHealthConfig, (root / CONFIG).read_text(), CONFIG)
-    except OSError as error:
-        stop(f"{CONFIG}: {error.strerror}")
+    path = root / CONFIG
+    if baseline and not path.exists():
+        config = CodeHealthConfig(
+            exclude=[],
+            allowed={},
+            limits=Limits(**DEFAULT_LIMITS),
+            pins=Pins(),
+        )
+    else:
+        try:
+            config = decode_config(CodeHealthConfig, path.read_text(), CONFIG)
+        except OSError as error:
+            stop(f"{CONFIG}: {error.strerror}")
     refuse_ledgered_pins(CONFIG, config.pins.ast_grep)
     refuse_unknown_rules(CONFIG, sorted(config.allowed))
     missing = set(CATEGORIES) - config.pins.model_fields_set

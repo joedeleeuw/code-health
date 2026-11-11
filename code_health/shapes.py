@@ -49,7 +49,7 @@ import collections.abc
 import re
 from dataclasses import dataclass
 
-from code_health.bindings import own_nodes
+from code_health.symbols import local_nodes as own_nodes
 from code_health.class_bodies import (
     class_level_names,
     initializer_stores,
