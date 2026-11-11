@@ -54,6 +54,21 @@
   "udevadm-drm-trigger-bash": {
     "reason": "Host-specific Pop-OS rule moved to dotfiles repository rules.",
     "replacement": "dotfiles/ast-grep/rules/worker-gpu-acl.yml"
+  },
+  "hash-literal-python": {
+    "reason": "Flagged every 64-hex string; on the corpus the hits were download checksums and content IDs in data files, not pins of repo files.",
+    "replacement": "nothing; review a hash pin of a tracked file by hand"
+  },
+  "hash-literal-rust": {
+    "reason": "Flagged every 64-hex string; on the corpus the hits were download checksums and content IDs in data files, not pins of repo files.",
+    "replacement": "nothing; review a hash pin of a tracked file by hand"
+  },
+  "hash-literal-json": {
+    "reason": "Flagged every 64-hex string; on the corpus the hits were download checksums and content IDs in data files, not pins of repo files.",
+    "replacement": "nothing; review a hash pin of a tracked file by hand"
+  },
+  "hash-literal-yaml": {
+    "reason": "Flagged every 64-hex string; on the corpus the hits were download checksums and content IDs in data files, not pins of repo files.",
+    "replacement": "nothing; review a hash pin of a tracked file by hand"
   }
 }
-

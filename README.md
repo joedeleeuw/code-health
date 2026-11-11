@@ -25,6 +25,7 @@ pre-commit:
 
 - `code_health/sgconfig-off.yml` runs the rules under `rules-off/`, which are off by default: correct matches that a graded sample found mostly not worth changing.
 - To run a subset, copy the rule files you want into your own rule directory. The Rust rules also need `code_health/utils/`.
+- A rule that was shipped and then withdrawn is listed with the reason in `code_health/retired-rule-ids.json`; the `hash-literal-*` rules went that way because they flagged every download checksum and content ID in data files.
 - To accept a finding, put `// ast-grep-ignore: <rule-id>` (or `#` in Python, Bash and YAML) on the line above it.
 
 ## Python preset
@@ -44,7 +45,6 @@ pre-commit:
 | `compat-identifier-rust` | Compatibility/retirement name declared, or one receiver probed under a fallback key. |
 | `dated-comment-rust` | Dated provenance prose in a comment. |
 | `elif-chain-rust` | If/else-if chain with 3+ else-ifs. |
-| `hash-literal-rust` (off by default) | Hash pin of a repo-tracked file (64-hex literal). |
 | `host-path-rust` | Host-absolute path in a repository file (tracked or untracked; only ignored files are skipped). |
 | `lock-unwrap-rust` (off by default) | A lock is taken with .unwrap(), so one panic while it is held poisons it and every later lock() panics too. |
 | `secret-call-rust` | Direct secret-store call (secret-tool, op, security). |
@@ -66,7 +66,6 @@ pre-commit:
 | `dict-argument-write` | A function writes its result into a dict it was handed and returns nothing. |
 | `elif-chain` | If/elif chain with 3+ elifs. |
 | `guarded-import` | Guarded import. |
-| `hash-literal-python` (off by default) | Hash pin of a repo-tracked file (64-hex literal). |
 | `host-path-python` | Host-absolute path in a repository file (tracked or untracked; only ignored files are skipped). |
 | `nested-ternary` | Nested conditional expression. |
 | `reexport-module` | Module whose only statements import names from elsewhere. |
@@ -88,7 +87,6 @@ pre-commit:
 | Rule | What it reports |
 |---|---|
 | `approval-key-json` | Approval/status key in a config. |
-| `hash-literal-json` (off by default) | Hash pin of a repo-tracked file (64-hex literal). |
 | `host-path-json` | Host-absolute path in a repository file (tracked or untracked; only ignored files are skipped). |
 
 ### YAML
@@ -96,7 +94,6 @@ pre-commit:
 | Rule | What it reports |
 |---|---|
 | `approval-key-yaml` | Approval/status key in a config. |
-| `hash-literal-yaml` (off by default) | Hash pin of a repo-tracked file (64-hex literal). |
 | `host-path-yaml` | Host-absolute path in a repository file (tracked or untracked; only ignored files are skipped). |
 
 ### Markdown
