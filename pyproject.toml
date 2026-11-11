@@ -7,6 +7,8 @@ name = "code-health"
 version = "0.1.0"
 description = "Whole-workspace static analysis for Python and Nix, with a Rust preset"
 requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
 dependencies = [
     "Jinja2==3.1.6",
     "PyYAML==6.0.3",
