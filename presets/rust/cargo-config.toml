@@ -15,4 +15,8 @@ lint = [
   "-Dclippy::cognitive_complexity",
   "-Dclippy::excessive_nesting",
   "-Dclippy::too_many_arguments",
+  "-Ddead_code",
+  "-Dunused_imports",
+  "-Dunused_variables",
+  "-Dunused_must_use",
 ]
