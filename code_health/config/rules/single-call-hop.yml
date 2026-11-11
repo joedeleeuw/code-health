@@ -1,0 +1,287 @@
+id: single-call-hop-rust
+language: Rust
+severity: warning
+message: Private function only forwards its parameters, in order, to one first-party call; call the target directly or give the wrapper a job.
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/target/**"
+  - "**/vendor/**"
+  - "**/third_party/**"
+  - "**/tests/**"
+  - "**/tests.rs"
+  - "**/*_tests.rs"
+  - "**/*_test.rs"
+utils:
+  forwarding-call:
+    kind: call_expression
+    all:
+      - has:
+          field: function
+          any:
+            - kind: identifier
+              regex: "^[a-z_][a-z0-9_]*$"
+            - kind: scoped_identifier
+              all:
+                - regex: "^(Self::)?([a-z_][a-z0-9_]*::)*[a-z_][a-z0-9_]*$"
+                - not: {regex: "^(std|core|alloc)::"}
+            - kind: field_expression
+              regex: "^self\\.[a-z_][a-z0-9_]*$"
+      - has:
+          field: arguments
+          regex: "^\\(\\s*([a-z_][a-z0-9_]*\\s*(,\\s*[a-z_][a-z0-9_]*\\s*)*,?\\s*)?\\)$"
+  awaited:
+    kind: await_expression
+    has: {matches: forwarding-call}
+  propagated:
+    kind: try_expression
+    has:
+      any:
+        - matches: forwarding-call
+        - matches: awaited
+  forwarded:
+    any:
+      - matches: forwarding-call
+      - matches: awaited
+      - matches: propagated
+rule:
+  kind: function_item
+  all:
+    - not: {has: {kind: visibility_modifier}}
+    - not: {has: {field: name, regex: "^(main|__.*)$"}}
+    - not: {follows: {kind: attribute_item}}
+    - not:
+        inside:
+          any:
+            - kind: trait_item
+            - kind: impl_item
+              has: {field: trait, regex: "."}
+            - kind: foreign_mod_item
+          stopBy: end
+    - not:
+        inside:
+          matches: test-scope
+          stopBy: end
+    - not: {has: {kind: function_modifiers, regex: "extern"}}
+    - any:
+        - all:
+            - has:
+                field: parameters
+                kind: parameters
+                all:
+                  - not: {has: {nthChild: 1, regex: "."}}
+                  - not: {has: {kind: self_parameter}}
+            - has:
+                kind: arguments
+                stopBy: end
+                all:
+                  - not: {has: {nthChild: 1, regex: "."}}
+        - all:
+            - has:
+                field: parameters
+                kind: parameters
+                all:
+                  - not: {has: {nthChild: 2, regex: "."}}
+                  - not: {has: {kind: self_parameter}}
+                  - has: {nthChild: 1, kind: parameter, has: {field: pattern, pattern: $P0}}
+            - has:
+                kind: arguments
+                stopBy: end
+                all:
+                  - not: {has: {nthChild: 2, regex: "."}}
+                  - has: {nthChild: 1, pattern: $P0}
+        - all:
+            - has:
+                field: parameters
+                kind: parameters
+                all:
+                  - not: {has: {nthChild: 3, regex: "."}}
+                  - not: {has: {kind: self_parameter}}
+                  - has: {nthChild: 1, kind: parameter, has: {field: pattern, pattern: $P0}}
+                  - has: {nthChild: 2, kind: parameter, has: {field: pattern, pattern: $P1}}
+            - has:
+                kind: arguments
+                stopBy: end
+                all:
+                  - not: {has: {nthChild: 3, regex: "."}}
+                  - has: {nthChild: 1, pattern: $P0}
+                  - has: {nthChild: 2, pattern: $P1}
+        - all:
+            - has:
+                field: parameters
+                kind: parameters
+                all:
+                  - not: {has: {nthChild: 4, regex: "."}}
+                  - not: {has: {kind: self_parameter}}
+                  - has: {nthChild: 1, kind: parameter, has: {field: pattern, pattern: $P0}}
+                  - has: {nthChild: 2, kind: parameter, has: {field: pattern, pattern: $P1}}
+                  - has: {nthChild: 3, kind: parameter, has: {field: pattern, pattern: $P2}}
+            - has:
+                kind: arguments
+                stopBy: end
+                all:
+                  - not: {has: {nthChild: 4, regex: "."}}
+                  - has: {nthChild: 1, pattern: $P0}
+                  - has: {nthChild: 2, pattern: $P1}
+                  - has: {nthChild: 3, pattern: $P2}
+        - all:
+            - has:
+                field: parameters
+                kind: parameters
+                all:
+                  - not: {has: {nthChild: 5, regex: "."}}
+                  - not: {has: {kind: self_parameter}}
+                  - has: {nthChild: 1, kind: parameter, has: {field: pattern, pattern: $P0}}
+                  - has: {nthChild: 2, kind: parameter, has: {field: pattern, pattern: $P1}}
+                  - has: {nthChild: 3, kind: parameter, has: {field: pattern, pattern: $P2}}
+                  - has: {nthChild: 4, kind: parameter, has: {field: pattern, pattern: $P3}}
+            - has:
+                kind: arguments
+                stopBy: end
+                all:
+                  - not: {has: {nthChild: 5, regex: "."}}
+                  - has: {nthChild: 1, pattern: $P0}
+                  - has: {nthChild: 2, pattern: $P1}
+                  - has: {nthChild: 3, pattern: $P2}
+                  - has: {nthChild: 4, pattern: $P3}
+        - all:
+            - has:
+                field: parameters
+                kind: parameters
+                all:
+                  - not: {has: {nthChild: 6, regex: "."}}
+                  - not: {has: {kind: self_parameter}}
+                  - has: {nthChild: 1, kind: parameter, has: {field: pattern, pattern: $P0}}
+                  - has: {nthChild: 2, kind: parameter, has: {field: pattern, pattern: $P1}}
+                  - has: {nthChild: 3, kind: parameter, has: {field: pattern, pattern: $P2}}
+                  - has: {nthChild: 4, kind: parameter, has: {field: pattern, pattern: $P3}}
+                  - has: {nthChild: 5, kind: parameter, has: {field: pattern, pattern: $P4}}
+            - has:
+                kind: arguments
+                stopBy: end
+                all:
+                  - not: {has: {nthChild: 6, regex: "."}}
+                  - has: {nthChild: 1, pattern: $P0}
+                  - has: {nthChild: 2, pattern: $P1}
+                  - has: {nthChild: 3, pattern: $P2}
+                  - has: {nthChild: 4, pattern: $P3}
+                  - has: {nthChild: 5, pattern: $P4}
+        - all:
+            - has:
+                field: parameters
+                kind: parameters
+                all:
+                  - not: {has: {nthChild: 2, regex: "."}}
+                  - has: {kind: self_parameter}
+            - has:
+                kind: arguments
+                stopBy: end
+                all:
+                  - not: {has: {nthChild: 1, regex: "."}}
+        - all:
+            - has:
+                field: parameters
+                kind: parameters
+                all:
+                  - not: {has: {nthChild: 3, regex: "."}}
+                  - has: {kind: self_parameter}
+                  - has: {nthChild: 2, kind: parameter, has: {field: pattern, pattern: $P0}}
+            - has:
+                kind: arguments
+                stopBy: end
+                all:
+                  - not: {has: {nthChild: 2, regex: "."}}
+                  - has: {nthChild: 1, pattern: $P0}
+        - all:
+            - has:
+                field: parameters
+                kind: parameters
+                all:
+                  - not: {has: {nthChild: 4, regex: "."}}
+                  - has: {kind: self_parameter}
+                  - has: {nthChild: 2, kind: parameter, has: {field: pattern, pattern: $P0}}
+                  - has: {nthChild: 3, kind: parameter, has: {field: pattern, pattern: $P1}}
+            - has:
+                kind: arguments
+                stopBy: end
+                all:
+                  - not: {has: {nthChild: 3, regex: "."}}
+                  - has: {nthChild: 1, pattern: $P0}
+                  - has: {nthChild: 2, pattern: $P1}
+        - all:
+            - has:
+                field: parameters
+                kind: parameters
+                all:
+                  - not: {has: {nthChild: 5, regex: "."}}
+                  - has: {kind: self_parameter}
+                  - has: {nthChild: 2, kind: parameter, has: {field: pattern, pattern: $P0}}
+                  - has: {nthChild: 3, kind: parameter, has: {field: pattern, pattern: $P1}}
+                  - has: {nthChild: 4, kind: parameter, has: {field: pattern, pattern: $P2}}
+            - has:
+                kind: arguments
+                stopBy: end
+                all:
+                  - not: {has: {nthChild: 4, regex: "."}}
+                  - has: {nthChild: 1, pattern: $P0}
+                  - has: {nthChild: 2, pattern: $P1}
+                  - has: {nthChild: 3, pattern: $P2}
+        - all:
+            - has:
+                field: parameters
+                kind: parameters
+                all:
+                  - not: {has: {nthChild: 6, regex: "."}}
+                  - has: {kind: self_parameter}
+                  - has: {nthChild: 2, kind: parameter, has: {field: pattern, pattern: $P0}}
+                  - has: {nthChild: 3, kind: parameter, has: {field: pattern, pattern: $P1}}
+                  - has: {nthChild: 4, kind: parameter, has: {field: pattern, pattern: $P2}}
+                  - has: {nthChild: 5, kind: parameter, has: {field: pattern, pattern: $P3}}
+            - has:
+                kind: arguments
+                stopBy: end
+                all:
+                  - not: {has: {nthChild: 5, regex: "."}}
+                  - has: {nthChild: 1, pattern: $P0}
+                  - has: {nthChild: 2, pattern: $P1}
+                  - has: {nthChild: 3, pattern: $P2}
+                  - has: {nthChild: 4, pattern: $P3}
+        - all:
+            - has:
+                field: parameters
+                kind: parameters
+                all:
+                  - not: {has: {nthChild: 7, regex: "."}}
+                  - has: {kind: self_parameter}
+                  - has: {nthChild: 2, kind: parameter, has: {field: pattern, pattern: $P0}}
+                  - has: {nthChild: 3, kind: parameter, has: {field: pattern, pattern: $P1}}
+                  - has: {nthChild: 4, kind: parameter, has: {field: pattern, pattern: $P2}}
+                  - has: {nthChild: 5, kind: parameter, has: {field: pattern, pattern: $P3}}
+                  - has: {nthChild: 6, kind: parameter, has: {field: pattern, pattern: $P4}}
+            - has:
+                kind: arguments
+                stopBy: end
+                all:
+                  - not: {has: {nthChild: 6, regex: "."}}
+                  - has: {nthChild: 1, pattern: $P0}
+                  - has: {nthChild: 2, pattern: $P1}
+                  - has: {nthChild: 3, pattern: $P2}
+                  - has: {nthChild: 4, pattern: $P3}
+                  - has: {nthChild: 5, pattern: $P4}
+    - has:
+        field: body
+        kind: block
+        all:
+          - has:
+              nthChild: 1
+              any:
+                - matches: forwarded
+                - kind: expression_statement
+                  has: {matches: forwarded}
+                - kind: return_expression
+                  has: {matches: forwarded}
+                - kind: expression_statement
+                  has:
+                    kind: return_expression
+                    has: {matches: forwarded}
+          - not: {has: {nthChild: 2, regex: "."}}

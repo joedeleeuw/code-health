@@ -2,9 +2,10 @@
 the ast-grep rules.
 
 Clippy supplies receiver and type provenance; rustc supplies dead-code and
-unused diagnostics. code_health/config/clippy.toml is passed unconditionally
-through CLIPPY_CONF_DIR as the single owner of disallowed-methods and
-disallowed-types for this pass. Other Clippy lints are allowed and lint levels
+unused diagnostics. code_health/config/clippy.toml is the single owner of
+disallowed-methods and disallowed-types for this pass; each workspace is linted
+with that file plus the repository's complexity, nesting and parameter limits
+as Clippy thresholds, passed through CLIPPY_CONF_DIR. Other Clippy lints are allowed and lint levels
 are capped at warn. Each selected diagnostic is counted once at its primary
 span. --locked prevents Cargo.lock changes. Missing tools and compilation
 failures stop the check.
@@ -12,8 +13,10 @@ failures stop the check.
 
 import os
 from pathlib import Path, PurePosixPath
+from tempfile import TemporaryDirectory
 
 from code_health import run
+from code_health.config import Limits
 from pydantic import BaseModel, ValidationError
 
 CONFIG_DIR = Path(__file__).resolve().parent / "config"
@@ -26,6 +29,10 @@ LINTS = (
     "clippy::manual_unwrap_or_default",
     "clippy::await_holding_lock",
     "clippy::await_holding_refcell_ref",
+    "clippy::allow_attributes_without_reason",
+    "clippy::cognitive_complexity",
+    "clippy::excessive_nesting",
+    "clippy::too_many_arguments",
     "dead_code",
     "unused_imports",
     "unused_variables",
@@ -84,11 +91,24 @@ def diagnostics(output: str) -> list[Diagnostic]:
     return found
 
 
-def cargo_clippy(root: Path, files: list[str]) -> dict[str, list[str]]:
+def cargo_clippy(root: Path, files: list[str], limits: Limits) -> dict[str, list[str]]:
     """Lint matches per lint and measured file."""
+    with TemporaryDirectory() as folder:
+        thresholds = (
+            f"cognitive-complexity-threshold = {limits.complexity}\n"
+            f"excessive-nesting-threshold = {limits.nesting}\n"
+            f"too-many-arguments-threshold = {limits.params}\n"
+        )
+        packaged = (CONFIG_DIR / "clippy.toml").read_text(encoding="utf-8")
+        Path(folder, "clippy.toml").write_text(thresholds + packaged, encoding="utf-8")
+        return linted(root, files, {**os.environ, "CLIPPY_CONF_DIR": folder})
+
+
+def linted(
+    root: Path, files: list[str], environment: dict[str, str]
+) -> dict[str, list[str]]:
     measured = set(files)
     found: dict[str, list[str]] = {}
-    environment = {**os.environ, "CLIPPY_CONF_DIR": str(CONFIG_DIR)}
     for workspace in workspaces(files):
         command = [
             "cargo",

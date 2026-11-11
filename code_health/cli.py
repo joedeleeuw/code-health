@@ -1,7 +1,7 @@
 """Code-health ratchet.
 
-Python and Rust repositories get Homer's file length, complexity, nesting depth
-and parameter limits; Python repositories also get classes that restate one
+Python repositories get Homer's file length, complexity, nesting depth
+and parameter limits, and Rust files the file length limit; Python repositories also get classes that restate one
 instance shape, functions that duplicate one body, AST import cycles,
 code that pyright's resolution shows nothing reads, parameters a function only
 forwards to other calls,
@@ -11,14 +11,14 @@ rules, dead repository paths in Python strings, JSON and YAML values and markdow
 spans, JSON objects whose dotted keys shadow the file's own leaves, seams with
 one adapter, and injected dependencies that only tests override. Measured Nix
 files get native Statix and deadnix findings, ratcheted by rule and file;
-both commands must be available on PATH when those files exist. Rust
-repositories also get whole-workspace structural checks for structs that restate
-one shape, functions that duplicate one body and private single-call wrapper hops. A
+both commands must be available on PATH when those files exist. A
 repository with a measured Cargo.toml also gets cargo clippy on each top-level
 workspace: the disallowed-method and disallowed-type lists from
 code_health/config/clippy.toml, let_underscore_must_use, let_underscore_lock,
 map_err_ignore, manual_unwrap_or_default, await_holding_lock,
-await_holding_refcell_ref, and rustc's dead_code,
+await_holding_refcell_ref, allow_attributes_without_reason, the config's
+complexity, nesting and parameter limits as cognitive_complexity,
+excessive_nesting and too_many_arguments, and rustc's dead_code,
 unused_imports, unused_variables and unused_must_use. Findings are counted per
 lint and file and ratcheted like the ast-grep rules. cargo must be on PATH with
 the clippy component, the crates must compile, and Cargo.lock must be current.
@@ -78,17 +78,11 @@ from code_health.ratchet import INCOMPLETE, ratchet
 from code_health.references import measure_references
 from code_health.restatements import ExportedShapes, FirstPartyShapes
 from code_health.rule_ledger import SGCONFIG as RULES
-from code_health.rust_metrics import measure_rust
 from code_health.source_language import source_languages
 from pydantic import AliasPath, BaseModel, Field, ValidationError
 
 SKIPPED = ("*.lock", "*-lock.json", "*-lock.yaml", "*.lockb", "go.sum", "*/go.sum")
 SKIPPED += (".github/workflows/*", CONFIG)
-RUST_FINDINGS = (
-    "single_call_hops",
-    "incomplete_hop_analysis",
-    "incomplete_shape_analysis",
-)
 
 
 class RuleMatch(BaseModel):
@@ -182,7 +176,7 @@ def measure(
     root: Path, tracked: TrackedSources, config: CodeHealthConfig
 ) -> tuple[dict, dict]:
     rules = ast_grep(root, tracked.languages, config.allowed)
-    lints = cargo_clippy(root, tracked.files)
+    lints = cargo_clippy(root, tracked.files, config.limits)
     values, findings = measure_python(root, tracked.trees, tracked.listed)
     values |= {"ast_grep": counted(rules), "clippy": counted(lints)}
     findings |= {"ast_grep": rules, "clippy": lints}
@@ -191,18 +185,11 @@ def measure(
     )
     merged_values = values | counts
     merged_findings = findings | found
-    rust_counts, rust_found = measure_rust(
-        root, [p for p, language in tracked.languages.items() if language == "Rust"]
-    )
-    merged_values["clone_pairs"] += rust_counts["clone_pairs"]
-    merged_findings["clone_pairs"] = {
-        "": [*merged_findings["clone_pairs"][""], *rust_found["clone_pairs"][""]]
+    merged_values["file_lines"] = merged_values["file_lines"] | {
+        path: len((root / path).read_bytes().splitlines())
+        for path, language in tracked.languages.items()
+        if language == "Rust"
     }
-    for category in ("file_lines", "complexity", "nesting", "params"):
-        merged_values[category] = merged_values[category] | rust_counts[category]
-    for category in RUST_FINDINGS:
-        merged_values[category] = merged_values[category] | rust_counts[category]
-        merged_findings[category] = merged_findings[category] | rust_found[category]
     return merged_values, merged_findings
 
 
