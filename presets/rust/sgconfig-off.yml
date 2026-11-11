@@ -1,4 +1,4 @@
 ruleDirs:
-  - ../../code_health/config/rules/rust-off
+  - ../../code_health/config/rules-off/rust
 utilDirs:
   - ../../code_health/config/utils
