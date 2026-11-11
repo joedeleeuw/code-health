@@ -41,7 +41,7 @@
   },
   "L4": {
     "reason": "Retired approval layer rule; replaced by pre-merge automated gates and invariants.",
-    "replacement": "docs/enforcement-map.md"
+    "replacement": "The enforcement map in the dotfiles repository"
   },
   "L5": {
     "reason": "Retired narrative history rule; rationale and context belong in commit messages and PR bodies.",
