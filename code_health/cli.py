@@ -169,7 +169,7 @@ def measure(root: Path, tracked: TrackedSources) -> tuple[dict, dict]:
     merged_values["file_lines"] = merged_values["file_lines"] | {
         path: len((root / path).read_bytes().splitlines())
         for path, language in tracked.languages.items()
-        if language == "Rust"
+        if language == "Rust" or path in tracked.unparsable
     }
     return merged_values, merged_findings
 
@@ -204,7 +204,16 @@ def dependency_shapes(root: Path, python: str) -> list[str]:
         Distributions(projects.manifests, tracked.listed),
     )
     exporting = ExportedShapes(dependency, exported, shapes.index.typed)
-    findings = [*uncovered, *unreadable, *shapes.dependency_clones(exporting)]
+    unparsable = [
+        f"cannot parse {path}: {errors[0]}"
+        for path, errors in sorted(tracked.unparsable.items())
+    ]
+    findings = [
+        *unparsable,
+        *uncovered,
+        *unreadable,
+        *shapes.dependency_clones(exporting),
+    ]
     return [f"dependency_shapes: {finding}" for finding in findings]
 
 

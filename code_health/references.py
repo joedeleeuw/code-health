@@ -175,8 +175,8 @@ class Unparsable(Exception):
 
 def parsed(root: Path, path: str):
     """The JSON or YAML documents of a data file."""
-    text = (root / path).read_text()
     try:
+        text = (root / path).read_text()
         if path.endswith(".jsonc"):
             return [load_jsonc(root / path)]
         if path.endswith(".json"):

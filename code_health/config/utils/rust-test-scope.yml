@@ -9,7 +9,7 @@ rule:
     - kind: let_declaration
   follows:
     kind: attribute_item
-    regex: "(?:cfg\\s*\\(\\s*(?:test\\s*\\)|all\\s*\\([^)]*\\btest\\b)|^#\\[\\s*(?:[a-z0-9_]+::)*test\\b)"
+    regex: "(?:cfg\\s*\\(\\s*test\\s*\\)|cfg\\s*\\(\\s*all\\s*\\((?:[^)]*,)?\\s*test\\s*[,)]|^#\\[\\s*(?:[a-z0-9_]+::)*test\\b)"
     stopBy:
       not:
         any:
