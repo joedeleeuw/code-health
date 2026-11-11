@@ -13,12 +13,8 @@ dependencies = [
     "packaging==25.0",
     "pydantic==2.12.3",
     "tree-sitter==0.25.2",
-    "tree-sitter-rust @ git+https://github.com/joedeleeuw/tree-sitter-rust@1f4ad21050bda00cfec12a1cdb32ae4900d7cfbb",
+    "tree-sitter-rust==0.24.2",
 ]
 
 [project.scripts]
 code-health = "code_health.cli:main"
-
-[tool.hatch.metadata]
-allow-direct-references = true
-
