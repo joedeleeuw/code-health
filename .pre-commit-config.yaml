@@ -34,3 +34,9 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+      - id: code-health-ast-grep-test-off
+        name: code-health ast-grep opt-in rule tests
+        entry: ast-grep test --config code_health/sgconfig-off.yml --skip-snapshot-tests
+        language: system
+        pass_filenames: false
+        always_run: true

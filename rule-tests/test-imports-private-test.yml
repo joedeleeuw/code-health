@@ -16,3 +16,10 @@ invalid:
     from pkg import _private_name
   - |
     from pkg.public import _private_name as private_name
+  - |
+    from pkg import public, _private
+  - |
+    from pkg import (
+        public,
+        _private,
+    )

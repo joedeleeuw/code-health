@@ -10,6 +10,9 @@ valid:
   - |
     def run(*, mode: str = ""):
         pass
+  - |
+    class Job:
+        status: str = Field(description="default='pending'")
 invalid:
   - |
     class Job:

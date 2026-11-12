@@ -12,6 +12,10 @@ valid:
   - |
     source = inspect.getsource(run)
     assert "timeout=" in source
+  - |
+    def test_codegen(tmp_path):
+        generate_module(Path(tmp_path) / "generated.py")
+        assert (Path(tmp_path) / "generated.py").read_text() == "expected"
 invalid:
   - |
     source = (REPO_ROOT / "src" / "app.py").read_text()

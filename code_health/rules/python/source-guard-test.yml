@@ -18,3 +18,4 @@ constraints:
     all:
       - regex: "(?:__file__|\\b[A-Z_]*ROOT\\b|Path\\s*\\()"
       - regex: "\\.py['\"]"
+      - not: {regex: "\\btmp(?:_?path|_?dir)?\\b|\\btempfile\\b"}

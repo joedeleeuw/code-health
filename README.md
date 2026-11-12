@@ -89,7 +89,6 @@ repos:
 | `path-prefix-containment-python` | String .startswith() on a resolved path without a trailing separator accepts sibling directories such as /root-backup; check containment with Path.is_relative_to() or os.path.commonpath(). |
 | `pytest-mocker-monkeypatch` (off by default) | Test patches attributes through monkeypatch or the mocker fixture instead of exercising the real runtime or injecting a boundary. |
 | `reexport-module` | Module whose only statements import names from elsewhere. |
-| `revalidation-isinstance-typed-param` | Function re-checks a parameter against the concrete type its signature already declares; decode untrusted input at the boundary instead. |
 | `secret-call-python` | Direct secret-store call (secret-tool, op, security). |
 | `silent-decode-discard-python` | Boundary JSON, YAML, or TOML decode failure is caught and collapsed into None or an empty value; let invalid input fail loudly or handle the parse error explicitly. |
 | `source-guard-test` | Test reads repository Python source to assert implementation syntax rather than runtime behavior. |

@@ -1,7 +1,7 @@
 id: stringly-state
 language: Python
 severity: error
-message: State, status, mode, or priority field/parameter is typed as plain str with a closed literal default. Declare a Literal[...] union or StrEnum/Enum so invalid states cannot be represented.
+message: State, status, mode, or priority field/parameter is typed as plain str with a literal default. If its values are a fixed set, declare a Literal[...] union or StrEnum/Enum so invalid states cannot be represented.
 ignores:
   - "**/gen/**"
   - "**/generated/**"
@@ -37,7 +37,15 @@ rule:
             any:
               - matches: closed-token
               - kind: call
-                regex: "(?:field|Field)\\([^)]*default\\s*=\\s*['\"][a-z][a-z0-9_-]{1,24}['\"]"
+                all:
+                  - has: {field: function, regex: "^(?:field|Field)$"}
+                  - has:
+                      field: arguments
+                      has:
+                        kind: keyword_argument
+                        all:
+                          - has: {field: name, regex: "^default$"}
+                          - has: {field: value, matches: closed-token}
     - kind: typed_default_parameter
       inside:
         kind: parameters
