@@ -1,0 +1,30 @@
+id: vague-name-python
+language: Python
+valid:
+  - |
+    def fixture(tmp_path, tmp_path_factory, tmpdir, tmpdir_factory):
+        pass
+  - |
+    class TestCase:
+        def setUpTestData(self):
+            pass
+        def tearDownTestData(self):
+            pass
+  - |
+    class Context:
+        def __exit__(self, exc_type, exc_value, exc_info):
+            pass
+  - |
+    T = TypeVar("T")
+    P = ParamSpec("P")
+    Ts = TypeVarTuple("Ts")
+  - |
+    invoice_total = calculate_total()
+invalid:
+  - |
+    result = calculate_total()
+  - |
+    def load(ctx):
+        return ctx
+  - |
+    responseData = fetch()

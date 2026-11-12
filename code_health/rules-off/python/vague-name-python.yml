@@ -12,18 +12,11 @@ metadata:
 rule:
   all:
     - any:
-        # exact vague nouns, case-insensitive whole name, optional trailing digit
-        # (wemake-python-styleguide WPS110, pylint bad-names, brief list)
         - regex: "(?i)^(?:data|info|value|values|val|vals|obj|objects|objs|thing|things|stuff|temp|tmp|foo|bar|baz|res|ret|retval|misc|result|results|item|items|var|vars|variable|param|params|parameters|arr|spam|ham|toto|tutu|tata)\\d*$"
-        # filler suffixes on another word, camelCase
         - regex: "\\w+(?:Value|Data|Info|Obj|Object|Thing|Stuff)$"
-        # filler suffixes on another word, snake_case
         - regex: "\\w+_(?:value|data|info|obj|object|thing|stuff)$"
-        # filler prefixes: myConfig, the_list, someFlag, tempFile, tmp_path
         - regex: "^(?:my|the|some|temp|tmp)[A-Z_]\\w*"
-        # abbreviations (eslint-plugin-unicorn prevent-abbreviations)
         - regex: "^(?:cb|ctx|el|err|evt|fn|msg|opts|req|str)\\d*$"
-        # single-letter names except i, j, k, n, x, y, _
         - regex: "^[a-hl-mo-wzA-HL-MO-WZ]$"
     - any:
         - inside: {kind: function_definition, field: name}
@@ -33,7 +26,16 @@ rule:
         - inside: {kind: default_parameter, field: name}
         - inside: {kind: typed_parameter}
         - inside: {kind: typed_default_parameter, field: name}
-    # a temp prefix on a location says what it is: tmp_path, tempDir, temp_file
     - not:
         regex: "(?i)^te?mp_?(?:dir|directory|file|path|root|base|home)s?$"
+    - not:
+        regex: "^(?:tmp_path_factory|tmpdir_factory|setUpTestData|tearDownTestData|exc_type|exc_value|exc_info)$"
+    - not:
+        inside:
+          kind: assignment
+          field: left
+          has:
+            field: right
+            kind: call
+            regex: "(?:TypeVar|ParamSpec|TypeVarTuple)\\("
     - kind: identifier

@@ -1,4 +1,7 @@
 ruleDirs:
-  - rules-off
+  - rules-off/rust
+  - rules-off/python
 utilDirs:
   - utils
+testConfigs:
+  - testDir: ../rule-tests
