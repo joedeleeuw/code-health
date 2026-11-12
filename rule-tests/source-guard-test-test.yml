@@ -1,0 +1,21 @@
+id: source-guard-test
+language: Python
+valid:
+  - |
+    assert "new = 2" in (regen / "new" / "matplotlib.py").read_text()
+  - |
+    assert "generated" in (tmp_path / "artifact.py").read_text()
+  - |
+    signature = inspect.signature(run)
+  - |
+    config = (REPO_ROOT / "config.json").read_text()
+  - |
+    source = inspect.getsource(run)
+    assert "timeout=" in source
+invalid:
+  - |
+    source = (REPO_ROOT / "src" / "app.py").read_text()
+    assert "asyncio.Lock" in source
+  - |
+    source = Path("src/app.py").read_text()
+    assert "run(" in source

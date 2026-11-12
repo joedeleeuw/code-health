@@ -1,0 +1,20 @@
+id: source-guard-test
+language: Python
+severity: error
+message: Test reads Python source from the repository to assert implementation syntax instead of executing and testing runtime behavior.
+files:
+  - "**/tests/**"
+  - "**/test/**"
+  - "**/test_*.py"
+  - "**/*_test.py"
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/site-packages/**"
+rule:
+  pattern: $PATH.read_text($$$)
+constraints:
+  PATH:
+    all:
+      - regex: "(?:__file__|\\b[A-Z_]*ROOT\\b|Path\\s*\\()"
+      - regex: "\\.py['\"]"

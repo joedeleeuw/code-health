@@ -1,0 +1,25 @@
+id: stringly-state
+language: Python
+valid:
+  - |
+    class Job:
+        status: Literal["pending", "done"] = "pending"
+  - |
+    class Job:
+        status: str
+  - |
+    def run(*, mode: str = ""):
+        pass
+invalid:
+  - |
+    class Job:
+        status: str = "pending"
+  - |
+    class Job:
+        priority: str = field(default="medium")
+  - |
+    class Job:
+        severity: str = Field(default="warning")
+  - |
+    def run(*, mode: str = "auto"):
+        pass

@@ -1,0 +1,48 @@
+id: stringly-state
+language: Python
+severity: error
+message: State, status, mode, or priority field/parameter is typed as plain str with a closed literal default. Declare a Literal[...] union or StrEnum/Enum so invalid states cannot be represented.
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/site-packages/**"
+  - "**/vendor/**"
+  - "**/third_party/**"
+  - "**/tests/**"
+  - "**/test/**"
+  - "**/testing/**"
+  - "**/test_*.py"
+  - "**/*_test.py"
+  - "**/conftest.py"
+utils:
+  state-name:
+    kind: identifier
+    regex: "^(?:status|state|mode|phase|stage|severity|priority|role|outcome|verdict|decision|strategy|lifecycle)$"
+  closed-token:
+    kind: string
+    regex: "^['\"][a-z][a-z0-9_-]{1,24}['\"]$"
+rule:
+  any:
+    - kind: assignment
+      inside:
+        kind: expression_statement
+        inside:
+          kind: block
+          inside: {kind: class_definition}
+      all:
+        - has: {field: left, matches: state-name}
+        - has: {field: type, regex: "^str$"}
+        - has:
+            field: right
+            any:
+              - matches: closed-token
+              - kind: call
+                regex: "(?:field|Field)\\([^)]*default\\s*=\\s*['\"][a-z][a-z0-9_-]{1,24}['\"]"
+    - kind: typed_default_parameter
+      inside:
+        kind: parameters
+        inside: {kind: function_definition}
+      all:
+        - has: {field: name, matches: state-name}
+        - has: {field: type, regex: "^str$"}
+        - has: {field: value, matches: closed-token}
