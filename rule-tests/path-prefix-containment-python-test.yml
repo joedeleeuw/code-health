@@ -10,6 +10,9 @@ valid:
   - |
     if os.path.realpath(candidate).startswith("/nix/store/"):
         use_store(candidate)
+  - |
+    if os.path.realpath(candidate).startswith(os.path.join(root, "")):
+        use_root(candidate)
 invalid:
   - |
     if not str(out_path.resolve()).startswith(str(quarantine_dir.resolve())):
@@ -17,3 +20,6 @@ invalid:
   - |
     if not os.path.abspath(candidate).startswith(os.path.abspath(root)):
         raise ValueError("escaped")
+  - |
+    def allowed(candidate, base):
+        return os.path.realpath(candidate).startswith(base + "/cache")

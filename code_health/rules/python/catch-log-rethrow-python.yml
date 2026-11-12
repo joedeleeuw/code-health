@@ -45,10 +45,7 @@ rule:
             stopBy: neighbor
       - has:
           kind: raise_statement
-          not:
-            has:
-              kind: call
-              stopBy: end
+          regex: "^raise$"
           stopBy: neighbor
       - not:
           has:

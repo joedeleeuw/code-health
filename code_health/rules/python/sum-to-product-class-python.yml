@@ -16,6 +16,47 @@ ignores:
   - "**/test_*.py"
   - "**/*_test.py"
   - "**/conftest.py"
+utils:
+  outermost-optional-annotation:
+    any:
+      - kind: binary_operator
+        has:
+          kind: none
+          stopBy:
+            not:
+              kind: binary_operator
+      - kind: generic_type
+        has:
+          kind: identifier
+          regex: "^Optional$"
+          stopBy: neighbor
+      - kind: generic_type
+        all:
+          - has:
+              kind: identifier
+              regex: "^Union$"
+              stopBy: neighbor
+          - has:
+              kind: type_parameter
+              has:
+                kind: type
+                has:
+                  kind: none
+                  stopBy: neighbor
+                stopBy: neighbor
+              stopBy: neighbor
+      - kind: subscript
+        has:
+          field: value
+          regex: "^(typing|typing_extensions)\\.Optional$"
+      - kind: subscript
+        all:
+          - has:
+              field: value
+              regex: "^(typing|typing_extensions)\\.Union$"
+          - has:
+              field: subscript
+              kind: none
 rule:
   kind: class_definition
   has:
@@ -46,5 +87,8 @@ rule:
                   regex: "^(error|err|error_message|err_msg|failure_reason)$"
               - has:
                   field: type
-                  regex: "(Optional\\[|None)"
+                  kind: type
+                  has:
+                    matches: outermost-optional-annotation
+                    stopBy: neighbor
           stopBy: neighbor

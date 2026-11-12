@@ -13,6 +13,13 @@ valid:
         if err.status_code == 429:
             backoff()
         raise
+  - |
+    try:
+        fetch()
+    except OSError as err:
+        if "temp" in str(unrelated_name):
+            cleanup()
+        raise
 invalid:
   - |
     try:

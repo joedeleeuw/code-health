@@ -16,17 +16,6 @@ ignores:
   - "**/test_*.py"
   - "**/*_test.py"
   - "**/conftest.py"
-utils:
-  err-substring-probe:
-    any:
-      - pattern: $SUB in str($E)
-      - pattern: $SUB not in str($E)
-      - pattern: $SUB in str($E).lower()
-      - pattern: $SUB not in str($E).lower()
-      - pattern: str($E).startswith($$$)
-      - pattern: str($E).endswith($$$)
-      - pattern: str($E).lower().startswith($$$)
-      - pattern: str($E).lower().endswith($$$)
 rule:
   kind: except_clause
   all:
@@ -42,10 +31,30 @@ rule:
         has:
           field: condition
           any:
-            - matches: err-substring-probe
+            - pattern: $SUB in str($E)
+            - pattern: $SUB not in str($E)
+            - pattern: $SUB in str($E).lower()
+            - pattern: $SUB not in str($E).lower()
+            - pattern: str($E).startswith($$$)
+            - pattern: str($E).endswith($$$)
+            - pattern: str($E).lower().startswith($$$)
+            - pattern: str($E).lower().endswith($$$)
             - has:
-                matches: err-substring-probe
+                any:
+                  - pattern: $SUB in str($E)
+                  - pattern: $SUB not in str($E)
+                  - pattern: $SUB in str($E).lower()
+                  - pattern: $SUB not in str($E).lower()
+                  - pattern: str($E).startswith($$$)
+                  - pattern: str($E).endswith($$$)
+                  - pattern: str($E).lower().startswith($$$)
+                  - pattern: str($E).lower().endswith($$$)
                 stopBy:
-                  kind: block
+                  any:
+                    - kind: block
+                    - kind: lambda
         stopBy:
-          kind: function_definition
+          any:
+            - kind: function_definition
+            - kind: class_definition
+            - kind: except_clause

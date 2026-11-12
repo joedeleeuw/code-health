@@ -16,6 +16,28 @@ ignores:
   - "**/test_*.py"
   - "**/*_test.py"
   - "**/conftest.py"
+utils:
+  trailing-sep-prefix:
+    any:
+      - kind: string
+        regex: '[/\\]["'']$'
+      - all:
+          - pattern: $LHS + $RHS
+          - has:
+              field: right
+              any:
+                - kind: attribute
+                  regex: '^os\.(sep|altsep)$'
+                - kind: string
+                  regex: '[/\\]["'']$'
+      - kind: call
+        all:
+          - has:
+              field: function
+              regex: '^os\.path\.join$'
+          - has:
+              field: arguments
+              regex: ',\s*(""|'''')\s*\)$'
 rule:
   kind: call
   all:
@@ -26,5 +48,6 @@ rule:
     - not:
         has:
           field: arguments
-          any:
-            - regex: '(os\.sep|\+\s*["''][/\\]|,\s*["'']["'']\s*\)|[/\\]["'']\s*\))'
+          has:
+            matches: trailing-sep-prefix
+            stopBy: neighbor

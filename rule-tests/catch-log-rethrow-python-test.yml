@@ -7,6 +7,13 @@ valid:
     except OSError as err:
         raise StepFailedError("step failed") from err
   - |
+    def load():
+        try:
+            run()
+        except OSError as error:
+            logger.error("read failed")
+            raise domain_error from error
+  - |
     try:
         run_step()
     except OSError as err:

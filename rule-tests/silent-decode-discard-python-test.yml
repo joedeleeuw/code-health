@@ -11,6 +11,15 @@ valid:
         except json.JSONDecodeError:
             return None
   - |
+    def decode(text):
+        try:
+            return json.loads(text)
+        except ValueError:
+            def cleanup():
+                return None
+            cleanup()
+            raise
+  - |
     async def handle_ws(ws, message: str) -> None:
         try:
             payload = json.loads(message)

@@ -16,6 +16,13 @@ ignores:
   - "**/test_*.py"
   - "**/*_test.py"
   - "**/conftest.py"
+utils:
+  nested-scope-boundary:
+    any:
+      - kind: try_statement
+      - kind: function_definition
+      - kind: class_definition
+      - kind: lambda
 rule:
   kind: try_statement
   all:
@@ -35,7 +42,7 @@ rule:
             field: function
             regex: "^(json\\.(loads|load)|(yaml|ruamel\\.yaml)\\.(safe_load|load)|(tomllib|tomli|toml)\\.(loads|load))$"
           stopBy:
-            kind: try_statement
+            matches: nested-scope-boundary
     - has:
         kind: except_clause
         all:
@@ -53,4 +60,4 @@ rule:
                       - kind: string
                         regex: '^(""|'''')$'
               stopBy:
-                kind: try_statement
+                matches: nested-scope-boundary

@@ -8,6 +8,10 @@ valid:
   - |
     class CompilationError(Exception):
         pass
+  - |
+    class Outcome:
+        success: bool
+        error: list[str | None]
 invalid:
   - |
     @dataclass(frozen=True)
