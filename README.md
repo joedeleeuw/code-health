@@ -39,7 +39,7 @@ repos:
 
 ## Python preset
 
-`presets/python/ruff.toml` holds the [ruff](https://docs.astral.sh/ruff) settings that go with the Python rules: unused imports and locals, the complexity and argument limits, a ban on `contextlib.suppress`, blanket `# type: ignore` comments without an error code (`PGH003`), blocking HTTP/process/file/`time.sleep` calls inside `async def` outside test files (`ASYNC210`, `ASYNC220`, `ASYNC221`, `ASYNC230`, `ASYNC251`), and private-attribute access in test files (outside tests the rule is noise: mature libraries hit it more than agent-written code). `presets/python/ruff-off.toml` extends it with bans that are house policy and off by default: mocks and `@deprecated`. Point your own config at one of them with `extend = "../code-health/presets/python/ruff.toml"` (top level of `ruff.toml`, or under `[tool.ruff]` in `pyproject.toml`), or paste its tables into `ruff.toml`. In `pyproject.toml` each pasted table name needs the `tool.ruff.` prefix; without it ruff ignores the table silently.
+`presets/python/ruff.toml` holds the [ruff](https://docs.astral.sh/ruff) settings that go with the Python rules: unused imports and locals, complexity and argument limits, implicit `Optional` annotations (`RUF013`), constant-string `getattr`/`setattr` (`B009`/`B010`), jumps from `finally` (`B012`), bare `except` (`E722`), HTTP calls without timeouts (`S113`), bare `raise Exception` (`TRY002`), a ban on `contextlib.suppress`, blanket `# type: ignore` comments without an error code (`PGH003`), blocking HTTP/process/file/`time.sleep` calls inside `async def` outside test files (`ASYNC210`, `ASYNC220`, `ASYNC221`, `ASYNC230`, `ASYNC251`), and private-attribute access in test files (outside tests the rule is noise: mature libraries hit it more than agent-written code). The argument limit and the new signature/attribute/request checks ignore test files, whose framework-injected parameters and fixtures are not production interfaces. `presets/python/ruff-off.toml` extends it with bans that are house policy and off by default: mocks and `@deprecated`. Point your own config at one of them with `extend = "../code-health/presets/python/ruff.toml"` (top level of `ruff.toml`, or under `[tool.ruff]` in `pyproject.toml`), or paste its tables into `ruff.toml`. In `pyproject.toml` each pasted table name needs the `tool.ruff.` prefix; without it ruff ignores the table silently.
 
 ## Rules
 
@@ -87,12 +87,16 @@ repos:
 | `host-path-python` | Host-absolute path in a repository file (tracked or untracked; only ignored files are skipped). |
 | `nested-ternary` | Nested conditional expression. |
 | `path-prefix-containment-python` | String .startswith() on a resolved path without a trailing separator accepts sibling directories such as /root-backup; check containment with Path.is_relative_to() or os.path.commonpath(). |
+| `pytest-mocker-monkeypatch` (off by default) | Test patches attributes through monkeypatch or the mocker fixture instead of exercising the real runtime or injecting a boundary. |
 | `reexport-module` | Module whose only statements import names from elsewhere. |
+| `revalidation-isinstance-typed-param` | Function re-checks a parameter against the concrete type its signature already declares; decode untrusted input at the boundary instead. |
 | `secret-call-python` | Direct secret-store call (secret-tool, op, security). |
 | `silent-decode-discard-python` | Boundary JSON, YAML, or TOML decode failure is caught and collapsed into None or an empty value; let invalid input fail loudly or handle the parse error explicitly. |
+| `source-guard-test` | Test reads repository Python source to assert implementation syntax rather than runtime behavior. |
+| `stringly-state` | State, mode, role, severity, or similar field/parameter uses plain str with a closed literal default instead of a Literal union or enum. |
 | `sum-to-product-class-python` | Class flattens mutually exclusive success/failure outcomes into a boolean ok/success flag plus an optional error field; model distinct outcomes as a union of closed types or raise an exception. |
-| `test-imports-private` | A test imports a private name. |
-| `vague-name-python` | Vague declared name. |
+| `test-imports-private` | A test, conftest, or test helper imports a private product name. |
+| `vague-name-python` (off by default) | Vague declared name, excluding framework-fixed protocol names. |
 
 ### Bash
 
