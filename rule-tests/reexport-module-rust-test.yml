@@ -10,6 +10,12 @@ valid:
   - |
     use std::collections::HashMap;
     type Registry = HashMap<String, usize>;
+  - |
+    #[cfg(test)]
+    pub use crate::test_support::Fixture;
+  - |
+    #![cfg(test)]
+    pub use crate::test_support::Fixture;
 invalid:
   - |
     //! Thin compatibility shim.

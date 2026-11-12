@@ -10,6 +10,16 @@ valid:
         let cfg: Config = serde_json::from_slice(raw)?;
         Ok(cfg)
     }
+  - |
+    mod first {
+        use serde_json::Value;
+    }
+    mod second {
+        struct Value;
+        fn parse_local_struct(raw: &str) {
+            let _v: Value = serde_json::from_str(raw).unwrap();
+        }
+    }
 invalid:
   - |
     fn parse_json_turbofish(raw: &str) -> Result<serde_json::Value, serde_json::Error> {

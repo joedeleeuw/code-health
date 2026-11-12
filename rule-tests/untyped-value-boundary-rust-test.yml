@@ -18,6 +18,14 @@ valid:
         }
     }
   - |
+    mod first {
+        use serde_json::Value;
+    }
+    mod second {
+        struct Value;
+        fn consume(input: Value) {}
+    }
+  - |
     use serde_json::Value;
 
     fn other_crate_value(input: &sqlmodel_core::Value) -> usize {
@@ -29,6 +37,10 @@ valid:
 
     struct OwnedByProbeRule {
         pub bag: std::collections::HashMap<String, Value>,
+    }
+
+    fn map_return_owned_by_probe() -> serde_json::Map<String, serde_json::Value> {
+        serde_json::Map::new()
     }
   - |
     use serde_json::Value;
@@ -45,6 +57,10 @@ invalid:
     }
   - |
     fn return_qualified() -> Result<serde_json::Value, DomainError> {
+        todo!()
+    }
+  - |
+    fn return_non_string_key_map() -> std::collections::HashMap<u64, serde_json::Value> {
         todo!()
     }
   - |

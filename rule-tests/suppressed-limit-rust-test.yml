@@ -1,0 +1,22 @@
+id: suppressed-limit-rust
+language: Rust
+valid:
+  - |
+    #[allow(clippy::too_many_arguments, reason = "FFI callback signature fixed by C header")]
+    fn c_entry(a: i32, b: i32, c: i32, d: i32, e: i32, f: i32) {}
+  - |
+    #[expect(clippy::cognitive_complexity, reason = "generated wire opcode dispatch")]
+    fn dispatch() {}
+  - |
+    #[allow(clippy::disallowed_types)]
+    fn workspace_local_lint() {}
+invalid:
+  - |
+    #[allow(clippy::too_many_arguments)]
+    fn too_wide(a: i32, b: i32, c: i32, d: i32, e: i32, f: i32) {}
+  - |
+    #[expect(clippy::cognitive_complexity)]
+    fn complex() {}
+  - |
+    #![allow(clippy::disallowed_methods)]
+    fn module_wide() {}

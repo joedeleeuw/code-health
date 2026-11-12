@@ -2,25 +2,35 @@ id: test-scope
 language: Rust
 rule:
   any:
-    - kind: mod_item
-    - kind: function_item
-    - kind: impl_item
-    - kind: struct_item
-    - kind: enum_item
-    - kind: type_item
-    - kind: const_item
-    - kind: static_item
-    - kind: trait_item
-    - kind: use_declaration
-    - kind: macro_invocation
-    - kind: expression_statement
-    - kind: let_declaration
-  follows:
-    kind: attribute_item
-    regex: "(?:cfg\\s*\\(\\s*test\\s*\\)|cfg\\s*\\(\\s*all\\s*\\((?:[^)]*,)?\\s*test\\s*[,)]|^#\\[\\s*(?:[a-z0-9_]+::)*test\\b)"
-    stopBy:
-      not:
-        any:
-          - kind: attribute_item
-          - kind: line_comment
-          - kind: block_comment
+    - all:
+        - any:
+            - kind: mod_item
+            - kind: function_item
+            - kind: impl_item
+            - kind: struct_item
+            - kind: enum_item
+            - kind: type_item
+            - kind: const_item
+            - kind: static_item
+            - kind: trait_item
+            - kind: use_declaration
+            - kind: macro_invocation
+            - kind: expression_statement
+            - kind: let_declaration
+        - follows:
+            kind: attribute_item
+            regex: "(?:cfg\\s*\\(\\s*test\\s*\\)|cfg\\s*\\(\\s*all\\s*\\((?:[^)]*,)?\\s*test\\s*[,)]|^#\\[\\s*(?:[a-z0-9_]+::)*test\\b)"
+            stopBy:
+              not:
+                any:
+                  - kind: attribute_item
+                  - kind: line_comment
+                  - kind: block_comment
+    - all:
+        - any:
+            - kind: source_file
+            - kind: declaration_list
+        - has:
+            kind: inner_attribute_item
+            regex: "(?:cfg\\s*\\(\\s*test\\s*\\)|cfg\\s*\\(\\s*all\\s*\\((?:[^)]*,)?\\s*test\\s*[,)])"
+            stopBy: neighbor

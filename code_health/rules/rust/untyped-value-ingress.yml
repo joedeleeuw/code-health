@@ -17,12 +17,77 @@ ignores:
 metadata:
   directive: G4
 utils:
-  untyped-tree-type-file:
-    kind: source_file
-    has:
-      kind: use_declaration
-      regex: "(serde_json|serde_yaml|yaml_serde|toml)::(.*\\b(Value|Table|Mapping)\\b|\\*)"
-      stopBy: end
+  local-untyped-tree-def:
+    any:
+      - kind: struct_item
+        has: {field: name, regex: "^(Value|Table|Mapping)$"}
+      - kind: enum_item
+        has: {field: name, regex: "^(Value|Table|Mapping)$"}
+      - kind: type_item
+        has: {field: name, regex: "^(Value|Table|Mapping)$"}
+      - kind: union_item
+        has: {field: name, regex: "^(Value|Table|Mapping)$"}
+  untyped-tree-use-decl:
+    kind: use_declaration
+    all:
+      - regex: "(serde_json|serde_yaml|yaml_serde|toml)::(value::|map::)?(Value\\b|Table\\b|Mapping\\b|\\*|\\{[^}]*\\b(Value|Table|Mapping)\\b)"
+      - not:
+          regex: "\\b(Value|Table|Mapping)\\s+as\\s+\\w+"
+  in-untyped-tree-scope:
+    any:
+      - inside:
+          kind: block
+          all:
+            - has:
+                matches: untyped-tree-use-decl
+                stopBy: neighbor
+            - not:
+                has:
+                  matches: local-untyped-tree-def
+                  stopBy: neighbor
+          stopBy:
+            kind: mod_item
+      - all:
+          - not:
+              inside:
+                kind: block
+                has:
+                  matches: local-untyped-tree-def
+                  stopBy: neighbor
+                stopBy:
+                  kind: mod_item
+          - any:
+              - inside:
+                  kind: declaration_list
+                  all:
+                    - inside:
+                        kind: mod_item
+                        stopBy: neighbor
+                    - has:
+                        matches: untyped-tree-use-decl
+                        stopBy: neighbor
+                    - not:
+                        has:
+                          matches: local-untyped-tree-def
+                          stopBy: neighbor
+                  stopBy:
+                    kind: mod_item
+              - all:
+                  - not:
+                      inside:
+                        kind: mod_item
+                        stopBy: end
+                  - inside:
+                      kind: source_file
+                      all:
+                        - has:
+                            matches: untyped-tree-use-decl
+                            stopBy: neighbor
+                        - not:
+                            has:
+                              matches: local-untyped-tree-def
+                              stopBy: neighbor
+                      stopBy: end
 rule:
   all:
     - not:
@@ -45,9 +110,7 @@ rule:
                         - regex: "^<\\s*(serde_json::(value::)?|serde_yaml::|yaml_serde::|toml::)(Value|Table|Mapping)\\s*>$"
                         - all:
                             - regex: "^<\\s*(Value|Table|Mapping)\\s*>$"
-                            - inside:
-                                matches: untyped-tree-type-file
-                                stopBy: end
+                            - matches: in-untyped-tree-scope
             - not:
                 has:
                   field: arguments
@@ -65,9 +128,7 @@ rule:
                   - regex: "^(serde_json::(value::)?|serde_yaml::|yaml_serde::|toml::)(Value|Table|Mapping)$"
                   - all:
                       - regex: "^(Value|Table|Mapping)$"
-                      - inside:
-                          matches: untyped-tree-type-file
-                          stopBy: end
+                      - matches: in-untyped-tree-scope
             - has:
                 field: value
                 has:

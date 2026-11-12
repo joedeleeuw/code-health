@@ -37,6 +37,10 @@ valid:
         }
         Err(diagnose_failure(bytes))
     }
+  - |
+    fn panic_on_missing(path: &str) -> String {
+        std::fs::read_to_string(path).unwrap_or_else(|err| panic!("unreadable {path}: {err}"))
+    }
 invalid:
   - |
     fn parse_direct(raw: &str) -> Option<Config> {
@@ -45,6 +49,25 @@ invalid:
   - |
     fn parse_turbofish(raw: &str) -> Option<Config> {
         serde_json::from_str::<Config>(raw).ok()
+    }
+  - |
+    fn value() -> u32 {
+        "bad".parse::<u32>().unwrap_or_default()
+    }
+  - |
+    fn load() {
+        if let Ok(config) = serde_json::from_str::<Config>("bad") {
+            return use_config(config);
+        }
+    }
+  - |
+    fn conditional_return_still_drops_err() -> Result<Config, DetailedErr> {
+        if let Ok(config) = serde_json::from_str::<Config>("bad") {
+            if config.active {
+                return Ok(config);
+            }
+        }
+        Err(DetailedErr)
     }
   - |
     fn parse_ok_map_or(raw: &str) -> usize {

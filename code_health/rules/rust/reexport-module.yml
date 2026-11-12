@@ -21,10 +21,16 @@ ignores:
 rule:
   kind: source_file
   all:
+    - not:
+        matches: test-scope
     - has:
         kind: use_declaration
-        has:
-          kind: visibility_modifier
+        all:
+          - has:
+              kind: visibility_modifier
+          - not:
+              matches: test-scope
+        stopBy: neighbor
     - not:
         has:
           not:
@@ -34,3 +40,5 @@ rule:
               - kind: block_comment
               - kind: attribute_item
               - kind: inner_attribute_item
+              - matches: test-scope
+          stopBy: neighbor

@@ -9,10 +9,23 @@ valid:
     fn wire_payload(name: &str) -> serde_json::Value {
         serde_json::json!({ "name": name })
     }
+  - |
+    fn load() {
+        let payload = json!({"x": 1});
+        {
+            let payload = std::collections::HashMap::from([("x", 7)]);
+            consume(payload["x"]);
+        }
+        send(payload);
+    }
 invalid:
   - |
     fn roundtrip_value(src: &Source) -> Result<Target, serde_json::Error> {
         serde_json::from_value(serde_json::to_value(src)?)
+    }
+  - |
+    fn load() {
+        let settings: Config = serde_json::from_value(fetch_payload()).unwrap();
     }
   - |
     fn roundtrip_macro() -> Result<Target, serde_json::Error> {

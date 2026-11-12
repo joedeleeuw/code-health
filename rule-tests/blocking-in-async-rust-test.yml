@@ -10,7 +10,7 @@ valid:
         let _ = Command::new("program").output().await;
     }
   - |
-    async fn sleep_owned_by_clippy() {
+    fn sync_sleep_outside_async() {
         std::thread::sleep(std::time::Duration::from_millis(1));
     }
   - |
@@ -22,6 +22,10 @@ valid:
         }
     }
 invalid:
+  - |
+    async fn serve() {
+        std::thread::sleep(std::time::Duration::from_secs(1));
+    }
   - |
     use std::fs;
     use tokio::fs as async_fs;

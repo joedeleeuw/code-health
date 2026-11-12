@@ -1,7 +1,7 @@
 id: untyped-value-probe-rust
 language: Rust
 severity: error
-message: "Untyped Value key probe or open Map<String, Value> field/parameter defers schema validation past the boundary; decode once into a closed #[derive(Deserialize)] struct or enum."
+message: "Untyped Value key probe or open Map<String, Value> field, parameter, or return type defers schema validation past the boundary; decode once into a closed #[derive(Deserialize)] struct or enum."
 ignores:
   - "**/gen/**"
   - "**/generated/**"
@@ -20,26 +20,86 @@ constraints:
   KEY:
     kind: string_literal
     regex: '^"'
-  KEY2:
-    kind: string_literal
-    regex: '^"'
-  K3:
-    kind: string_literal
-    regex: '^"'
   PTR:
     kind: string_literal
     regex: '^"/'
   FN:
     not:
-      regex: "^(toml_edit::)?Item$"
+      regex: "^(toml_edit::.*|Item)$"
   METHOD:
     regex: "^(as_str|as_u64|as_i64|as_f64|as_bool|as_array|as_object|as_null|as_integer|as_float|as_table|as_datetime|as_mapping|as_sequence)$"
 utils:
-  value-file:
-    kind: source_file
-    has:
-      regex: "\\b(serde_json|serde_yaml|yaml_serde|toml::(Value|Table|from_))"
-      stopBy: end
+  local-value-type-def:
+    any:
+      - kind: struct_item
+        has: {field: name, regex: "^Value$"}
+      - kind: enum_item
+        has: {field: name, regex: "^Value$"}
+      - kind: type_item
+        has: {field: name, regex: "^Value$"}
+      - kind: union_item
+        has: {field: name, regex: "^Value$"}
+  value-use-decl:
+    kind: use_declaration
+    all:
+      - regex: "(serde_json|serde_yaml|yaml_serde|toml)::(value::)?(Value\\b|\\*|\\{[^}]*\\bValue\\b)"
+      - not:
+          regex: "\\bValue\\s+as\\s+\\w+"
+  in-value-scope:
+    any:
+      - inside:
+          kind: block
+          all:
+            - has:
+                matches: value-use-decl
+                stopBy: neighbor
+            - not:
+                has:
+                  matches: local-value-type-def
+                  stopBy: neighbor
+          stopBy:
+            kind: mod_item
+      - all:
+          - not:
+              inside:
+                kind: block
+                has:
+                  matches: local-value-type-def
+                  stopBy: neighbor
+                stopBy:
+                  kind: mod_item
+          - any:
+              - inside:
+                  kind: declaration_list
+                  all:
+                    - inside:
+                        kind: mod_item
+                        stopBy: neighbor
+                    - has:
+                        matches: value-use-decl
+                        stopBy: neighbor
+                    - not:
+                        has:
+                          matches: local-value-type-def
+                          stopBy: neighbor
+                  stopBy:
+                    kind: mod_item
+              - all:
+                  - not:
+                      inside:
+                        kind: mod_item
+                        stopBy: end
+                  - inside:
+                      kind: source_file
+                      all:
+                        - has:
+                            matches: value-use-decl
+                            stopBy: neighbor
+                        - not:
+                            has:
+                              matches: local-value-type-def
+                              stopBy: neighbor
+                      stopBy: end
 rule:
   all:
     - not:
@@ -47,42 +107,52 @@ rule:
           matches: test-scope
           stopBy: end
     - any:
-        - pattern: $OBJ.get($KEY).and_then(|$V| $V.$METHOD())
-        - pattern: $OBJ.get($KEY).and_then($FN::$METHOD)
-        - pattern: $OBJ[$KEY].$METHOD()
-        - pattern: $OBJ.get($KEY)?.$METHOD()
-        - pattern: $OBJ.pointer($PTR)
         - all:
-            - pattern: $OBJ[$KEY][$KEY2]
+            - any:
+                - pattern: $OBJ.get($KEY).and_then(|$V| $V.$METHOD())
+                - pattern: $OBJ.get($KEY).and_then($FN::$METHOD)
+                - pattern: $OBJ[$KEY].$METHOD()
+                - pattern: $OBJ.pointer($PTR)
             - not:
                 inside:
-                  kind: index_expression
-                  stopBy: neighbor
-            - not:
-                inside:
-                  pattern: $OUTER[$K3].$METHOD()
+                  kind: function_item
+                  has:
+                    field: parameters
+                    has:
+                      kind: parameter
+                      all:
+                        - has:
+                            field: pattern
+                            pattern: $OBJ
+                        - has:
+                            field: type
+                            regex: "toml_edit::"
                   stopBy:
-                    kind: call_expression
-        - kind: let_condition
-          all:
-            - inside:
-                matches: value-file
-                stopBy: end
-            - has:
-                field: pattern
-                regex: "^Some\\("
-            - has:
-                field: value
-                pattern: $OBJ.get($KEY)
+                    kind: function_item
         - kind: generic_type
           all:
             - has:
                 field: type
                 regex: "^(std::collections::|serde_json::(value::)?|indexmap::|rustc_hash::)?(HashMap|BTreeMap|IndexMap|FxHashMap|Map)$"
-            - has:
-                field: type_arguments
-                kind: type_arguments
-                regex: "^<\\s*String\\s*,\\s*(serde_json::(value::)?|serde_yaml::|yaml_serde::|toml::)?Value\\s*>$"
+            - any:
+                - has:
+                    field: type_arguments
+                    kind: type_arguments
+                    regex: "^<\\s*String\\s*,\\s*(serde_json::(value::)?|serde_yaml::|yaml_serde::|toml::)Value\\s*>$"
+                - all:
+                    - has:
+                        field: type
+                        regex: "^serde_json::(value::)?Map$"
+                    - has:
+                        field: type_arguments
+                        kind: type_arguments
+                        regex: "^<\\s*String\\s*,\\s*Value\\s*>$"
+                - all:
+                    - has:
+                        field: type_arguments
+                        kind: type_arguments
+                        regex: "^<\\s*String\\s*,\\s*Value\\s*>$"
+                    - matches: in-value-scope
             - any:
                 - inside:
                     all:
@@ -109,3 +179,18 @@ rule:
                       any:
                         - kind: parameter
                         - kind: block
+                - inside:
+                    all:
+                      - kind: function_item
+                      - not:
+                          matches: trait-impl-fn
+                    field: return_type
+                    stopBy:
+                      any:
+                        - kind: function_item
+                        - kind: block
+                - inside:
+                    kind: function_signature_item
+                    field: return_type
+                    stopBy:
+                      kind: function_signature_item

@@ -1,7 +1,7 @@
 id: value-roundtrip-rust
 language: Rust
 severity: error
-message: Data is serialized into serde_json::Value or JSON text only to be reparsed or mutated by string key in the same scope; construct or transform the typed Rust struct directly.
+message: Data is reparsed from serde_json::Value via from_value, round-tripped through JSON text, or built with json! and mutated by string key; decode once at the boundary into the typed Rust struct.
 ignores:
   - "**/gen/**"
   - "**/generated/**"
@@ -20,6 +20,73 @@ constraints:
   KEY:
     kind: string_literal
     regex: '^"'
+utils:
+  local-from-value-fn:
+    kind: function_item
+    has:
+      field: name
+      regex: "^from_value$"
+  from-value-use-decl:
+    kind: use_declaration
+    all:
+      - regex: "serde_json::(value::)?(from_value\\b|\\*|\\{[^}]*\\bfrom_value\\b)"
+      - not:
+          regex: "\\bfrom_value\\s+as\\s+\\w+"
+  in-from-value-scope:
+    any:
+      - inside:
+          kind: block
+          all:
+            - has:
+                matches: from-value-use-decl
+                stopBy: neighbor
+            - not:
+                has:
+                  matches: local-from-value-fn
+                  stopBy: neighbor
+          stopBy:
+            kind: mod_item
+      - all:
+          - not:
+              inside:
+                kind: block
+                has:
+                  matches: local-from-value-fn
+                  stopBy: neighbor
+                stopBy:
+                  kind: mod_item
+          - any:
+              - inside:
+                  kind: declaration_list
+                  all:
+                    - inside:
+                        kind: mod_item
+                        stopBy: neighbor
+                    - has:
+                        matches: from-value-use-decl
+                        stopBy: neighbor
+                    - not:
+                        has:
+                          matches: local-from-value-fn
+                          stopBy: neighbor
+                  stopBy:
+                    kind: mod_item
+              - all:
+                  - not:
+                      inside:
+                        kind: mod_item
+                        stopBy: end
+                  - inside:
+                      kind: source_file
+                      all:
+                        - has:
+                            matches: from-value-use-decl
+                            stopBy: neighbor
+                        - not:
+                            has:
+                              matches: local-from-value-fn
+                              stopBy: neighbor
+                      stopBy: end
 rule:
   all:
     - not:
@@ -28,24 +95,26 @@ rule:
           stopBy: end
     - any:
         - kind: call_expression
-          all:
-            - has:
-                field: function
-                regex: "^(serde_json::)?from_value"
-            - has:
-                field: arguments
+          has:
+            field: function
+            any:
+              - kind: scoped_identifier
+                regex: "^serde_json::(value::)?from_value$"
+              - kind: generic_function
                 has:
-                  any:
-                    - kind: call_expression
-                      has:
-                        field: function
-                        regex: "^(serde_json::)?to_value"
-                    - kind: macro_invocation
-                      has:
-                        field: macro
-                        regex: "^(serde_json::)?json$"
-                  stopBy:
-                    kind: closure_expression
+                  field: function
+                  kind: scoped_identifier
+                  regex: "^serde_json::(value::)?from_value$"
+              - all:
+                  - any:
+                      - kind: identifier
+                        regex: "^from_value$"
+                      - kind: generic_function
+                        has:
+                          field: function
+                          kind: identifier
+                          regex: "^from_value$"
+                  - matches: in-from-value-scope
         - kind: call_expression
           all:
             - has:
@@ -59,17 +128,18 @@ rule:
                     field: function
                     regex: "^(serde_json::)?to_string"
                   stopBy:
-                    kind: closure_expression
+                    any:
+                      - kind: closure_expression
+                      - kind: function_item
+                      - kind: async_block
         - kind: let_declaration
           all:
-            - any:
-                - has:
-                    field: pattern
-                    kind: identifier
+            - has:
+                field: pattern
+                any:
+                  - kind: identifier
                     pattern: $VAR
-                - has:
-                    field: pattern
-                    has:
+                  - has:
                       kind: identifier
                       pattern: $VAR
                       stopBy: neighbor
@@ -83,14 +153,104 @@ rule:
                   - has:
                       kind: token_tree
                       regex: "^\\(\\s*\\{"
-            - inside:
-                kind: block
-                has:
-                  any:
-                    - pattern: $VAR[$KEY]
-                    - pattern: $VAR.get($KEY)
-                    - pattern: $VAR.get_mut($KEY)
-                    - pattern: $VAR.as_object_mut()
-                  stopBy:
-                    kind: function_item
-                stopBy: neighbor
+            - precedes:
+                any:
+                  - any:
+                      - pattern: $VAR[$KEY]
+                      - pattern: $VAR.get($KEY)
+                      - pattern: $VAR.get_mut($KEY)
+                      - pattern: $VAR.as_object_mut()
+                  - has:
+                      all:
+                        - any:
+                            - pattern: $VAR[$KEY]
+                            - pattern: $VAR.get($KEY)
+                            - pattern: $VAR.get_mut($KEY)
+                            - pattern: $VAR.as_object_mut()
+                        - inside:
+                            follows:
+                              kind: let_declaration
+                              all:
+                                - has:
+                                    field: pattern
+                                    any:
+                                      - kind: identifier
+                                        pattern: $VAR
+                                      - has:
+                                          kind: identifier
+                                          pattern: $VAR
+                                          stopBy: neighbor
+                                - has:
+                                    field: value
+                                    kind: macro_invocation
+                                    all:
+                                      - has:
+                                          field: macro
+                                          regex: "^(serde_json::)?json$"
+                                      - has:
+                                          kind: token_tree
+                                          regex: "^\\(\\s*\\{"
+                              stopBy:
+                                kind: let_declaration
+                                has:
+                                  field: pattern
+                                  any:
+                                    - kind: identifier
+                                      pattern: $VAR
+                                    - has:
+                                        kind: identifier
+                                        pattern: $VAR
+                                        stopBy: end
+                            stopBy:
+                              any:
+                                - kind: function_item
+                                - kind: closure_expression
+                                  has:
+                                    field: parameters
+                                    has:
+                                      kind: identifier
+                                      pattern: $VAR
+                                      stopBy: end
+                                - kind: for_expression
+                                  has:
+                                    field: pattern
+                                    has:
+                                      kind: identifier
+                                      pattern: $VAR
+                                      stopBy: end
+                                - kind: match_arm
+                                  has:
+                                    field: pattern
+                                    has:
+                                      kind: identifier
+                                      pattern: $VAR
+                                      stopBy: end
+                                - all:
+                                    - inside:
+                                        kind: block
+                                        stopBy: neighbor
+                                    - follows:
+                                        kind: let_declaration
+                                        has:
+                                          field: pattern
+                                          any:
+                                            - kind: identifier
+                                              pattern: $VAR
+                                            - has:
+                                                kind: identifier
+                                                pattern: $VAR
+                                                stopBy: end
+                                        stopBy: end
+                      stopBy:
+                        kind: function_item
+                stopBy:
+                  kind: let_declaration
+                  has:
+                    field: pattern
+                    any:
+                      - kind: identifier
+                        pattern: $VAR
+                      - has:
+                          kind: identifier
+                          pattern: $VAR
+                          stopBy: end

@@ -1,7 +1,7 @@
 id: blocking-in-async-rust
 language: Rust
 severity: error
-message: Synchronous std::fs I/O or std::process::Command execution inside an async function or block stalls the async runtime executor; use tokio::fs, tokio::process::Command, or spawn_blocking.
+message: Blocking thread::sleep, synchronous std::fs I/O, or synchronous std::process::Command execution inside an async function or block stalls the async runtime executor; use tokio::time::sleep, tokio::fs, tokio::process::Command, or spawn_blocking.
 ignores:
   - "**/gen/**"
   - "**/generated/**"
@@ -36,33 +36,117 @@ utils:
     has:
       field: function
       regex: "(spawn_blocking|block_in_place)$"
-  async-fs-import:
-    kind: source_file
-    has:
-      kind: use_declaration
-      regex: "(tokio|async_std|smol)::(?:fs\\s*;|.*\\bfs\\s*[,}])"
-      stopBy: end
-  async-command-import:
-    kind: source_file
-    has:
-      kind: use_declaration
-      regex: "(tokio|async_std|smol)::(?:process::Command\\s*;|.*\\bCommand\\s*[,}])"
-      stopBy: end
-  sync-fs-import:
-    kind: source_file
-    has:
-      kind: use_declaration
-      regex: "std::fs(?:\\s*;|\\s*::\\{[^}]*\\bself\\b)"
-      stopBy: end
-  sync-command-import:
-    kind: source_file
-    has:
-      kind: use_declaration
-      all:
-        - regex: "std::process::(?:Command\\b|.*\\{[^}]*\\bCommand\\b)"
-        - not:
-            regex: "\\bCommand\\s+as\\s+\\w+"
-      stopBy: end
+  async-fs-use:
+    kind: use_declaration
+    regex: "(tokio|async_std|smol)::(?:fs\\s*;|.*\\bfs\\s*[,}])"
+  sync-fs-use:
+    kind: use_declaration
+    regex: "std::fs(?:\\s*;|\\s*::\\{[^}]*\\bself\\b)"
+  async-command-use:
+    kind: use_declaration
+    regex: "(tokio|async_std|smol)::(?:process::Command\\s*;|.*\\bCommand\\s*[,}])"
+  sync-command-use:
+    kind: use_declaration
+    all:
+      - regex: "std::process::(?:Command\\b|.*\\{[^}]*\\bCommand\\b)"
+      - not:
+          regex: "\\bCommand\\s+as\\s+\\w+"
+  sync-sleep-use:
+    kind: use_declaration
+    all:
+      - regex: "std::thread::(?:sleep\\b|\\*|\\{[^}]*\\bsleep\\b)"
+      - not:
+          regex: "\\bsleep\\s+as\\s+\\w+"
+  in-async-fs-scope:
+    any:
+      - inside:
+          kind: block
+          has: {matches: async-fs-use, stopBy: neighbor}
+          stopBy: {kind: mod_item}
+      - inside:
+          kind: declaration_list
+          all:
+            - inside: {kind: mod_item, stopBy: neighbor}
+            - has: {matches: async-fs-use, stopBy: neighbor}
+          stopBy: {kind: mod_item}
+      - all:
+          - not: {inside: {kind: mod_item, stopBy: end}}
+          - inside:
+              kind: source_file
+              has: {matches: async-fs-use, stopBy: neighbor}
+              stopBy: end
+  in-sync-fs-scope:
+    any:
+      - inside:
+          kind: block
+          has: {matches: sync-fs-use, stopBy: neighbor}
+          stopBy: {kind: mod_item}
+      - inside:
+          kind: declaration_list
+          all:
+            - inside: {kind: mod_item, stopBy: neighbor}
+            - has: {matches: sync-fs-use, stopBy: neighbor}
+          stopBy: {kind: mod_item}
+      - all:
+          - not: {inside: {kind: mod_item, stopBy: end}}
+          - inside:
+              kind: source_file
+              has: {matches: sync-fs-use, stopBy: neighbor}
+              stopBy: end
+  in-async-command-scope:
+    any:
+      - inside:
+          kind: block
+          has: {matches: async-command-use, stopBy: neighbor}
+          stopBy: {kind: mod_item}
+      - inside:
+          kind: declaration_list
+          all:
+            - inside: {kind: mod_item, stopBy: neighbor}
+            - has: {matches: async-command-use, stopBy: neighbor}
+          stopBy: {kind: mod_item}
+      - all:
+          - not: {inside: {kind: mod_item, stopBy: end}}
+          - inside:
+              kind: source_file
+              has: {matches: async-command-use, stopBy: neighbor}
+              stopBy: end
+  in-sync-command-scope:
+    any:
+      - inside:
+          kind: block
+          has: {matches: sync-command-use, stopBy: neighbor}
+          stopBy: {kind: mod_item}
+      - inside:
+          kind: declaration_list
+          all:
+            - inside: {kind: mod_item, stopBy: neighbor}
+            - has: {matches: sync-command-use, stopBy: neighbor}
+          stopBy: {kind: mod_item}
+      - all:
+          - not: {inside: {kind: mod_item, stopBy: end}}
+          - inside:
+              kind: source_file
+              has: {matches: sync-command-use, stopBy: neighbor}
+              stopBy: end
+  in-sync-sleep-scope:
+    any:
+      - inside:
+          kind: block
+          has: {matches: sync-sleep-use, stopBy: neighbor}
+          stopBy: {kind: mod_item}
+      - inside:
+          kind: declaration_list
+          all:
+            - inside: {kind: mod_item, stopBy: neighbor}
+            - has: {matches: sync-sleep-use, stopBy: neighbor}
+          stopBy: {kind: mod_item}
+      - all:
+          - not: {inside: {kind: mod_item, stopBy: end}}
+          - inside:
+              kind: source_file
+              has: {matches: sync-sleep-use, stopBy: neighbor}
+              stopBy: end
   sync-command-call:
     kind: call_expression
     any:
@@ -76,13 +160,9 @@ utils:
               kind: scoped_identifier
               regex: "^Command::new$"
           - any:
-              - inside:
-                  matches: sync-command-import
-                  stopBy: end
+              - matches: in-sync-command-scope
               - not:
-                  inside:
-                    matches: async-command-import
-                    stopBy: end
+                  matches: in-async-command-scope
 rule:
   kind: call_expression
   all:
@@ -102,6 +182,16 @@ rule:
         - has:
             field: function
             kind: scoped_identifier
+            regex: "^(std::)?thread::sleep$"
+        - all:
+            - has:
+                field: function
+                kind: identifier
+                regex: "^sleep$"
+            - matches: in-sync-sleep-scope
+        - has:
+            field: function
+            kind: scoped_identifier
             regex: "^std::fs::(read_to_string|read|write|read_dir|create_dir|create_dir_all|remove_file|remove_dir|remove_dir_all|copy|rename|metadata|symlink_metadata|canonicalize)$"
         - all:
             - has:
@@ -109,13 +199,9 @@ rule:
                 kind: scoped_identifier
                 regex: "^fs::(read_to_string|read|write|read_dir|create_dir|create_dir_all|remove_file|remove_dir|remove_dir_all|copy|rename|metadata|symlink_metadata|canonicalize)$"
             - any:
-                - inside:
-                    matches: sync-fs-import
-                    stopBy: end
+                - matches: in-sync-fs-scope
                 - not:
-                    inside:
-                      matches: async-fs-import
-                      stopBy: end
+                    matches: in-async-fs-scope
         - has:
             field: function
             kind: field_expression

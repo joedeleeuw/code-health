@@ -13,6 +13,14 @@ valid:
         fn call(&self, args: std::collections::HashMap<String, serde_json::Value>) {}
     }
   - |
+    fn get(
+        matrix: std::collections::HashMap<
+            String, std::collections::HashMap<String, i32>
+        >
+    ) -> i32 {
+        matrix["a"]["b"]
+    }
+  - |
     fn lookup_user(users: &std::collections::HashMap<String, User>) -> Option<&User> {
         if let Some(u) = users.get("admin") {
             return Some(u);
@@ -20,8 +28,14 @@ valid:
         None
     }
   - |
-    fn edit_toml_cst(doc: &toml_edit::DocumentMut) {
+    fn edit_toml_cst(doc: &toml_edit::DocumentMut) -> Option<&str> {
         let _ = doc.get("project").and_then(Item::as_table);
+        doc.get("project")?.as_str()
+    }
+  - |
+    struct Value;
+    struct LocalMap {
+        entries: std::collections::HashMap<String, Value>,
     }
 invalid:
   - |
@@ -33,22 +47,12 @@ invalid:
         val.get("port").and_then(toml::Value::as_integer)
     }
   - |
-    fn probe_qmark(val: &serde_json::Value) -> Option<&str> {
-        val.get("id")?.as_str()
-    }
-  - |
     fn probe_pointer(val: &serde_json::Value) -> Option<&serde_json::Value> {
         val.pointer("/choices/0/text")
     }
   - |
-    fn probe_nested_index(val: &serde_json::Value) -> &serde_json::Value {
-        &val["user"]["email"]
-    }
-  - |
-    fn probe_if_let(val: &serde_json::Value) {
-        if let Some(items) = val.get("items") {
-            let _ = items;
-        }
+    fn probe_indexed_coercion(val: &serde_json::Value) -> Option<&str> {
+        val["user"]["email"].as_str()
     }
   - |
     struct Bag {
@@ -57,4 +61,8 @@ invalid:
   - |
     struct OptionalBag {
         attrs: Option<std::collections::HashMap<String, serde_json::Value>>,
+    }
+  - |
+    fn payload() -> serde_json::Map<String, serde_json::Value> {
+        serde_json::Map::new()
     }

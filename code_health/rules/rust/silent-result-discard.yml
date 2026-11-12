@@ -1,7 +1,7 @@
 id: silent-result-discard-rust
 language: Rust
 severity: error
-message: Boundary serde decode, filesystem I/O, or Result failure is silently collapsed into Option, an empty value, or discarded; propagate or handle the error explicitly.
+message: Boundary serde/FromStr parse, filesystem I/O, or Result failure is silently collapsed into Option, an empty value, or discarded; propagate or handle the error explicitly.
 ignores:
   - "**/gen/**"
   - "**/generated/**"
@@ -30,6 +30,29 @@ utils:
           has:
             field: function
             matches: serde-decode-function
+  parse-call:
+    kind: call_expression
+    has:
+      field: function
+      any:
+        - kind: field_expression
+          has:
+            field: field
+            regex: "^parse$"
+        - kind: generic_function
+          has:
+            field: function
+            kind: field_expression
+            has:
+              field: field
+              regex: "^parse$"
+        - kind: scoped_identifier
+          regex: "^((std|core)::str::)?FromStr::from_str$"
+        - kind: generic_function
+          has:
+            field: function
+            kind: scoped_identifier
+            regex: "^((std|core)::str::)?FromStr::from_str$"
   row-get-function:
     kind: field_expression
     all:
@@ -98,6 +121,7 @@ utils:
                 any:
                   - matches: serde-decode-call
                   - matches: row-get-call
+                  - matches: parse-call
       - has:
           field: arguments
           has:
@@ -129,6 +153,69 @@ utils:
     has:
       field: name
       regex: "^(try|sniff|probe|extract|detect|maybe)_"
+  panic-closure-arg:
+    has:
+      field: arguments
+      has:
+        kind: closure_expression
+        has:
+          kind: macro_invocation
+          has:
+            field: macro
+            regex: "^(std::)?(panic|unreachable)$"
+          stopBy:
+            any:
+              - kind: closure_expression
+              - kind: function_item
+  explicit-failure-continuation:
+    any:
+      - kind: call_expression
+        has:
+          field: function
+          regex: "^Err$"
+      - kind: try_expression
+      - kind: macro_invocation
+        has:
+          field: macro
+          regex: "^((anyhow::)?bail|(std::)?panic|(std::)?unreachable)$"
+      - matches: serde-decode-call
+      - has:
+          any:
+            - kind: call_expression
+              has:
+                field: function
+                regex: "^Err$"
+            - kind: try_expression
+            - kind: macro_invocation
+              has:
+                field: macro
+                regex: "^((anyhow::)?bail|(std::)?panic|(std::)?unreachable)$"
+            - matches: serde-decode-call
+          stopBy:
+            any:
+              - kind: closure_expression
+              - kind: function_item
+              - kind: async_block
+  guarded-fast-path-if:
+    kind: if_expression
+    all:
+      - has:
+          field: consequence
+          kind: block
+          has:
+            any:
+              - kind: return_expression
+              - kind: expression_statement
+                has:
+                  kind: return_expression
+                  stopBy: neighbor
+            stopBy: neighbor
+      - inside:
+          kind: expression_statement
+          precedes:
+            matches: explicit-failure-continuation
+            stopBy: end
+          stopBy: neighbor
 rule:
   all:
     - not:
@@ -151,6 +238,8 @@ rule:
                       field: value
                       matches: serde-decode-call
             - not:
+                matches: panic-closure-arg
+            - not:
                 inside:
                   any:
                     - matches: option-fallback-chain
@@ -167,10 +256,28 @@ rule:
                 all:
                   - has:
                       field: field
+                      regex: "^(unwrap_or|unwrap_or_default)$"
+                  - has:
+                      field: value
+                      matches: parse-call
+            - not:
+                inside:
+                  matches: sniffer-fn
+                  stopBy: end
+        - kind: call_expression
+          all:
+            - has:
+                field: function
+                kind: field_expression
+                all:
+                  - has:
+                      field: field
                       regex: "^(unwrap_or|unwrap_or_default|unwrap_or_else)$"
                   - has:
                       field: value
                       matches: row-get-call
+            - not:
+                matches: panic-closure-arg
             - not:
                 inside:
                   matches: option-fallback-chain
@@ -188,6 +295,8 @@ rule:
                   - has:
                       field: field
                       regex: "^(ok|unwrap_or|unwrap_or_default|unwrap_or_else)$"
+            - not:
+                matches: panic-closure-arg
             - inside:
                 kind: block
                 stopBy:
@@ -212,19 +321,22 @@ rule:
                     - matches: sniffer-fn
                   stopBy: end
         - kind: call_expression
-          has:
-            field: function
-            kind: field_expression
-            all:
-              - has:
-                  field: field
-                  regex: "^(unwrap_or_default|unwrap_or|unwrap_or_else)$"
-              - has:
-                  field: value
-                  kind: call_expression
-                  has:
-                    field: function
-                    regex: "^(std::)?fs::(read_to_string|read|read_dir|metadata|canonicalize)$"
+          all:
+            - has:
+                field: function
+                kind: field_expression
+                all:
+                  - has:
+                      field: field
+                      regex: "^(unwrap_or_default|unwrap_or|unwrap_or_else)$"
+                  - has:
+                      field: value
+                      kind: call_expression
+                      has:
+                        field: function
+                        regex: "^(std::)?fs::(read_to_string|read|read_dir|metadata|canonicalize)$"
+            - not:
+                matches: panic-closure-arg
         - kind: if_expression
           all:
             - not:
@@ -232,14 +344,7 @@ rule:
                   - has:
                       field: alternative
                       kind: else_clause
-                  - has:
-                      field: consequence
-                      has:
-                        kind: return_expression
-                        stopBy:
-                          any:
-                            - kind: function_item
-                            - kind: closure_expression
+                  - matches: guarded-fast-path-if
                   - inside:
                       any:
                         - kind: for_expression
