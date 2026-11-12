@@ -1,0 +1,24 @@
+id: pytest-mocker-monkeypatch
+language: Python
+valid:
+  - |
+    def test_writes_file(tmp_path):
+        target = tmp_path / "result.txt"
+        write_result(target)
+        assert target.read_text() == "result"
+  - |
+    def test_environment(monkeypatch):
+        monkeypatch.setenv("MODE", "test")
+invalid:
+  - |
+    def test_config(monkeypatch):
+        monkeypatch.setattr(config, "_enabled", True)
+  - |
+    def test_client(mocker):
+        mocker.patch("client.send")
+  - |
+    def test_client(mocker):
+        mocker.patch.object(client, "send")
+  - |
+    def test_client(mocker):
+        mocker.spy(client, "send")

@@ -1,0 +1,20 @@
+id: pytest-mocker-monkeypatch
+language: Python
+severity: error
+message: Test patches attributes via monkeypatch.setattr or mocker.patch. Exercise the real runtime or inject an explicit boundary.
+files:
+  - "**/tests/**"
+  - "**/test/**"
+  - "**/test_*.py"
+  - "**/*_test.py"
+  - "**/conftest.py"
+ignores:
+  - "**/gen/**"
+  - "**/generated/**"
+  - "**/site-packages/**"
+rule:
+  any:
+    - pattern: monkeypatch.setattr($$$)
+    - pattern: mocker.patch($$$)
+    - pattern: mocker.patch.object($$$)
+    - pattern: mocker.spy($$$)
