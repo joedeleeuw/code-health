@@ -1113,6 +1113,213 @@
     "typescript"
    ],
    "role": "negative-control"
+  },
+  {
+   "name": "sqlalchemy",
+   "remote": "https://github.com/sqlalchemy/sqlalchemy.git",
+   "rev": "4e974a083b5258bcb5817e430bc3b4c441d715a7",
+   "languages": [
+    "python"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "celery",
+   "remote": "https://github.com/celery/celery.git",
+   "rev": "9c2f238334331db43f15956f131235fd3bb70fd1",
+   "languages": [
+    "python"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "aiohttp",
+   "remote": "https://github.com/aio-libs/aiohttp.git",
+   "rev": "09f2de88da57306ed9640038d317636247d77abb",
+   "languages": [
+    "python"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "scrapy",
+   "remote": "https://github.com/scrapy/scrapy.git",
+   "rev": "f7b1fd3f2f57c9d01f45276c1c3194f58cb0c1ea",
+   "languages": [
+    "python"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "jinja",
+   "remote": "https://github.com/pallets/jinja.git",
+   "rev": "5ef70112a1ff19c05324ff889dd30405b1002044",
+   "languages": [
+    "python"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "werkzeug",
+   "remote": "https://github.com/pallets/werkzeug.git",
+   "rev": "0f43c6ebd426039e4b99ec22535c2c8a2ec2f69f",
+   "languages": [
+    "python"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "urllib3",
+   "remote": "https://github.com/urllib3/urllib3.git",
+   "rev": "6da1f82193a6665544381002914aa82563386191",
+   "languages": [
+    "python"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "starlette",
+   "remote": "https://github.com/encode/starlette.git",
+   "rev": "271c277da0ff64e2048a4d46ecc812b9d61db5f6",
+   "languages": [
+    "python"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "mypy",
+   "remote": "https://github.com/python/mypy.git",
+   "rev": "332915e151c64a804bdd37b08b45700d14b0e219",
+   "languages": [
+    "python"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "tornado",
+   "remote": "https://github.com/tornadoweb/tornado.git",
+   "rev": "6ef5ce8ee502f3afa534e2abcbb30407f2f78cde",
+   "languages": [
+    "python"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "pip",
+   "remote": "https://github.com/pypa/pip.git",
+   "rev": "4b71f36fb4dfbc87ce65ac4710eeccf81d379f55",
+   "languages": [
+    "python"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "cargo",
+   "remote": "https://github.com/rust-lang/cargo.git",
+   "rev": "e7155031f4a75f3ccf0f9bd529ad3074a7e0d0f3",
+   "languages": [
+    "rust"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "rustfmt",
+   "remote": "https://github.com/rust-lang/rustfmt.git",
+   "rev": "0acb4720feb76e209e7c61f0133efbe628a4641b",
+   "languages": [
+    "rust"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "alacritty",
+   "remote": "https://github.com/alacritty/alacritty.git",
+   "rev": "aa5d942f46c40184a3f214830ff5f7989f4733a1",
+   "languages": [
+    "rust"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "nushell",
+   "remote": "https://github.com/nushell/nushell.git",
+   "rev": "a4819256a2d875ca42c8600242388da291f3beaa",
+   "languages": [
+    "rust"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "tantivy",
+   "remote": "https://github.com/quickwit-oss/tantivy.git",
+   "rev": "2ad36b4fd0c00ded047b12295423250d8d4d713b",
+   "languages": [
+    "rust"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "reqwest",
+   "remote": "https://github.com/seanmonstar/reqwest.git",
+   "rev": "6b99ec2a6a4fa9b601337fff9979541bb27050d2",
+   "languages": [
+    "rust"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "serde-json",
+   "remote": "https://github.com/serde-rs/json.git",
+   "rev": "8c535a260ce561eaab4111aafc29038eb9f77ff3",
+   "languages": [
+    "rust"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "tracing",
+   "remote": "https://github.com/tokio-rs/tracing.git",
+   "rev": "a3d8b7fd3a8bafd1b98f9a6f48418640aab0af8a",
+   "languages": [
+    "rust"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "sqlx",
+   "remote": "https://github.com/launchbadge/sqlx.git",
+   "rev": "987b8c5a74b6da8b71da6b5549925a7f6e59aac9",
+   "languages": [
+    "rust"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "bat",
+   "remote": "https://github.com/sharkdp/bat.git",
+   "rev": "8cf33bdde9a6e4c11d0f866415b1fc867df0cd40",
+   "languages": [
+    "rust"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "fd",
+   "remote": "https://github.com/sharkdp/fd.git",
+   "rev": "24d90b28d25438af2a8f2e7f7e46d03d6828da94",
+   "languages": [
+    "rust"
+   ],
+   "role": "negative-control"
+  },
+  {
+   "name": "helix",
+   "remote": "https://github.com/helix-editor/helix.git",
+   "rev": "57d864129eb54e1d4890a938e692ca465adaee3f",
+   "languages": [
+    "rust"
+   ],
+   "role": "negative-control"
   }
  ]
 }
