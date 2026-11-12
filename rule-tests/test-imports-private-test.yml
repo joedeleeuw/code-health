@@ -1,0 +1,18 @@
+id: test-imports-private
+language: Python
+valid:
+  - |
+    from ._support import _fixture_helper
+  - |
+    from tests._support import _fixture_helper
+  - |
+    from _common import escape_filter_path
+  - |
+    from pkg.public import public_name
+  - |
+    from pkg._internal import public_name
+invalid:
+  - |
+    from pkg import _private_name
+  - |
+    from pkg.public import _private_name as private_name

@@ -1,11 +1,14 @@
 id: test-imports-private
 language: Python
 severity: error
-message: A test imports a private name. The interface is the test surface; test through the module's public entry points, or make the name part of the interface.
-# test files only: a helper or mock module beside the tests is not a test
+message: A test imports a private product name. Test through the module's public entry points, or make the name part of the interface.
 files:
+  - "**/tests/**"
+  - "**/test/**"
+  - "**/testing/**"
   - "**/test_*.py"
   - "**/*_test.py"
+  - "**/conftest.py"
 ignores:
   - "**/gen/**"
   - "**/generated/**"
@@ -13,7 +16,6 @@ ignores:
 metadata:
   directive: D1
 utils:
-  # a private helper of the test suite itself is not the product's internals
   product-import:
     kind: import_from_statement
     has:
