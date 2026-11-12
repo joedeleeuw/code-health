@@ -12,6 +12,13 @@ valid:
             .ok()
     }
   - |
+    fn load() -> Result<(), Error> {
+        run().inspect_err(|_| {
+            register_handler(|| tracing::error!("later failure"));
+        })?;
+        Ok(())
+    }
+  - |
     #[test]
     fn logs_in_test() -> Result<(), std::io::Error> {
         let _ = std::fs::read_to_string("x").inspect_err(|e| eprintln!("{e}"))?;

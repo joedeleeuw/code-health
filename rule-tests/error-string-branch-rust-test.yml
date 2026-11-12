@@ -6,6 +6,21 @@ valid:
         matches!(res, Err(ApiError::Unauthorized))
     }
   - |
+    fn retry(outcome: Result<(), std::io::Error>, name: &str) -> bool {
+        match outcome {
+            Err(_) if name.starts_with("temp") => true,
+            _ => false,
+        }
+    }
+  - |
+    fn non_branching_body_calc(flag: bool, err: std::io::Error) -> bool {
+        if flag {
+            let matched = err.to_string().contains("temp");
+            return matched;
+        }
+        false
+    }
+  - |
     fn check_normal_string(line: &str) -> bool {
         if line.contains("error") {
             return true;

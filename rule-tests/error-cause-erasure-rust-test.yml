@@ -6,11 +6,26 @@ valid:
         res.map_err(AppError::Io)
     }
   - |
+    fn load() -> anyhow::Result<()> {
+        run().map_err(|e| anyhow::anyhow!(e))
+    }
+  - |
     fn preserve_source_with_ctx(path: &str, res: Result<(), std::io::Error>) -> Result<(), AppError> {
         res.map_err(|err| AppError::Read {
             path: format!("{path}"),
             source: err,
         })
+    }
+  - |
+    fn preserve_source_shorthand(path: &str, res: Result<(), std::io::Error>) -> Result<(), AppError> {
+        res.map_err(|source| AppError::Read {
+            path: format!("{path}"),
+            source,
+        })
+    }
+  - |
+    fn preserve_source_tuple(path: &str, res: Result<(), std::io::Error>) -> Result<(), AppError> {
+        res.map_err(|e| AppError::IoAt(format!("{path}"), e))
     }
   - |
     fn direct_string_owned_by_anemic_error(res: Result<(), std::io::Error>) -> Result<(), String> {
@@ -20,6 +35,10 @@ invalid:
   - |
     fn wrap_to_string(res: Result<(), rusqlite::Error>) -> Result<(), AppError> {
         res.map_err(|err| AppError::Database(err.to_string()))
+    }
+  - |
+    fn load() {
+        run().map_err(|e| { Failure(e.to_string()) });
     }
   - |
     fn wrap_format(res: Result<(), std::io::Error>) -> Result<(), AppError> {

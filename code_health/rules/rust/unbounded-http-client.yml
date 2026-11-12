@@ -1,7 +1,7 @@
 id: unbounded-http-client-rust
 language: Rust
 severity: error
-message: reqwest::get, Client::new(), or ureq::get/post constructs an HTTP request or client with no timeout; configure Client::builder().timeout(...) or AgentBuilder::new().timeout(...) so hung peers cannot stall callers indefinitely.
+message: reqwest::get, reqwest::Client::new(), or an unconfigured ureq request/Agent executes HTTP with no timeout; configure Client::builder().timeout(...) or ureq timeout_global/timeout(...) so hung peers cannot stall callers indefinitely.
 ignores:
   - "**/gen/**"
   - "**/generated/**"
@@ -18,12 +18,91 @@ ignores:
   - "**/*_tests.rs"
   - "**/*_test.rs"
 utils:
-  reqwest-client-import:
-    kind: source_file
+  local-client-type-def:
+    any:
+      - kind: struct_item
+        has: {field: name, regex: "^Client$"}
+      - kind: enum_item
+        has: {field: name, regex: "^Client$"}
+      - kind: type_item
+        has: {field: name, regex: "^Client$"}
+      - kind: union_item
+        has: {field: name, regex: "^Client$"}
+  reqwest-async-client-use:
+    kind: use_declaration
+    all:
+      - regex: "reqwest::(Client\\b|\\*|\\{[^}]*\\bClient\\b)"
+      - not:
+          regex: "reqwest::blocking::|\\bClient\\s+as\\s+\\w+"
+  in-reqwest-client-scope:
+    any:
+      - inside:
+          kind: block
+          all:
+            - has:
+                matches: reqwest-async-client-use
+                stopBy: neighbor
+            - not:
+                has:
+                  matches: local-client-type-def
+                  stopBy: neighbor
+          stopBy:
+            kind: mod_item
+      - all:
+          - not:
+              inside:
+                kind: block
+                has:
+                  matches: local-client-type-def
+                  stopBy: neighbor
+                stopBy:
+                  kind: mod_item
+          - any:
+              - inside:
+                  kind: declaration_list
+                  all:
+                    - inside:
+                        kind: mod_item
+                        stopBy: neighbor
+                    - has:
+                        matches: reqwest-async-client-use
+                        stopBy: neighbor
+                    - not:
+                        has:
+                          matches: local-client-type-def
+                          stopBy: neighbor
+                  stopBy:
+                    kind: mod_item
+              - all:
+                  - not:
+                      inside:
+                        kind: mod_item
+                        stopBy: end
+                  - inside:
+                      kind: source_file
+                      all:
+                        - has:
+                            matches: reqwest-async-client-use
+                            stopBy: neighbor
+                        - not:
+                            has:
+                              matches: local-client-type-def
+                              stopBy: neighbor
+                      stopBy: end
+  timeout-method-call:
+    kind: call_expression
     has:
-      kind: use_declaration
-      regex: "reqwest::(.*\\bClient\\b|\\*)"
-      stopBy: end
+      field: function
+      kind: field_expression
+      has:
+        field: field
+        regex: "^timeout(_global|_connect|_recv_response|_recv_body|_send_request|_send_body)?$"
+  ureq-request-init:
+    kind: call_expression
+    has:
+      field: function
+      kind: scoped_identifier
+      regex: "^ureq::(get|post|put|delete|patch|head)$"
 rule:
   kind: call_expression
   all:
@@ -33,24 +112,43 @@ rule:
           stopBy: end
     - not:
         inside:
-          kind: call_expression
-          has:
-            field: function
-            kind: field_expression
-            has:
-              field: field
-              regex: "^timeout$"
+          matches: timeout-method-call
           stopBy: end
     - any:
         - has:
             field: function
             kind: scoped_identifier
-            regex: "^(reqwest::(blocking::)?get|reqwest::(blocking::)?Client::new|ureq::(get|post|put|delete|patch|head|Agent::new))$"
+            regex: "^(reqwest::get|reqwest::Client::new|ureq::Agent::new)$"
         - all:
             - has:
                 field: function
                 kind: scoped_identifier
                 regex: "^Client::new$"
-            - inside:
-                matches: reqwest-client-import
-                stopBy: end
+            - matches: in-reqwest-client-scope
+        - all:
+            - has:
+                field: function
+                kind: field_expression
+                all:
+                  - has:
+                      field: field
+                      regex: "^(call|send|send_string|send_bytes|send_json|send_form)$"
+                  - has:
+                      field: value
+                      any:
+                        - matches: ureq-request-init
+                        - has:
+                            matches: ureq-request-init
+                            stopBy:
+                              any:
+                                - kind: block
+                                - kind: closure_expression
+                                - kind: function_item
+            - not:
+                has:
+                  matches: timeout-method-call
+                  stopBy:
+                    any:
+                      - kind: block
+                      - kind: closure_expression
+                      - kind: function_item

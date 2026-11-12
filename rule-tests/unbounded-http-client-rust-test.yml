@@ -8,17 +8,38 @@ valid:
         Client::builder().timeout(Duration::from_secs(10)).build()
     }
   - |
+    fn client() {
+        let client = reqwest::blocking::Client::new();
+    }
+  - |
+    fn fetch(url: &str) {
+        ureq::get(url)
+            .config()
+            .timeout_global(Some(std::time::Duration::from_secs(5)))
+            .build()
+            .call();
+    }
+  - |
     use std::time::Duration;
-    fn fetch(url: &str) -> Result<ureq::Response, ureq::Error> {
+    fn fetch_v2(url: &str) -> Result<ureq::Response, ureq::Error> {
         ureq::get(url).timeout(Duration::from_secs(5)).call()
     }
   - |
-    struct Client;
-    impl Client {
-        fn new() -> Self { Self }
+    fn prepare_request(url: &str) -> ureq::Request {
+        ureq::get(url)
     }
-    fn local_client() -> Client {
-        Client::new()
+  - |
+    mod http_layer {
+        use reqwest::Client;
+    }
+    mod db_layer {
+        struct Client;
+        impl Client {
+            fn new() -> Self { Self }
+        }
+        fn local_client() -> Client {
+            Client::new()
+        }
     }
   - |
     #[cfg(test)]

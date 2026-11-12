@@ -14,6 +14,17 @@ ignores:
   - "**/tests.rs"
   - "**/*_tests.rs"
   - "**/*_test.rs"
+utils:
+  log-error-macro:
+    kind: macro_invocation
+    has:
+      field: macro
+      regex: "(warn|error|eprintln)$"
+  nested-exec-boundary:
+    any:
+      - kind: closure_expression
+      - kind: function_item
+      - kind: async_block
 rule:
   kind: try_expression
   all:
@@ -34,11 +45,15 @@ rule:
               - has:
                   field: arguments
                   has:
-                    kind: macro_invocation
+                    kind: closure_expression
                     has:
-                      field: macro
-                      regex: "(warn|error|eprintln)$"
-                    stopBy: end
+                      field: body
+                      any:
+                        - matches: log-error-macro
+                        - has:
+                            matches: log-error-macro
+                            stopBy:
+                              matches: nested-exec-boundary
             stopBy: neighbor
         - has:
             kind: call_expression
@@ -68,11 +83,9 @@ rule:
                                   kind: let_declaration
                                   stopBy: neighbor
                             - has:
-                                kind: macro_invocation
-                                has:
-                                  field: macro
-                                  regex: "(warn|error|eprintln)$"
-                                stopBy: end
+                                matches: log-error-macro
+                                stopBy:
+                                  matches: nested-exec-boundary
                             - has:
                                 kind: identifier
                                 pattern: $E

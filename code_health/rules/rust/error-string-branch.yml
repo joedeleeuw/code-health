@@ -39,32 +39,98 @@ rule:
                 pattern: $ERR
                 regex: "(?i)(^e$|^err$|^error$|_err$|_error$|^err_|^error_)"
                 stopBy: end
-            - not:
-                inside:
-                  kind: match_pattern
-                  stopBy:
-                    kind: match_arm
             - inside:
-                any:
-                  - kind: if_expression
-                  - kind: match_arm
+                kind: if_expression
+                field: condition
                 stopBy:
-                  kind: function_item
+                  any:
+                    - kind: block
+                    - kind: closure_expression
+                    - kind: function_item
         - kind: match_arm
-          has:
-            field: pattern
-            kind: match_pattern
-            all:
-              - regex: "^Err\\s*\\([\\s\\S]*\\bif\\b"
-              - has:
-                  kind: call_expression
+          all:
+            - has:
+                field: pattern
+                kind: match_pattern
+                all:
+                  - has:
+                      kind: tuple_struct_pattern
+                      all:
+                        - has:
+                            field: type
+                            regex: "^Err$"
+                        - has:
+                            kind: identifier
+                            not:
+                              regex: "^Err$"
+                            pattern: $E
+                  - has:
+                      field: condition
+                      any:
+                        - pattern: $E.$PRED($PAT)
+                        - pattern: $E.to_lowercase().$PRED($PAT)
+                        - pattern: $E.to_ascii_lowercase().$PRED($PAT)
+                        - pattern: $E.to_string().$PRED($PAT)
+                        - pattern: $E.to_string().to_lowercase().$PRED($PAT)
+                        - pattern: $E.to_string().to_ascii_lowercase().$PRED($PAT)
+                        - has:
+                            any:
+                              - pattern: $E.$PRED($PAT)
+                              - pattern: $E.to_lowercase().$PRED($PAT)
+                              - pattern: $E.to_ascii_lowercase().$PRED($PAT)
+                              - pattern: $E.to_string().$PRED($PAT)
+                              - pattern: $E.to_string().to_lowercase().$PRED($PAT)
+                              - pattern: $E.to_string().to_ascii_lowercase().$PRED($PAT)
+                            stopBy:
+                              any:
+                                - kind: block
+                                - kind: closure_expression
+                                - kind: function_item
+        - kind: match_arm
+          all:
+            - has:
+                field: pattern
+                kind: match_pattern
+                all:
+                  - not:
+                      has:
+                        field: condition
+                        regex: "."
+                  - has:
+                      kind: tuple_struct_pattern
+                      all:
+                        - has:
+                            field: type
+                            regex: "^Err$"
+                        - has:
+                            kind: identifier
+                            not:
+                              regex: "^Err$"
+                            pattern: $E
+            - has:
+                field: value
+                has:
+                  kind: if_expression
                   has:
-                    field: function
-                    kind: field_expression
-                    has:
-                      field: field
-                      regex: "^(contains|starts_with|ends_with)$"
-                  stopBy: end
+                    field: condition
+                    any:
+                      - pattern: $E.$PRED($PAT)
+                      - pattern: $E.to_lowercase().$PRED($PAT)
+                      - pattern: $E.to_ascii_lowercase().$PRED($PAT)
+                      - has:
+                          any:
+                            - pattern: $E.$PRED($PAT)
+                            - pattern: $E.to_lowercase().$PRED($PAT)
+                            - pattern: $E.to_ascii_lowercase().$PRED($PAT)
+                          stopBy:
+                            any:
+                              - kind: block
+                              - kind: closure_expression
+                              - kind: function_item
+                  stopBy:
+                    any:
+                      - kind: function_item
+                      - kind: closure_expression
         - kind: if_expression
           all:
             - has:
@@ -98,6 +164,11 @@ rule:
                             - pattern: $E.to_lowercase().$PRED($PAT)
                             - pattern: $E.to_ascii_lowercase().$PRED($PAT)
                           stopBy:
-                            kind: block
+                            any:
+                              - kind: block
+                              - kind: closure_expression
+                              - kind: function_item
                   stopBy:
-                    kind: function_item
+                    any:
+                      - kind: function_item
+                      - kind: closure_expression

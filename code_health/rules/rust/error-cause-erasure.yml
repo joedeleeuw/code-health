@@ -16,6 +16,32 @@ ignores:
   - "**/*_test.rs"
 metadata:
   directive: G7
+utils:
+  non-tail-node:
+    any:
+      - kind: let_declaration
+      - kind: expression_statement
+      - kind: line_comment
+      - kind: block_comment
+      - kind: attribute_item
+      - kind: empty_statement
+      - kind: function_item
+      - kind: struct_item
+      - kind: enum_item
+      - kind: type_item
+      - kind: const_item
+      - kind: static_item
+      - kind: use_declaration
+  anyhow-macro-name:
+    kind: macro_invocation
+    has:
+      field: macro
+      regex: "^(anyhow::)?anyhow$"
+  format-macro:
+    kind: macro_invocation
+    has:
+      field: macro
+      regex: "^(std::)?format$"
 rule:
   kind: call_expression
   all:
@@ -42,43 +68,216 @@ rule:
             - any:
                 - has:
                     field: body
-                    kind: macro_invocation
+                    all:
+                      - not:
+                          kind: block
+                      - any:
+                          - all:
+                              - matches: anyhow-macro-name
+                              - has:
+                                  kind: token_tree
+                                  any:
+                                    - has:
+                                        any:
+                                          - kind: string_literal
+                                          - kind: raw_string_literal
+                                        stopBy: neighbor
+                                    - has:
+                                        any:
+                                          - pattern: $E.to_string()
+                                          - pattern: $E.to_owned()
+                                          - pattern: String::from($E)
+                                          - matches: format-macro
+                                        stopBy:
+                                          any:
+                                            - kind: closure_expression
+                                            - kind: function_item
+                                            - kind: async_block
+                          - all:
+                              - not:
+                                  any:
+                                    - matches: anyhow-macro-name
+                                    - pattern: $E.to_string()
+                                    - pattern: $E.to_owned()
+                                    - pattern: String::from($E)
+                                    - matches: format-macro
+                              - has:
+                                  any:
+                                    - pattern: $E.to_string()
+                                    - pattern: $E.to_owned()
+                                    - pattern: String::from($E)
+                                    - matches: format-macro
+                                  stopBy:
+                                    any:
+                                      - kind: closure_expression
+                                      - kind: function_item
+                                      - kind: async_block
+                              - not:
+                                  any:
+                                    - kind: call_expression
+                                      all:
+                                        - not:
+                                            has:
+                                              field: function
+                                              regex: "^(std::string::)?String::from$"
+                                        - has:
+                                            field: arguments
+                                            has:
+                                              any:
+                                                - kind: identifier
+                                                  pattern: $E
+                                                - pattern: Box::new($E)
+                                                - pattern: Arc::new($E)
+                                                - pattern: $E.into()
+                                                - pattern: Some($E)
+                                                - pattern: Some(Box::new($E))
+                                              stopBy: neighbor
+                                    - has:
+                                        any:
+                                          - kind: shorthand_field_initializer
+                                            has:
+                                              kind: identifier
+                                              pattern: $E
+                                          - kind: field_initializer
+                                            has:
+                                              field: value
+                                              any:
+                                                - kind: identifier
+                                                  pattern: $E
+                                                - pattern: Box::new($E)
+                                                - pattern: Arc::new($E)
+                                                - pattern: $E.into()
+                                                - pattern: Some($E)
+                                                - pattern: Some(Box::new($E))
+                                          - kind: call_expression
+                                            all:
+                                              - not:
+                                                  has:
+                                                    field: function
+                                                    regex: "^(std::string::)?String::from$"
+                                              - has:
+                                                  field: arguments
+                                                  has:
+                                                    any:
+                                                      - kind: identifier
+                                                        pattern: $E
+                                                      - pattern: Box::new($E)
+                                                      - pattern: Arc::new($E)
+                                                      - pattern: $E.into()
+                                                      - pattern: Some($E)
+                                                      - pattern: Some(Box::new($E))
+                                                    stopBy: neighbor
+                                        stopBy:
+                                          any:
+                                            - kind: closure_expression
+                                            - kind: function_item
+                                            - kind: async_block
+                - has:
+                    field: body
+                    kind: block
                     has:
-                      field: macro
-                      regex: "^(anyhow::)?anyhow$"
-                - all:
-                    - not:
-                        has:
-                          field: body
-                          any:
-                            - pattern: $E.to_string()
-                            - pattern: $E.to_owned()
-                            - pattern: String::from($E)
-                            - kind: macro_invocation
-                              has:
-                                field: macro
-                                regex: "^(std::)?format$"
-                            - kind: block
-                    - has:
-                        field: body
-                        all:
-                          - has:
-                              any:
-                                - pattern: $E.to_string()
-                                - pattern: $E.to_owned()
-                                - pattern: String::from($E)
-                                - kind: macro_invocation
-                                  has:
-                                    field: macro
-                                    regex: "^(std::)?format$"
-                              stopBy:
-                                kind: closure_expression
-                          - not:
-                              has:
-                                kind: field_initializer
-                                has:
-                                  kind: identifier
-                                  pattern: $E
-                                  stopBy: neighbor
-                                stopBy:
-                                  kind: closure_expression
+                      all:
+                        - not:
+                            matches: non-tail-node
+                        - any:
+                            - all:
+                                - matches: anyhow-macro-name
+                                - has:
+                                    kind: token_tree
+                                    any:
+                                      - has:
+                                          any:
+                                            - kind: string_literal
+                                            - kind: raw_string_literal
+                                          stopBy: neighbor
+                                      - has:
+                                          any:
+                                            - pattern: $E.to_string()
+                                            - pattern: $E.to_owned()
+                                            - pattern: String::from($E)
+                                            - matches: format-macro
+                                          stopBy:
+                                            any:
+                                              - kind: closure_expression
+                                              - kind: function_item
+                                              - kind: async_block
+                            - all:
+                                - not:
+                                    any:
+                                      - matches: anyhow-macro-name
+                                      - pattern: $E.to_string()
+                                      - pattern: $E.to_owned()
+                                      - pattern: String::from($E)
+                                      - matches: format-macro
+                                - has:
+                                    any:
+                                      - pattern: $E.to_string()
+                                      - pattern: $E.to_owned()
+                                      - pattern: String::from($E)
+                                      - matches: format-macro
+                                    stopBy:
+                                      any:
+                                        - kind: closure_expression
+                                        - kind: function_item
+                                        - kind: async_block
+                                - not:
+                                    any:
+                                      - kind: call_expression
+                                        all:
+                                          - not:
+                                              has:
+                                                field: function
+                                                regex: "^(std::string::)?String::from$"
+                                          - has:
+                                              field: arguments
+                                              has:
+                                                any:
+                                                  - kind: identifier
+                                                    pattern: $E
+                                                  - pattern: Box::new($E)
+                                                  - pattern: Arc::new($E)
+                                                  - pattern: $E.into()
+                                                  - pattern: Some($E)
+                                                  - pattern: Some(Box::new($E))
+                                                stopBy: neighbor
+                                      - has:
+                                          any:
+                                            - kind: shorthand_field_initializer
+                                              has:
+                                                kind: identifier
+                                                pattern: $E
+                                            - kind: field_initializer
+                                              has:
+                                                field: value
+                                                any:
+                                                  - kind: identifier
+                                                    pattern: $E
+                                                  - pattern: Box::new($E)
+                                                  - pattern: Arc::new($E)
+                                                  - pattern: $E.into()
+                                                  - pattern: Some($E)
+                                                  - pattern: Some(Box::new($E))
+                                            - kind: call_expression
+                                              all:
+                                                - not:
+                                                    has:
+                                                      field: function
+                                                      regex: "^(std::string::)?String::from$"
+                                                - has:
+                                                    field: arguments
+                                                    has:
+                                                      any:
+                                                        - kind: identifier
+                                                          pattern: $E
+                                                        - pattern: Box::new($E)
+                                                        - pattern: Arc::new($E)
+                                                        - pattern: $E.into()
+                                                        - pattern: Some($E)
+                                                        - pattern: Some(Box::new($E))
+                                                      stopBy: neighbor
+                                          stopBy:
+                                            any:
+                                              - kind: closure_expression
+                                              - kind: function_item
+                                              - kind: async_block
+                      stopBy: neighbor
