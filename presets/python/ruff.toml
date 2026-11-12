@@ -35,3 +35,10 @@ max-args = 5
 
 [lint.per-file-ignores]
 "!{**/tests/**,**/test/**,**/testing/**,**/test_*.py,**/*_test.py,**/conftest.py}" = ["SLF001"]
+"{**/tests/**,**/test/**,**/testing/**,**/tests_integ/**,**/test_*.py,**/*_test.py,**/conftest.py}" = [
+    "ASYNC210",
+    "ASYNC220",
+    "ASYNC221",
+    "ASYNC230",
+    "ASYNC251",
+]
