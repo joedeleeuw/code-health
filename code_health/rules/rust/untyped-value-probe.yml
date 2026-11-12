@@ -1,7 +1,7 @@
 id: untyped-value-probe-rust
 language: Rust
 severity: error
-message: Untyped Value key probe or open Map<String, Value> field/parameter defers schema validation past the boundary; decode once into a closed #[derive(Deserialize)] struct or enum.
+message: "Untyped Value key probe or open Map<String, Value> field/parameter defers schema validation past the boundary; decode once into a closed #[derive(Deserialize)] struct or enum."
 ignores:
   - "**/gen/**"
   - "**/generated/**"

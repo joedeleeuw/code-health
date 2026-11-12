@@ -1,7 +1,7 @@
 id: untyped-json-response-rust
 language: Rust
 severity: error
-message: Ok(json!({ ... })) returns an ad-hoc untyped JSON object instead of a closed #[derive(Serialize)] struct or enum.
+message: "Ok(json!({ ... })) returns an ad-hoc untyped JSON object instead of a closed #[derive(Serialize)] struct or enum."
 ignores:
   - "**/gen/**"
   - "**/generated/**"

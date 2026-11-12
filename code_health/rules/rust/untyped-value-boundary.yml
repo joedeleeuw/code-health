@@ -1,7 +1,7 @@
 id: untyped-value-boundary-rust
 language: Rust
 severity: error
-message: Raw serde_json::Value in a function parameter, return type, or struct field defers schema validation into callers and callees; use a closed #[derive(Serialize, Deserialize)] struct or enum.
+message: "Raw serde_json::Value in a function parameter, return type, or struct field defers schema validation into callers and callees; use a closed #[derive(Serialize, Deserialize)] struct or enum."
 ignores:
   - "**/gen/**"
   - "**/generated/**"

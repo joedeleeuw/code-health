@@ -1,7 +1,7 @@
 id: error-cause-erasure-rust
 language: Rust
 severity: error
-message: .map_err wraps a formatted error string or anyhow! message instead of preserving the underlying error cause; carry #[source]/#[from] on a typed variant or use .context(...).
+message: ".map_err wraps a formatted error string or anyhow! message instead of preserving the underlying error cause; carry #[source]/#[from] on a typed variant or use .context(...)."
 ignores:
   - "**/gen/**"
   - "**/generated/**"

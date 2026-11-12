@@ -1,7 +1,7 @@
 id: untyped-value-ingress-rust
 language: Rust
 severity: error
-message: Boundary payload is decoded into an untyped Value, Table, or Mapping instead of a closed #[derive(Deserialize)] struct or enum; parse once at the boundary into the domain type.
+message: "Boundary payload is decoded into an untyped Value, Table, or Mapping instead of a closed #[derive(Deserialize)] struct or enum; parse once at the boundary into the domain type."
 ignores:
   - "**/gen/**"
   - "**/generated/**"
