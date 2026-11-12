@@ -13,6 +13,9 @@ valid:
   - |
     if os.path.realpath(candidate).startswith(os.path.join(root, "")):
         use_root(candidate)
+  - |
+    def owned_target(link):
+        return os.path.realpath(link).startswith(f"{UNIT_DIR.resolve()}{os.sep}")
 invalid:
   - |
     if not str(out_path.resolve()).startswith(str(quarantine_dir.resolve())):

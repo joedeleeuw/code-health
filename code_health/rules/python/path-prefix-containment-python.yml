@@ -20,7 +20,7 @@ utils:
   trailing-sep-prefix:
     any:
       - kind: string
-        regex: '[/\\]["'']$'
+        regex: '([/\\]|\{os\.(sep|altsep)\})["'']$'
       - all:
           - pattern: $LHS + $RHS
           - has:
