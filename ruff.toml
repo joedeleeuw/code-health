@@ -6,7 +6,7 @@ extend-exclude = [
 [lint]
 select = ["E4", "E7", "E9", "F", "BLE001", "S110", "S112", "PLW1510",
     "B904", "B905", "SIM116", "SLF001", "TID251", "RUF006", "TRY004", "DTZ",
-    "ASYNC210", "ASYNC220", "ASYNC221", "ASYNC230", "ASYNC251", "PGH003"]
+    "ASYNC210", "ASYNC220", "ASYNC221", "ASYNC230", "ASYNC251"]
 
 [lint.flake8-tidy-imports.banned-api]
 "contextlib.suppress".msg = "G7: fail loudly; do not suppress exceptions"

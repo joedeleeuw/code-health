@@ -21,14 +21,7 @@ extend-select = [
     "ASYNC221",
     "ASYNC230",
     "ASYNC251",
-    "PGH003",
     "RUF013",
-    "B009",
-    "B010",
-    "B012",
-    "E722",
-    "S113",
-    "TRY002",
 ]
 
 [lint.mccabe]
@@ -50,8 +43,4 @@ max-args = 5
     "ASYNC251",
     "PLR0913",
     "RUF013",
-    "B009",
-    "B010",
-    "S113",
-    "TRY002",
 ]
