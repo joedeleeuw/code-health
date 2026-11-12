@@ -35,7 +35,16 @@ utils:
     kind: call_expression
     has:
       field: function
-      regex: "(spawn_blocking|block_in_place)$"
+      regex: "(spawn_blocking|block_in_place|unblock)$"
+  background-task:
+    kind: async_block
+    inside:
+      kind: arguments
+      inside:
+        kind: call_expression
+        has:
+          field: function
+          regex: "(background_spawn|background_executor\\(\\)\\s*\\.spawn)$"
   async-fs-use:
     kind: use_declaration
     regex: "(tokio|async_std|smol)::(?:fs\\s*;|.*\\bfs\\s*[,}])"
@@ -226,3 +235,8 @@ rule:
           matches: blocking-escape
           stopBy:
             matches: async-scope
+    - not:
+        inside:
+          matches: background-task
+          stopBy:
+            matches: exec-boundary

@@ -21,6 +21,21 @@ valid:
             let _ = std::process::Command::new("program").output();
         }
     }
+  - |
+    use std::fs;
+    fn load(cx: &mut App, path: PathBuf) {
+        cx.spawn(async move |cx| {
+            let size = cx
+                .background_executor()
+                .spawn(async move { std::fs::metadata(&path).ok().map(|m| m.len()) })
+                .await;
+        })
+        .detach();
+    }
+  - |
+    async fn read(path: PathBuf) -> std::io::Result<Vec<u8>> {
+        blocking::unblock(move || std::fs::read(path)).await
+    }
 invalid:
   - |
     async fn serve() {

@@ -57,9 +57,7 @@ repos:
 | `elif-chain-rust` | If/else-if chain with 3+ else-ifs. |
 | `error-cause-erasure-rust` | .map_err wraps a formatted error string or anyhow! message instead of preserving the underlying error cause; carry #[source]/#[from] on a typed variant or use .context(...). |
 | `error-string-branch-rust` | Control flow branches on substrings of a rendered error message instead of matching a typed error variant or structured status code. |
-| `host-path-rust` | Host-absolute path in a repository file (tracked or untracked; only ignored files are skipped). |
 | `lock-unwrap-rust` (off by default) | A lock is taken with .unwrap(), so one panic while it is held poisons it and every later lock() panics too. |
-| `reexport-module-rust` | Re-export-only shim module adds an indirection hop without owning behavior; import from the defining module or re-export at the crate boundary (lib.rs / mod.rs). |
 | `secret-call-rust` | Direct secret-store call (secret-tool, op, security). |
 | `silent-result-discard-rust` | Boundary serde/FromStr parse, filesystem I/O, or Result failure is silently collapsed into Option, an empty value, or discarded; propagate or handle the error explicitly. |
 | `single-call-hop-rust` | Private function only forwards its parameters, in order, to one first-party call; call the target directly or give the wrapper a job. |
