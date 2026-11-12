@@ -48,7 +48,7 @@ repos:
 | Rule | What it reports |
 |---|---|
 | `anemic-error-rust` | Signature or alias uses Result<T, String>, or .map_err erases a typed error into String; use a typed domain error enum or error crate type. |
-| `blocking-in-async-rust` | Synchronous std::fs I/O or std::process::Command execution inside an async function or block stalls the async runtime executor; use tokio::fs, tokio::process::Command, or spawn_blocking. |
+| `blocking-in-async-rust` | Blocking thread::sleep, synchronous std::fs I/O, or synchronous std::process::Command execution inside an async function or block stalls the async runtime executor; use tokio::time::sleep, tokio::fs, tokio::process::Command, or spawn_blocking. |
 | `catch-log-rethrow-rust` | Logging an error inside inspect_err or map_err and immediately propagating it unmodified with ? duplicates error logs across stack frames; add domain context or log once at the top-level boundary. |
 | `closed-string-field-rust` (off by default) | A status, kind, state, level, mode, role or severity field is a String, so any text is a valid case. |
 | `closed-string-rust` | A struct field stores a closed case space as String instead of an enum. |
@@ -61,18 +61,18 @@ repos:
 | `lock-unwrap-rust` (off by default) | A lock is taken with .unwrap(), so one panic while it is held poisons it and every later lock() panics too. |
 | `reexport-module-rust` | Re-export-only shim module adds an indirection hop without owning behavior; import from the defining module or re-export at the crate boundary (lib.rs / mod.rs). |
 | `secret-call-rust` | Direct secret-store call (secret-tool, op, security). |
-| `silent-result-discard-rust` | Boundary serde decode, filesystem I/O, or Result failure is silently collapsed into Option, an empty value, or discarded; propagate or handle the error explicitly. |
+| `silent-result-discard-rust` | Boundary serde/FromStr parse, filesystem I/O, or Result failure is silently collapsed into Option, an empty value, or discarded; propagate or handle the error explicitly. |
 | `single-call-hop-rust` | Private function only forwards its parameters, in order, to one first-party call; call the target directly or give the wrapper a job. |
 | `sql-string-interpolation-rust` | format! interpolates a value into SQL statement text (quoted or compared), bypassing bound parameters; pass values through the driver's bindings (?1, $1, params![]). |
 | `sum-to-product-struct-rust` | Struct flattens a success/failure sum type into a boolean flag plus an Option<_> error field; model the mutually exclusive outcomes as Result<T, E> or a tagged enum. |
 | `suppressed-limit-rust` | A size or safety lint from the preset is silenced with allow or expect and no reason; fix the code so the lint passes, change the limit for the whole workspace in clippy.toml, or state the reason in the attribute. |
-| `unbounded-http-client-rust` | reqwest::get, Client::new(), or ureq::get/post constructs an HTTP request or client with no timeout; configure Client::builder().timeout(...) or AgentBuilder::new().timeout(...) so hung peers cannot stall callers indefinitely. |
+| `unbounded-http-client-rust` | reqwest::get, reqwest::Client::new(), or an unconfigured ureq request/Agent executes HTTP with no timeout; configure Client::builder().timeout(...) or ureq timeout_global/timeout(...) so hung peers cannot stall callers indefinitely. |
 | `untyped-json-response-rust` | Ok(json!({ ... })) returns an ad-hoc untyped JSON object instead of a closed #[derive(Serialize)] struct or enum. |
 | `untyped-value-boundary-rust` | Raw serde_json::Value in a function parameter, return type, or struct field defers schema validation into callers and callees; use a closed #[derive(Serialize, Deserialize)] struct or enum. |
 | `untyped-value-ingress-rust` | Boundary payload is decoded into an untyped Value, Table, or Mapping instead of a closed #[derive(Deserialize)] struct or enum; parse once at the boundary into the domain type. |
-| `untyped-value-probe-rust` | Untyped Value key probe or open Map<String, Value> field/parameter defers schema validation past the boundary; decode once into a closed #[derive(Deserialize)] struct or enum. |
+| `untyped-value-probe-rust` | Untyped Value key probe or open Map<String, Value> field, parameter, or return type defers schema validation past the boundary; decode once into a closed #[derive(Deserialize)] struct or enum. |
 | `vague-name-rust` (off by default) | Vague declared name. |
-| `value-roundtrip-rust` | Data is serialized into serde_json::Value or JSON text only to be reparsed or mutated by string key in the same scope; construct or transform the typed Rust struct directly. |
+| `value-roundtrip-rust` | Data is reparsed from serde_json::Value via from_value, round-tripped through JSON text, or built with json! and mutated by string key; decode once at the boundary into the typed Rust struct. |
 
 ### Python
 
@@ -129,8 +129,8 @@ repos:
 
 Rust is checked by the tools a Rust workspace already runs; `presets/rust` holds what to adopt:
 
-1. Copy `presets/rust/clippy.toml` to the workspace root (or merge it into yours). It sets the complexity, nesting and argument thresholds and bans `std::thread::sleep` (`Value` and `Result` checks live in the pattern rules so each defect has one owner). Clippy counts `self` as an argument and the function body as one nesting level.
-2. Paste `presets/rust/cargo-config.toml` into the workspace's `.cargo/config.toml`. It defines `cargo lint`: Clippy over every crate's library and binary targets (`--lib --bins`) with the preset's lints and rustc's dead-code and unused warnings denied. The levels ride on the command, so no crate has to opt in. A workspace that vendors crates it does not want linted uses `presets/rust/workspace-lints.toml` instead: paste it into the root `Cargo.toml` and add `[lints] workspace = true` to each crate that should be checked; a crate without that line is skipped.
+1. Copy `presets/rust/clippy.toml` to the workspace root (or merge it into yours). It sets the complexity, nesting and argument thresholds and bans `std::thread::sleep` across compiled code (`blocking-in-async-rust` also catches `thread::sleep` inside `async` without a build, while `Value`, `serde_json::from_value`, and boundary/parse `Result` checks live solely in the pattern rules). Clippy counts `self` as an argument and the function body as one nesting level.
+2. Paste `presets/rust/cargo-config.toml` into the workspace's `.cargo/config.toml`. It defines `cargo lint`: Clippy over every crate's library and binary targets (`--lib --bins`, leaving unit and integration test targets, `examples`, and `benches` unchecked by Clippy) with the preset's lints and rustc's dead-code and unused warnings denied. The levels ride on the command, so no crate has to opt in. A workspace that vendors crates it does not want linted uses `presets/rust/workspace-lints.toml` instead: paste it into the root `Cargo.toml` and add `[lints] workspace = true` to each crate that should be checked; a crate without that line is skipped.
 3. Run the pattern rules with `ast-grep scan --config <checkout>/presets/rust/sgconfig.yml`.
 4. Install `cargo-machete` and run `cargo machete` for dependencies no code uses. A deliberate exception goes in the crate's `Cargo.toml` under `[package.metadata.cargo-machete]` as `ignored = ["name"]`.
 
